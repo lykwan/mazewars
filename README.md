@@ -21,7 +21,7 @@ In addition, this project will include:
 
 In this app, there will be a screen with a maze as the gameboard, game controls, and a ranking list indicating which player is currently in the lead. Game controls will explain the keys used to play in this game. There will be several players in the gameboard, which can all move around, and a ball which could be captured.
 
-![wireframes](oddball.png)
+![wireframes](img/oddball.png)
 
 ### Architecture and Technologies
 

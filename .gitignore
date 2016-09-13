@@ -1,1 +1,4 @@
-oddball.xml
+img/oddball.xml
+crafty_example/
+.DS_Store
+node_modules/
