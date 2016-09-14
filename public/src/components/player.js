@@ -20,26 +20,14 @@ export default function() {
       this.bind('EnterFrame', function() {
           if (this.charMove.right) {
             this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-            this.socket.on('updatePos', data => {
-              this.x += this.charSpeed;
-            });
           } else if (this.charMove.left) {
             this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-            this.socket.on('updatePos', data => {
-              this.x -= this.charSpeed;
-            });
           } else if (this.charMove.up) {
             this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-            this.socket.on('updatePos', data => {
-              this.y -= this.charSpeed;
-            });
           } else if (this.charMove.down) {
             this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-            this.socket.on('updatePos', (data) => {
-              console.log(this);
-              this.y += this.charSpeed;
-            });
           }
+
       });
 
       this.bind('KeyDown', function(e) {
@@ -88,6 +76,18 @@ export default function() {
     setUpSocket(socket, playerId) {
       this.socket = socket;
       this.playerId = playerId;
+      this.socket.on('updatePos', data => {
+        console.log('got hereeee updating pos ');
+        if (data.charMove.right) {
+            this.x += this.charSpeed;
+        } else if (data.charMove.left) {
+            this.x -= this.charSpeed;
+        } else if (data.charMove.up) {
+            this.y -= this.charSpeed;
+        } else if (data.charMove.down) {
+            this.y += this.charSpeed;
+        }
+      });
     }
 
   });
