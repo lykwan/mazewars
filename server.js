@@ -59,23 +59,22 @@ io.on('connection', function(socket) {
     let movingPlayer = gameState.players[data.playerId];
     if (data.charMove.left) {
       movingPlayer.x -= movingPlayer.charSpeed;
-      if (movingPlayer.hit()) {
+      if (movingPlayer.hit("Solid")) {
         movingPlayer.x += movingPlayer.charSpeed;
       }
     } else if (data.charMove.right) {
       movingPlayer.x += movingPlayer.charSpeed;
-      console.log(movingPlayer.hit());
-      if (movingPlayer.hit()) {
+      if (movingPlayer.hit("Solid")) {
         movingPlayer.x -= movingPlayer.charSpeed;
       }
     } else if (data.charMove.up) {
       movingPlayer.y -= movingPlayer.charSpeed;
-      if (movingPlayer.hit()) {
+      if (movingPlayer.hit("Solid")) {
         movingPlayer.y += movingPlayer.charSpeed;
       }
     } else if (data.charMove.down) {
       movingPlayer.y += movingPlayer.charSpeed;
-      if (movingPlayer.hit()) {
+      if (movingPlayer.hit("Solid")) {
         movingPlayer.y -= movingPlayer.charSpeed;
       }
     }
