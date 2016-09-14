@@ -1,4 +1,4 @@
-import { mapGrid, wallDirection } from './constants.js';
+import { mapGrid, wallDirection } from '../constants.js';
 /* globals Crafty */
 
 export default function() {

@@ -1,10 +1,12 @@
 import { mapGrid, wallDirection } from './constants.js';
-import createComponents from './entities.js';
-import createPlayerComponent from './player.js';
-import Board from './board.js';
+import createComponents from './components/entities.js';
+import createPlayerComponent from './components/player.js';
+import Board from './components/board.js';
+const socket = io();
 /* globals Crafty */
 /* globals mapGrid */
 /* globals wallDirection */
+/* globals io */
 
 class Game {
   constructor() {
@@ -32,7 +34,15 @@ class Game {
       }
     }
 
-    Crafty.e('Player').color('blue').at(0, 0);
+    // player.trigger("ChangeColor", {color:"yellow"});
+
+    this.connectedWithSocket();
+  }
+
+  connectedWithSocket() {
+    socket.on('connected', function (data) {
+      var player = Crafty.e('Player').color('blue').at(0, 0).setUpSocket(socket, data.playerId);
+    });
   }
 
 }

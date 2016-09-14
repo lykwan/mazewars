@@ -1,4 +1,4 @@
-import { mapGrid, wallDirection } from './constants.js';
+import { mapGrid, wallDirection } from '../constants.js';
 import Tile from './tile.js';
 
 const DIRECTION = {
@@ -104,7 +104,6 @@ class Board {
       this.grid[x][y].walls[dir] = false;
       this.grid[neighX][neighY].walls[OPPOSITE[dir]] = false;
 
-      debugger;
       this.expandMaze(x, y);
     }
   }

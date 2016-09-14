@@ -52,6 +52,8 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	/* globals io */
+	
 	document.addEventListener('DOMContentLoaded', function () {
 	  var game = new _game2.default();
 	  game.start();
@@ -71,15 +73,15 @@
 	
 	var _constants = __webpack_require__(2);
 	
-	var _entities = __webpack_require__(3);
+	var _entities = __webpack_require__(7);
 	
 	var _entities2 = _interopRequireDefault(_entities);
 	
-	var _player = __webpack_require__(4);
+	var _player = __webpack_require__(8);
 	
 	var _player2 = _interopRequireDefault(_player);
 	
-	var _board = __webpack_require__(5);
+	var _board = __webpack_require__(9);
 	
 	var _board2 = _interopRequireDefault(_board);
 	
@@ -87,9 +89,11 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	var socket = io();
 	/* globals Crafty */
 	/* globals mapGrid */
 	/* globals wallDirection */
+	/* globals io */
 	
 	var Game = function () {
 	  function Game() {
@@ -123,7 +127,16 @@
 	        }
 	      }
 	
-	      Crafty.e('Player').color('blue').at(0, 0);
+	      // player.trigger("ChangeColor", {color:"yellow"});
+	
+	      this.connectedWithSocket();
+	    }
+	  }, {
+	    key: 'connectedWithSocket',
+	    value: function connectedWithSocket() {
+	      socket.on('connected', function (data) {
+	        var player = Crafty.e('Player').color('blue').at(0, 0).setUpSocket(socket, data.playerId);
+	      });
 	    }
 	  }]);
 	
@@ -157,7 +170,11 @@
 	};
 
 /***/ },
-/* 3 */
+/* 3 */,
+/* 4 */,
+/* 5 */,
+/* 6 */,
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -229,7 +246,7 @@
 	var _constants = __webpack_require__(2);
 
 /***/ },
-/* 4 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -241,7 +258,7 @@
 	exports.default = function () {
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('Actor, Fourway, Color, Collision').fourway(100).stopOnSolids();
+	      this.requires('Actor, Fourway, Color, Collision').moveInDirections(2).stopOnSolids();
 	    },
 	
 	    playerColor: function playerColor(color) {
@@ -249,21 +266,90 @@
 	      return this;
 	    },
 	
+	    moveInDirections: function moveInDirections(speed) {
+	      this.charMove = { left: false, right: false, up: false, down: false };
+	      this.charSpeed = speed;
+	
+	      this.bind('EnterFrame', function () {
+	        var _this = this;
+	
+	        if (this.charMove.right) {
+	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
+	          this.socket.on('updatePos', function (data) {
+	            _this.x += _this.charSpeed;
+	          });
+	        } else if (this.charMove.left) {
+	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
+	          this.socket.on('updatePos', function (data) {
+	            _this.x -= _this.charSpeed;
+	          });
+	        } else if (this.charMove.up) {
+	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
+	          this.socket.on('updatePos', function (data) {
+	            _this.y -= _this.charSpeed;
+	          });
+	        } else if (this.charMove.down) {
+	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
+	          this.socket.on('updatePos', function (data) {
+	            console.log(_this);
+	            _this.y += _this.charSpeed;
+	          });
+	        }
+	      });
+	
+	      this.bind('KeyDown', function (e) {
+	        this.charMove.left = false;
+	        this.charMove.right = false;
+	        this.charMove.down = false;
+	        this.charMove.up = false;
+	
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
+	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
+	      });
+	
+	      this.bind('KeyUp', function (e) {
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
+	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
+	      });
+	
+	      return this;
+	    },
+	
+	
 	    stopOnSolids: function stopOnSolids() {
 	      this.onHit('Solid', this.stopMovement);
 	      return this;
 	    },
 	
 	    stopMovement: function stopMovement() {
-	      this._speed = 0;
-	      this.x -= this._dx;
-	      this.y -= this._dy;
+	      if (this.charMove.left) {
+	        this.x += this.charSpeed;
+	      } else if (this.charMove.right) {
+	        this.x -= this.charSpeed;
+	      } else if (this.charMove.up) {
+	        this.y += this.charSpeed;
+	      } else if (this.charMove.down) {
+	        this.y -= this.charSpeed;
+	      }
+	      this.charMove.left = false;
+	      this.charMove.right = false;
+	      this.charMove.down = false;
+	      this.charMove.up = false;
+	    },
+	
+	    setUpSocket: function setUpSocket(socket, playerId) {
+	      this.socket = socket;
+	      this.playerId = playerId;
 	    }
 	  });
 	};
 
 /***/ },
-/* 5 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -278,7 +364,7 @@
 	
 	var _constants = __webpack_require__(2);
 	
-	var _tile = __webpack_require__(6);
+	var _tile = __webpack_require__(10);
 	
 	var _tile2 = _interopRequireDefault(_tile);
 	
@@ -415,7 +501,6 @@
 	        this.grid[x][y].walls[dir] = false;
 	        this.grid[neighX][neighY].walls[OPPOSITE[dir]] = false;
 	
-	        debugger;
 	        this.expandMaze(x, y);
 	      }
 	    }
@@ -427,7 +512,7 @@
 	exports.default = Board;
 
 /***/ },
-/* 6 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
