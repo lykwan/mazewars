@@ -30,7 +30,7 @@ module.exports = function(Crafty, model) {
 
   Crafty.c('Wall', {
     init: function() {
-      model.wallInit.bind(this)();
+      this.requires('2D, Canvas, Solid, Color, Collision');
     },
 
     wallDir: function(wallDir) {

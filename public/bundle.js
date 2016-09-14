@@ -223,7 +223,7 @@
 	
 	  Crafty.c('Wall', {
 	    init: function init() {
-	      model.wallInit.bind(this)();
+	      this.requires('2D, Canvas, Solid, Color, Collision');
 	    },
 	
 	    wallDir: function wallDir(_wallDir) {
@@ -275,11 +275,6 @@
 	      this.requires('Actor, Color, Collision').moveInDirections(2);
 	    },
 	
-	    // playerColor: function(color) {
-	    //   this.color(color);
-	    //   return this;
-	    // },
-	
 	    moveInDirections: function moveInDirections(speed) {
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	      this.charSpeed = speed;
@@ -288,27 +283,6 @@
 	      return this;
 	    },
 	
-	
-	    stopOnSolids: function stopOnSolids() {
-	      this.onHit('Solid', this.stopMovement);
-	      return this;
-	    },
-	
-	    stopMovement: function stopMovement() {
-	      if (this.charMove.left) {
-	        this.x += this.charSpeed;
-	      } else if (this.charMove.right) {
-	        this.x -= this.charSpeed;
-	      } else if (this.charMove.up) {
-	        this.y += this.charSpeed;
-	      } else if (this.charMove.down) {
-	        this.y -= this.charSpeed;
-	      }
-	      this.charMove.left = false;
-	      this.charMove.right = false;
-	      this.charMove.down = false;
-	      this.charMove.up = false;
-	    },
 	
 	    setUp: function setUp(playerId, playerColor) {
 	      this.playerId = playerId;
