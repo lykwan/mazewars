@@ -21,7 +21,9 @@
     "babel-core": "^6.14.0",
     "babel-loader": "^6.2.5",
     "babel-preset-es2015": "^6.14.0",
+    "craftyjs": "^0.7.1",
     "express": "^4.14.0",
+    "seedrandom": "^2.4.2",
     "socket.io": "^1.4.8",
     "webpack": "^1.13.2"
   },

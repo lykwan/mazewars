@@ -1,54 +1,22 @@
 /* globals Crafty */
 
-export default function() {
+module.exports = function(Crafty, model) {
   Crafty.c('Player', {
     init: function() {
-      this.requires('Actor, Fourway, Color, Collision')
-          .moveInDirections(2)
-          .stopOnSolids();
+      this.requires('Actor, Color, Collision')
+          .moveInDirections(2);
     },
 
-    playerColor: function(color) {
-      this.color(color);
-      return this;
-    },
+    // playerColor: function(color) {
+    //   this.color(color);
+    //   return this;
+    // },
 
     moveInDirections(speed) {
       this.charMove = { left: false, right: false, up: false, down: false };
       this.charSpeed = speed;
 
-      this.bind('EnterFrame', function() {
-          if (this.charMove.right) {
-            this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-          } else if (this.charMove.left) {
-            this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-          } else if (this.charMove.up) {
-            this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-          } else if (this.charMove.down) {
-            this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-          }
-
-      });
-
-      this.bind('KeyDown', function(e) {
-        this.charMove.left = false;
-        this.charMove.right = false;
-        this.charMove.down = false;
-        this.charMove.up = false;
-
-        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
-        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
-        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
-        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
-      });
-
-      this.bind('KeyUp', function(e) {
-        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
-        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
-        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
-        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
-      });
-
+      model.playerMoveInDirections.bind(this, speed)();
       return this;
     },
 
@@ -73,22 +41,39 @@ export default function() {
       this.charMove.up = false;
     },
 
-    setUpSocket(socket, playerId) {
-      this.socket = socket;
+    setUp: function(playerId, playerColor) {
       this.playerId = playerId;
-      this.socket.on('updatePos', data => {
-        console.log('got hereeee updating pos ');
-        if (data.charMove.right) {
-            this.x += this.charSpeed;
-        } else if (data.charMove.left) {
-            this.x -= this.charSpeed;
-        } else if (data.charMove.up) {
-            this.y -= this.charSpeed;
-        } else if (data.charMove.down) {
-            this.y += this.charSpeed;
-        }
-      });
-    }
+      if (playerColor) {
+        this.color(playerColor);
+      }
 
+      return this;
+    },
+
+    setUpSocket: function(socket) {
+      this.socket = socket;
+      this.socket.on('updatePos', data => {
+        this.x = data.x;
+        this.y = data.y;
+      });
+
+      return this;
+    }
   });
-}
+
+  Crafty.c('otherPlayer', {
+    init: function() {
+      this.requires('Actor, Color');
+    },
+
+    setUp: function(playerId, playerColor) {
+      this.playerId = playerId;
+
+      if (playerColor) {
+        this.color(playerColor);
+      }
+
+      return this;
+    },
+  });
+};

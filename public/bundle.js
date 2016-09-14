@@ -71,15 +71,21 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _constants = __webpack_require__(2);
+	var _canvas = __webpack_require__(3);
 	
-	var _entities = __webpack_require__(7);
+	var _canvas2 = _interopRequireDefault(_canvas);
+	
+	var _entities = __webpack_require__(4);
 	
 	var _entities2 = _interopRequireDefault(_entities);
 	
-	var _player = __webpack_require__(8);
+	var _player = __webpack_require__(5);
 	
 	var _player2 = _interopRequireDefault(_player);
+	
+	var _client_model = __webpack_require__(6);
+	
+	var _client_model2 = _interopRequireDefault(_client_model);
 	
 	var _board = __webpack_require__(9);
 	
@@ -89,53 +95,44 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	var Constants = __webpack_require__(2);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
+	
 	var socket = io();
 	/* globals Crafty */
-	/* globals mapGrid */
-	/* globals wallDirection */
 	/* globals io */
 	
 	var Game = function () {
 	  function Game() {
 	    _classCallCheck(this, Game);
-	
-	    this.board = new _board2.default(_constants.mapGrid.NUM_COLS, _constants.mapGrid.NUM_ROWS);
 	  }
 	
 	  _createClass(Game, [{
 	    key: 'width',
 	    value: function width() {
-	      return _constants.mapGrid.NUM_ROWS * _constants.mapGrid.TILE_WIDTH;
+	      return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
 	    }
 	  }, {
 	    key: 'height',
 	    value: function height() {
-	      return _constants.mapGrid.NUM_COLS * _constants.mapGrid.TILE_HEIGHT;
+	      return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
 	    }
 	  }, {
 	    key: 'start',
 	    value: function start() {
-	      Crafty.init(this.width(), this.height());
-	      Crafty.background('#000000');
+	      var _this = this;
 	
-	      (0, _entities2.default)();
-	      (0, _player2.default)();
-	
-	      for (var i = 0; i < _constants.mapGrid.NUM_COLS; i++) {
-	        for (var j = 0; j < _constants.mapGrid.NUM_ROWS; j++) {
-	          this.board.grid[i][j].drawWalls();
-	        }
-	      }
-	
-	      // player.trigger("ChangeColor", {color:"yellow"});
-	
-	      this.connectedWithSocket();
-	    }
-	  }, {
-	    key: 'connectedWithSocket',
-	    value: function connectedWithSocket() {
+	      (0, _canvas2.default)(Crafty, _client_model2.default);
 	      socket.on('connected', function (data) {
-	        var player = Crafty.e('Player').color('blue').at(0, 0).setUpSocket(socket, data.playerId);
+	        var player = Crafty.e('Player').color('blue').at(0, 0).setUp(data.playerId, data.playerColor).setUpSocket(socket, data.playerId);
+	        _this.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
+	
+	        for (var i = 0; i < mapGrid.NUM_COLS; i++) {
+	          for (var j = 0; j < mapGrid.NUM_ROWS; j++) {
+	            _this.board.grid[i][j].drawWalls(Crafty);
+	          }
+	        }
 	      });
 	    }
 	  }]);
@@ -151,53 +148,68 @@
 
 	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var mapGrid = exports.mapGrid = {
+	var mapGrid = {
 	  NUM_ROWS: 8,
 	  NUM_COLS: 8,
 	  WALL_THICKNESS: 3,
 	  TILE_WIDTH: 50,
 	  TILE_HEIGHT: 50,
-	  PLAYER_WIDTH: 40,
-	  PLAYER_HEIGHT: 40
+	  PLAYER_WIDTH: 30,
+	  PLAYER_HEIGHT: 30
 	};
 	
-	var wallDirection = exports.wallDirection = {
+	var wallDirection = {
 	  HORIZONTAL: 'HORIZONTAL',
 	  VERTICAL: 'VERTICAL'
 	};
+	
+	module.exports = { mapGrid: mapGrid, wallDirection: wallDirection };
 
 /***/ },
-/* 3 */,
-/* 4 */,
-/* 5 */,
-/* 6 */,
-/* 7 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
+	var createComponents = __webpack_require__(4);
+	var createPlayerComponent = __webpack_require__(5);
+	
+	module.exports = function (Crafty, model) {
+	  Crafty.init(500, 500);
+	
+	  if (model.receiver === 'CLIENT') {
+	    Crafty.background('#000000');
+	  }
+	
+	  createComponents(Crafty, model);
+	  createPlayerComponent(Crafty, model);
+	};
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
 	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	var Constants = __webpack_require__(2);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
 	/* globals Crafty */
 	
-	exports.default = function () {
+	module.exports = function (Crafty, model) {
 	  Crafty.c('Tile', {
 	    init: function init() {
 	      this.attr({
-	        w: _constants.mapGrid.PLAYER_WIDTH,
-	        h: _constants.mapGrid.PLAYER_HEIGHT
+	        w: mapGrid.PLAYER_WIDTH,
+	        h: mapGrid.PLAYER_HEIGHT
 	      });
 	    },
 	
 	    at: function at(row, col) {
-	      var x = row * _constants.mapGrid.TILE_WIDTH + _constants.mapGrid.WALL_THICKNESS;
-	      var y = col * _constants.mapGrid.TILE_HEIGHT + _constants.mapGrid.WALL_THICKNESS;
+	      var x = row * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
+	      var y = col * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
 	      this.attr({ x: x, y: y });
 	      return this;
 	    }
@@ -211,22 +223,28 @@
 	
 	  Crafty.c('Wall', {
 	    init: function init() {
-	      this.requires('2D, Canvas, Color, Solid, Collision');
+	      model.wallInit.bind(this)();
 	    },
 	
 	    wallDir: function wallDir(_wallDir) {
-	      if (_wallDir === _constants.wallDirection.HORIZONTAL) {
-	        this.attr({
-	          w: _constants.mapGrid.TILE_WIDTH,
-	          h: _constants.mapGrid.WALL_THICKNESS
-	        }).color('#FFFFFF');
-	      } else if (_wallDir === _constants.wallDirection.VERTICAL) {
-	        this.attr({
-	          w: _constants.mapGrid.WALL_THICKNESS,
-	          h: _constants.mapGrid.TILE_HEIGHT
-	        }).color('#FFFFFF');
+	      var wall = this;
+	      if (_wallDir === wallDirection.HORIZONTAL) {
+	        wall.attr({
+	          w: mapGrid.TILE_WIDTH,
+	          h: mapGrid.WALL_THICKNESS
+	        });
+	      } else if (_wallDir === wallDirection.VERTICAL) {
+	        wall.attr({
+	          w: mapGrid.WALL_THICKNESS,
+	          h: mapGrid.TILE_HEIGHT
+	        });
 	      }
-	      return this;
+	
+	      if (model.receiver === 'CLIENT') {
+	        wall.color('#FFFFFF');
+	      }
+	
+	      return wall;
 	    },
 	
 	    atWall: function atWall(row, col, offset) {
@@ -235,72 +253,38 @@
 	      var offSetX = _offset[0];
 	      var offsetY = _offset[1];
 	
-	      var x = row * _constants.mapGrid.TILE_WIDTH + offSetX * (_constants.mapGrid.TILE_WIDTH - _constants.mapGrid.WALL_THICKNESS);
-	      var y = col * _constants.mapGrid.TILE_HEIGHT + offsetY * (_constants.mapGrid.TILE_HEIGHT - _constants.mapGrid.WALL_THICKNESS);
+	      var x = row * mapGrid.TILE_WIDTH + offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS);
+	      var y = col * mapGrid.TILE_HEIGHT + offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS);
 	      this.attr({ x: x, y: y });
 	      return this;
 	    }
 	  });
 	};
-	
-	var _constants = __webpack_require__(2);
 
 /***/ },
-/* 8 */
+/* 5 */
 /***/ function(module, exports) {
 
 	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
+	/* globals Crafty */
 	
-	exports.default = function () {
+	module.exports = function (Crafty, model) {
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('Actor, Fourway, Color, Collision').moveInDirections(2).stopOnSolids();
+	      this.requires('Actor, Color, Collision').moveInDirections(2);
 	    },
 	
-	    playerColor: function playerColor(color) {
-	      this.color(color);
-	      return this;
-	    },
+	    // playerColor: function(color) {
+	    //   this.color(color);
+	    //   return this;
+	    // },
 	
 	    moveInDirections: function moveInDirections(speed) {
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	      this.charSpeed = speed;
 	
-	      this.bind('EnterFrame', function () {
-	        if (this.charMove.right) {
-	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	        } else if (this.charMove.left) {
-	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	        } else if (this.charMove.up) {
-	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	        } else if (this.charMove.down) {
-	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	        }
-	      });
-	
-	      this.bind('KeyDown', function (e) {
-	        this.charMove.left = false;
-	        this.charMove.right = false;
-	        this.charMove.down = false;
-	        this.charMove.up = false;
-	
-	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
-	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
-	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
-	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
-	      });
-	
-	      this.bind('KeyUp', function (e) {
-	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
-	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
-	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
-	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
-	      });
-	
+	      model.playerMoveInDirections.bind(this, speed)();
 	      return this;
 	    },
 	
@@ -326,50 +310,104 @@
 	      this.charMove.up = false;
 	    },
 	
-	    setUpSocket: function setUpSocket(socket, playerId) {
+	    setUp: function setUp(playerId, playerColor) {
+	      this.playerId = playerId;
+	      if (playerColor) {
+	        this.color(playerColor);
+	      }
+	
+	      return this;
+	    },
+	
+	    setUpSocket: function setUpSocket(socket) {
 	      var _this = this;
 	
 	      this.socket = socket;
-	      this.playerId = playerId;
 	      this.socket.on('updatePos', function (data) {
-	        console.log('got hereeee updating pos ');
-	        if (data.charMove.right) {
-	          _this.x += _this.charSpeed;
-	        } else if (data.charMove.left) {
-	          _this.x -= _this.charSpeed;
-	        } else if (data.charMove.up) {
-	          _this.y -= _this.charSpeed;
-	        } else if (data.charMove.down) {
-	          _this.y += _this.charSpeed;
-	        }
+	        _this.x = data.x;
+	        _this.y = data.y;
 	      });
+	
+	      return this;
+	    }
+	  });
+	
+	  Crafty.c('otherPlayer', {
+	    init: function init() {
+	      this.requires('Actor, Color');
+	    },
+	
+	    setUp: function setUp(playerId, playerColor) {
+	      this.playerId = playerId;
+	
+	      if (playerColor) {
+	        this.color(playerColor);
+	      }
+	
+	      return this;
 	    }
 	  });
 	};
 
 /***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var ClientModel = {
+	  receiver: 'CLIENT',
+	  wallInit: function wallInit() {
+	    this.requires('2D, Canvas, Solid, Color, Collision');
+	  },
+	  playerMoveInDirections: function playerMoveInDirections(speed) {
+	    this.bind('EnterFrame', function () {
+	      if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
+	        this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
+	      }
+	    });
+	
+	    this.bind('KeyDown', function (e) {
+	      this.charMove.left = false;
+	      this.charMove.right = false;
+	      this.charMove.down = false;
+	      this.charMove.up = false;
+	
+	      if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
+	      if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
+	      if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
+	      if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
+	    });
+	
+	    this.bind('KeyUp', function (e) {
+	      if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
+	      if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
+	      if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
+	      if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
+	    });
+	  }
+	};
+	
+	module.exports = ClientModel;
+
+/***/ },
+/* 7 */,
+/* 8 */,
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _constants = __webpack_require__(2);
-	
-	var _tile = __webpack_require__(10);
-	
-	var _tile2 = _interopRequireDefault(_tile);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Constants = __webpack_require__(2);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
+	var Tile = __webpack_require__(10);
 	
 	var DIRECTION = {
 	  left: 'left',
@@ -386,11 +424,12 @@
 	};
 	
 	var Board = function () {
-	  function Board(n, m) {
+	  function Board(n, m, seedRandomStr) {
 	    _classCallCheck(this, Board);
 	
 	    this.numCols = n;
 	    this.numRows = m;
+	    Math.seedrandom(seedRandomStr);
 	    this.grid = this.createGrid();
 	    this.frontier = [];
 	    this.createMaze();
@@ -403,7 +442,7 @@
 	      for (var i = 0; i < grid.length; i++) {
 	        grid[i] = new Array(this.numCols);
 	        for (var j = 0; j < this.numCols; j++) {
-	          grid[i][j] = new _tile2.default(i, j);
+	          grid[i][j] = new Tile(i, j);
 	        }
 	      }
 	      return grid;
@@ -508,7 +547,7 @@
 	  return Board;
 	}();
 	
-	exports.default = Board;
+	module.exports = Board;
 
 /***/ },
 /* 10 */
@@ -516,16 +555,13 @@
 
 	'use strict';
 	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _constants = __webpack_require__(2);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	var Constants = __webpack_require__(2);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
 	/* globals Crafty */
 	
 	var Tile = function () {
@@ -546,18 +582,18 @@
 	
 	  _createClass(Tile, [{
 	    key: 'drawWalls',
-	    value: function drawWalls() {
+	    value: function drawWalls(Crafty) {
 	      if (this.walls.left) {
-	        Crafty.e('Wall').wallDir(_constants.wallDirection.VERTICAL).atWall(this.x, this.y, [0, 0]);
+	        Crafty.e('Wall').wallDir(wallDirection.VERTICAL).atWall(this.x, this.y, [0, 0]);
 	      }
 	      if (this.walls.right) {
-	        Crafty.e('Wall').wallDir(_constants.wallDirection.VERTICAL).atWall(this.x, this.y, [1, 0]);
+	        Crafty.e('Wall').wallDir(wallDirection.VERTICAL).atWall(this.x, this.y, [1, 0]);
 	      }
 	      if (this.walls.top) {
-	        Crafty.e('Wall').wallDir(_constants.wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 0]);
+	        Crafty.e('Wall').wallDir(wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 0]);
 	      }
 	      if (this.walls.bottom) {
-	        Crafty.e('Wall').wallDir(_constants.wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 1]);
+	        Crafty.e('Wall').wallDir(wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 1]);
 	      }
 	    }
 	  }]);
@@ -565,7 +601,7 @@
 	  return Tile;
 	}();
 	
-	exports.default = Tile;
+	module.exports = Tile;
 
 /***/ }
 /******/ ]);
