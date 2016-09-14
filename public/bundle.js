@@ -271,29 +271,14 @@
 	      this.charSpeed = speed;
 	
 	      this.bind('EnterFrame', function () {
-	        var _this = this;
-	
 	        if (this.charMove.right) {
 	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	          this.socket.on('updatePos', function (data) {
-	            _this.x += _this.charSpeed;
-	          });
 	        } else if (this.charMove.left) {
 	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	          this.socket.on('updatePos', function (data) {
-	            _this.x -= _this.charSpeed;
-	          });
 	        } else if (this.charMove.up) {
 	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	          this.socket.on('updatePos', function (data) {
-	            _this.y -= _this.charSpeed;
-	          });
 	        } else if (this.charMove.down) {
 	          this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	          this.socket.on('updatePos', function (data) {
-	            console.log(_this);
-	            _this.y += _this.charSpeed;
-	          });
 	        }
 	      });
 	
@@ -342,8 +327,22 @@
 	    },
 	
 	    setUpSocket: function setUpSocket(socket, playerId) {
+	      var _this = this;
+	
 	      this.socket = socket;
 	      this.playerId = playerId;
+	      this.socket.on('updatePos', function (data) {
+	        console.log('got hereeee updating pos ');
+	        if (data.charMove.right) {
+	          _this.x += _this.charSpeed;
+	        } else if (data.charMove.left) {
+	          _this.x -= _this.charSpeed;
+	        } else if (data.charMove.up) {
+	          _this.y -= _this.charSpeed;
+	        } else if (data.charMove.down) {
+	          _this.y += _this.charSpeed;
+	        }
+	      });
 	    }
 	  });
 	};
