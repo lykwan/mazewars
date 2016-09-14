@@ -1,16 +1,18 @@
-import { mapGrid, wallDirection } from './constants.js';
+import createCanvas from './components/canvas.js';
 import createComponents from './components/entities.js';
 import createPlayerComponent from './components/player.js';
-import Board from './components/board.js';
+import ClientModel from './model/client_model.js';
+import Board from './board.js';
+const Constants = require('./constants.js');
+const mapGrid = Constants.mapGrid;
+const wallDirection = Constants.wallDirection;
+
 const socket = io();
 /* globals Crafty */
-/* globals mapGrid */
-/* globals wallDirection */
 /* globals io */
 
 class Game {
   constructor() {
-    this.board = new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS);
   }
 
   width() {
@@ -22,29 +24,23 @@ class Game {
   }
 
   start() {
-    Crafty.init(this.width(), this.height());
-    Crafty.background('#000000');
+    createCanvas(Crafty, ClientModel);
+    socket.on('connected', data => {
+        let player = Crafty.e('Player')
+                           .color('blue')
+                           .at(0, 0)
+                           .setUp(data.playerId, data.playerColor)
+                           .setUpSocket(socket, data.playerId);
+      this.board =
+        new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
 
-    createComponents();
-    createPlayerComponent();
-
-    for (let i = 0; i < mapGrid.NUM_COLS; i++) {
-      for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
-        this.board.grid[i][j].drawWalls();
+      for (let i = 0; i < mapGrid.NUM_COLS; i++) {
+        for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
+          this.board.grid[i][j].drawWalls(Crafty);
+        }
       }
-    }
-
-    // player.trigger("ChangeColor", {color:"yellow"});
-
-    this.connectedWithSocket();
-  }
-
-  connectedWithSocket() {
-    socket.on('connected', function (data) {
-      var player = Crafty.e('Player').color('blue').at(0, 0).setUpSocket(socket, data.playerId);
     });
   }
-
 }
 
 export default Game;

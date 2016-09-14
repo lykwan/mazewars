@@ -1,7 +1,9 @@
-import { mapGrid, wallDirection } from '../constants.js';
+const Constants = require('../constants.js');
+const mapGrid = Constants.mapGrid;
+const wallDirection = Constants.wallDirection;
 /* globals Crafty */
 
-export default function() {
+module.exports = function(Crafty, model) {
   Crafty.c('Tile', {
     init: function() {
       this.attr({
@@ -18,6 +20,7 @@ export default function() {
     }
   });
 
+
   Crafty.c('Actor', {
     init: function() {
       this.requires('2D, Canvas, Tile');
@@ -27,22 +30,28 @@ export default function() {
 
   Crafty.c('Wall', {
     init: function() {
-      this.requires('2D, Canvas, Color, Solid, Collision');
+      model.wallInit.bind(this)();
     },
 
     wallDir: function(wallDir) {
+      let wall = this;
       if (wallDir === wallDirection.HORIZONTAL) {
-        this.attr({
+        wall.attr({
              w: mapGrid.TILE_WIDTH,
              h: mapGrid.WALL_THICKNESS
-          }).color('#FFFFFF');
+           });
       } else if (wallDir === wallDirection.VERTICAL) {
-        this.attr({
+        wall.attr({
              w: mapGrid.WALL_THICKNESS,
              h: mapGrid.TILE_HEIGHT
-          }).color('#FFFFFF');
+           });
       }
-      return this;
+
+      if (model.receiver === 'CLIENT') {
+        wall.color('#FFFFFF');
+      }
+
+      return wall;
     },
 
     atWall: function(row, col, offset) {
@@ -55,4 +64,4 @@ export default function() {
       return this;
     }
   });
-}
+};
