@@ -14,6 +14,7 @@ const socket = io();
 class Game {
   constructor() {
     this.players = {};
+    this.weapons = {};
   }
 
   width() {
@@ -26,20 +27,28 @@ class Game {
 
   start() {
     createCanvas(Crafty, ClientModel);
+    Crafty.background('#000000');
 
     this.setUpConnection();
     this.setUpPlayersMove();
     this.setUpAddNewPlayer();
-    this.setUpAddWeapon();
+    this.setUpPlacingWeapons();
+    this.setUpCreateDamage();
   }
 
   setUpConnection() {
     var colors = ['blue', 'red', 'yellow', 'green'];
     socket.on('connected', data => {
+      let weaponDisplay = Crafty.e('WeaponDisplay')
+                                .attr({ x: 600, y: 300 })
+                                .createText(' ');
+      console.log(weaponDisplay);
+      let weaponDisplayId = weaponDisplay[0];
       let player = Crafty.e('Player')
                          .at(0, 0)
-                         .setUp(data.selfId, data.playerColor)
-                         .setUpSocket(socket, data.playerId);
+                         .setUp(data.selfId, data.playerColor, weaponDisplayId)
+                         .setUpSocket(socket, data.playerId)
+                         .bindingKeyEvents();
 
       data.playerIds.forEach(id => {
         let otherPlayer = Crafty.e('OtherPlayer')
@@ -57,6 +66,7 @@ class Game {
           this.board.grid[i][j].drawWalls(Crafty);
         }
       }
+
     });
   }
 
@@ -80,12 +90,24 @@ class Game {
     });
   }
 
-  setUpAddWeapon() {
+  setUpPlacingWeapons() {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
                            .at(data.x, data.y)
-                           .type(data.type)
+                           .setUp(data.weaponId, data.type)
                            .color(data.color);
+      this.weapons[data.weaponId] = weapon;
+    });
+
+    socket.on('destroyWeapon', data => {
+      const weapon = this.weapons[data.weaponId];
+      weapon.destroy();
+    });
+  }
+
+  setUpCreateDamage() {
+    socket.on('createDamage', data => {
+      console.log(data);
     });
   }
 }

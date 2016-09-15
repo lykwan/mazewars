@@ -6,13 +6,16 @@ module.exports = function(Crafty) {
       this.requires('Actor, Color, Collision');
     },
 
-    selfDestroy: function() {
-      this.destroy();
-    },
-
-    type: function(type) {
+    setUp: function(weaponId, type) {
+      this.weaponId = weaponId;
       this.type = type;
       return this;
+    }
+  });
+
+  Crafty.c('Damage', {
+    init: function() {
+      this.requires('Actor, Color, Collision');
     }
   });
 };

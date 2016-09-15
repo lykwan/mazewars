@@ -108,6 +108,7 @@
 	    _classCallCheck(this, Game);
 	
 	    this.players = {};
+	    this.weapons = {};
 	  }
 	
 	  _createClass(Game, [{
@@ -124,11 +125,13 @@
 	    key: 'start',
 	    value: function start() {
 	      (0, _canvas2.default)(Crafty, _client_model2.default);
+	      Crafty.background('#000000');
 	
 	      this.setUpConnection();
 	      this.setUpPlayersMove();
 	      this.setUpAddNewPlayer();
-	      this.setUpAddWeapon();
+	      this.setUpPlacingWeapons();
+	      this.setUpCreateDamage();
 	    }
 	  }, {
 	    key: 'setUpConnection',
@@ -137,7 +140,10 @@
 	
 	      var colors = ['blue', 'red', 'yellow', 'green'];
 	      socket.on('connected', function (data) {
-	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor).setUpSocket(socket, data.playerId);
+	        var weaponDisplay = Crafty.e('WeaponDisplay').attr({ x: 600, y: 300 }).createText(' ');
+	        console.log(weaponDisplay);
+	        var weaponDisplayId = weaponDisplay[0];
+	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor, weaponDisplayId).setUpSocket(socket, data.playerId).bindingKeyEvents();
 	
 	        data.playerIds.forEach(function (id) {
 	          var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(id, colors[id]);
@@ -179,10 +185,25 @@
 	      });
 	    }
 	  }, {
-	    key: 'setUpAddWeapon',
-	    value: function setUpAddWeapon() {
+	    key: 'setUpPlacingWeapons',
+	    value: function setUpPlacingWeapons() {
+	      var _this4 = this;
+	
 	      socket.on('addWeapon', function (data) {
-	        var weapon = Crafty.e('Weapon').at(data.x, data.y).type(data.type).color(data.color);
+	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.weaponId, data.type).color(data.color);
+	        _this4.weapons[data.weaponId] = weapon;
+	      });
+	
+	      socket.on('destroyWeapon', function (data) {
+	        var weapon = _this4.weapons[data.weaponId];
+	        weapon.destroy();
+	      });
+	    }
+	  }, {
+	    key: 'setUpCreateDamage',
+	    value: function setUpCreateDamage() {
+	      socket.on('createDamage', function (data) {
+	        console.log(data);
 	      });
 	    }
 	  }]);
@@ -233,17 +254,15 @@
 	var createComponents = __webpack_require__(4);
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(11);
+	var createSideBarComponent = __webpack_require__(12);
 	
 	module.exports = function (Crafty, model) {
 	  Crafty.init(700, 500);
 	
-	  if (model.receiver === 'CLIENT') {
-	    Crafty.background('#000000');
-	  }
-	
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
 	  createWeaponComponent(Crafty);
+	  createSideBarComponent(Crafty);
 	};
 
 /***/ },
@@ -324,40 +343,107 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals Crafty */
+	var Constants = __webpack_require__(2);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
 	
 	module.exports = function (Crafty, model) {
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('Actor, Color, Collision').moveInDirections(2);
+	      this.requires('Actor, Color, Collision, Text');
+	      this.charSpeed = 2;
 	    },
 	
-	    moveInDirections: function moveInDirections(speed) {
+	    bindingKeyEvents: function bindingKeyEvents() {
 	      this.charMove = { left: false, right: false, up: false, down: false };
-	      this.charSpeed = speed;
 	
-	      model.playerMoveInDirections.bind(this, speed)();
+	      this.bind('EnterFrame', function () {
+	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
+	          this.socket.emit('updatePos', {
+	            playerId: this.playerId,
+	            charMove: this.charMove
+	          });
+	        }
+	      });
+	
+	      this.bind('KeyDown', function (e) {
+	        this.charMove.left = false;
+	        this.charMove.right = false;
+	        this.charMove.down = false;
+	        this.charMove.up = false;
+	
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
+	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
+	
+	        if (e.keyCode === Crafty.keys.Z) {
+	          this.pickUpWeapon();
+	        }
+	
+	        if (e.keyCode === Crafty.keys.X) {
+	          this.shootWeapon();
+	        }
+	      });
+	
+	      this.bind('KeyUp', function (e) {
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
+	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
+	      });
+	
 	      return this;
 	    },
 	
 	
-	    setUp: function setUp(playerId, playerColor) {
+	    setUp: function setUp(playerId, playerColor, weapons) {
 	      this.playerId = playerId;
 	      if (playerColor) {
 	        this.color(playerColor);
 	      }
+	      this.existingWeapons = weapons;
 	      return this;
 	    },
 	
 	    setUpSocket: function setUpSocket(socket) {
 	      this.socket = socket;
 	      return this;
-	    }
+	    },
 	
+	    pickUpWeapon: function pickUpWeapon() {
+	      var _this = this;
+	
+	      this.socket.emit('pickUpWeapon', {
+	        playerId: this.playerId
+	      });
+	
+	      this.socket.on('pickUpWeapon', function (data) {
+	        _this.weaponType = data.type;
+	        _this.color('white');
+	        // const weaponDisplay = Crafty(this.weaponDisplayId);
+	        // weaponDisplay.createText(this.weaponType);
+	      });
+	    },
+	
+	    shootWeapon: function shootWeapon() {
+	      this.socket.emit('shootWeapon', {
+	        playerId: this.playerId
+	      });
+	    },
+	
+	    getCol: function getCol() {
+	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+	    },
+	
+	    getRow: function getRow() {
+	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
+	    }
 	  });
 	
 	  Crafty.c('OtherPlayer', {
@@ -365,11 +451,15 @@
 	      this.requires('Actor, Color');
 	    },
 	
-	    setUp: function setUp(playerId, playerColor) {
+	    setUp: function setUp(playerId, playerColor, weaponDisplayId) {
 	      this.playerId = playerId;
 	
 	      if (playerColor) {
 	        this.color(playerColor);
+	      }
+	
+	      if (weaponDisplayId) {
+	        this.weaponDisplayId = weaponDisplayId;
 	      }
 	
 	      return this;
@@ -388,32 +478,7 @@
 	  wallInit: function wallInit() {
 	    this.requires('2D, Canvas, Solid, Color, Collision');
 	  },
-	  playerMoveInDirections: function playerMoveInDirections(speed) {
-	    this.bind('EnterFrame', function () {
-	      if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
-	        this.socket.emit('updatePos', { playerId: this.playerId, charMove: this.charMove });
-	      }
-	    });
-	
-	    this.bind('KeyDown', function (e) {
-	      this.charMove.left = false;
-	      this.charMove.right = false;
-	      this.charMove.down = false;
-	      this.charMove.up = false;
-	
-	      if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
-	      if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
-	      if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
-	      if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
-	    });
-	
-	    this.bind('KeyUp', function (e) {
-	      if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
-	      if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
-	      if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
-	      if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
-	    });
-	  }
+	  playerMoveInDirections: function playerMoveInDirections(speed) {}
 	};
 	
 	module.exports = ClientModel;
@@ -645,12 +710,49 @@
 	      this.requires('Actor, Color, Collision');
 	    },
 	
-	    selfDestroy: function selfDestroy() {
-	      this.destroy();
+	    setUp: function setUp(weaponId, type) {
+	      this.weaponId = weaponId;
+	      this.type = type;
+	      return this;
+	    }
+	  });
+	
+	  Crafty.c('Damage', {
+	    init: function init() {
+	      this.requires('Actor, Color, Collision');
+	    }
+	  });
+	};
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('PlayerScore', {
+	    init: function init() {
+	      this.requires('2D, DOM, Text');
+	    }
+	  });
+	
+	  Crafty.c('PlayerIcon', {
+	    init: function init() {
+	      this.requires('Actor, Color');
+	    }
+	  });
+	
+	  Crafty.c('WeaponDisplay', {
+	    init: function init() {
+	      this.requires('2D, DOM, Text, Color');
+	      this.color('white');
 	    },
 	
-	    type: function type(_type) {
-	      this.type = _type;
+	    createText: function createText(type) {
+	      this.text('Weapon: ' + type);
 	      return this;
 	    }
 	  });

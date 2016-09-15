@@ -24,14 +24,17 @@ var colors = ['blue', 'red', 'yellow', 'green'];
 
 var gameState = {
   playerId: 0,
+  weaponId: 0,
   players: {},
   weapons: {},
-  seedRandomStr: "random Str",
+  seedRandomStr: "random Strrrrr",
   board: null
 };
 
 var constants = {
-  WEAPON_COLOR: 'orange'
+  WEAPON_COLOR: 'orange',
+  WEAPON_RANGE: 10,
+  DAMAGE_COLOR: 'purple'
 };
 
 io.on('connection', function(socket) {
@@ -41,6 +44,8 @@ io.on('connection', function(socket) {
                              playerColor: colors[gameState.playerId],
                              playerIds: Object.keys(gameState.players)
                            });
+
+  socket.join(gameState.playerId);
 
   drawBoard();
   setUpAddNewPlayer(socket);
@@ -55,6 +60,8 @@ io.on('connection', function(socket) {
 
   setUpDisconnect(socket);
   setUpUpdatePos(socket);
+  setUpPickUpWeapon(socket);
+  setUpShootWeapon(socket);
   addWeapon(socket);
 });
 
@@ -73,6 +80,7 @@ function drawBoard() {
 function setUpDisconnect(socket) {
   socket.on('disconnect', function() {
     console.log('user disconnected');
+
   });
 }
 
@@ -117,8 +125,8 @@ function setUpAddNewPlayer(socket) {
 
 function addWeapon(socket) {
   setInterval(function() {
-    let col = 2;
-    let row = 6;
+    let col = Math.floor(Math.random() * mapGrid.NUM_COLS);
+    let row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
     while (gameState.weapons[[col, row]]) {
       col = Math.floor(Math.random() * mapGrid.NUM_COLS);
       row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
@@ -127,15 +135,100 @@ function addWeapon(socket) {
     const type = weaponTypes.BFS;
     const weapon = Crafty.e('Weapon')
                          .at(col, row)
-                         .type(type);
-    gameState.weapons[[col, row]] = weapon;
+                         .setUp(gameState.weaponId, type);
+    gameState.weapons[gameState.weaponId] = weapon;
+
     io.emit('addWeapon', {
       x: col,
       y: row,
       type: type,
-      color: constants.WEAPON_COLOR
+      color: constants.WEAPON_COLOR,
+      weaponId: gameState.weaponId
     });
+
+    gameState.weaponId++;
   }, 5000);
+}
+
+function setUpPickUpWeapon(socket) {
+  socket.on('pickUpWeapon', data => {
+    const player = gameState.players[data.playerId];
+    const collidedWeapons = player.hit('Weapon');
+    if (collidedWeapons) {
+      const weapon = collidedWeapons[0].obj;
+      const weaponId = weapon.weaponId;
+      player.weaponType = weapon.type;
+      io.to(data.playerId).emit('pickUpWeapon', {
+        type: weapon.type
+      });
+
+      weapon.destroy();
+      delete gameState.weapons[weaponId];
+      io.emit('destroyWeapon', {
+        weaponId: weaponId
+      });
+    }
+  });
+}
+
+function setUpShootWeapon(socket) {
+  socket.on('shootWeapon', data => {
+    const player = gameState.players[data.playerId];
+    let damageCells = [];
+    if (player.weaponType === weaponTypes.BFS) {
+      damageCells = shootBFSWeapon(player);
+    }
+
+    io.emit('createDamage', {
+      damageCells: damageCells
+    });
+  });
+}
+
+function shootBFSWeapon(player) {
+  let damageCells = [];
+  let initCol = player.getCol();
+  let initRow = player.getRow();
+  let remainingDistance = constants.WEAPON_RANGE;
+  let tileQueue = [[initCol, initRow]];
+  while (remainingDistance >= 0) {
+    let [col, row] = tileQueue.shift();
+    damageCells.push([col, row]);
+    let tile = gameState.board.grid[col][row];
+    if (!tile.walls.left) {
+      const damageCell = [col - 1, row];
+      if (!hasCell(damageCells, damageCell)) {
+        tileQueue.push([col - 1, row]);
+      }
+    }
+    if (!tile.walls.top) {
+      const damageCell = [col, row - 1];
+      if (!hasCell(damageCells, damageCell)) {
+        tileQueue.push([col, row - 1]);
+      }
+    }
+    if (!tile.walls.right) {
+      const damageCell = [col + 1, row];
+      if (!hasCell(damageCells, damageCell)) {
+        tileQueue.push([col + 1, row]);
+      }
+    }
+    if (!tile.walls.bottom) {
+      const damageCell = [col, row + 1];
+      if (!hasCell(damageCells, damageCell)) {
+        tileQueue.push([col, row + 1]);
+      }
+    }
+    remainingDistance--;
+  }
+
+  return damageCells;
+}
+
+function hasCell(damageCells, damageCell) {
+  return damageCells.some(cell => {
+    return cell[0] === damageCell[0] && cell[1] === damageCell[1];
+  });
 }
 
 server.listen(3000, function () {
