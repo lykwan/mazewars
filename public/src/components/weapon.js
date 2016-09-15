@@ -16,6 +16,16 @@ module.exports = function(Crafty) {
   Crafty.c('Damage', {
     init: function() {
       this.requires('Actor, Color, Collision');
+    },
+
+    setUpCreator(playerId) {
+      this.creatorId = playerId;
+      return this;
+    },
+
+    disappearAfter() {
+      setTimeout(() => this.destroy(), 500);
+      return this;
     }
   });
 };

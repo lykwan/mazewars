@@ -53,12 +53,11 @@ module.exports = function(Crafty, model) {
       return this;
     },
 
-    setUp: function(playerId, playerColor, weapons) {
+    setUp: function(playerId, playerColor) {
       this.playerId = playerId;
       if (playerColor) {
         this.color(playerColor);
       }
-      this.existingWeapons = weapons;
       return this;
     },
 
