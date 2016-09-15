@@ -205,9 +205,7 @@
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
 	      socket.on('createDamage', function (data) {
-	        data.damageCells.forEach(function (cell) {
-	          Crafty.e('Damage').at(cell[0], cell[1]).setUpCreator(data.creatorId).disappearAfter().color('#7ec0ee', 0.5);
-	        });
+	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).setUpCreator(data.creatorId).disappearAfter().color('#7ec0ee', 0.5);
 	      });
 	    }
 	  }, {
@@ -216,9 +214,9 @@
 	      var _this5 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        console.log('changing hp');
 	        var player = _this5.players[data.playerId];
 	        if (player) {
+	          console.log('got here killing someone!!');
 	          player.HP = data.playerHP;
 	        }
 	      });

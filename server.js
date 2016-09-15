@@ -22,7 +22,7 @@ createCanvas(Crafty, ServerModel);
 
 var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
 
-var gameState = {
+let gameState = {
   playerId: 0,
   weaponId: 0,
   players: {},
@@ -31,10 +31,14 @@ var gameState = {
   board: null
 };
 
-var constants = {
+const constants = {
   WEAPON_COLOR: 'orange',
   WEAPON_RANGE: 10,
-  DAMAGE_COLOR: 'purple'
+  DAMAGE_COLOR: 'purple',
+  BUFFER_DAMAGE_TIME: 400,
+  WEAPON_SPAWN_TIME: 5000,
+  DAMAGE_ANIMATION_TIME: 100,
+  HP_DAMAGE: 10
 };
 
 io.on('connection', function(socket) {
@@ -147,7 +151,7 @@ function addWeapon(socket) {
     });
 
     gameState.weaponId++;
-  }, 5000);
+  }, constants.WEAPON_SPAWN_TIME);
 }
 
 function setUpPickUpWeapon(socket) {
@@ -179,20 +183,29 @@ function setUpShootWeapon(socket) {
       damageCells = shootBFSWeapon(player);
     }
 
-    for (let i = 0; i < damageCells.length; i++) {
+    let idx = 0;
+    let intervalId = setInterval(() => {
       const damage = Crafty.e('Damage')
-            .at(damageCells[i][0], damageCells[i][1])
+            .at(damageCells[idx][0], damageCells[idx][1])
             .setUpCreator(data.playerId)
             .disappearAfter();
 
       damage.onHit('Player', lowerHP.bind(null, damage));
-    }
 
-    io.emit('createDamage', {
-      damageCells: damageCells,
-      creatorId: data.playerId,
-      color: Constants.DAMAGE_COLOR
-    });
+      io.emit('createDamage', {
+        damageCell: damageCells[idx],
+        creatorId: data.playerId,
+        color: Constants.DAMAGE_COLOR
+      });
+
+      idx++;
+
+      if (idx === damageCells.length) {
+        clearInterval(intervalId);
+      }
+
+    }, constants.DAMAGE_ANIMATION_TIME);
+
   });
 }
 
@@ -242,15 +255,36 @@ function hasCell(damageCells, damageCell) {
   });
 }
 
+// function checkDamage(creatorId) {
+//   console.log('creat', creatorId);
+//   return setInterval(() => {
+//     Object.keys(gameState.players).forEach(playerId => {
+//       const player = gameState.players[playerId];
+//       console.log(player.hit('Damage'));
+//       if (player.hit('Damage') &&
+//          (parseInt(playerId, 10) !== parseInt(creatorId, 10))) {
+//         player.HP -= 10;
+//         console.log('killing someone on server')
+//         io.emit('HPChange', {
+//           playerId: player.playerId,
+//           playerHP: player.HP
+//         });
+//       }
+//     });
+//   }, 100);
+// }
+
 function lowerHP(damageEntity) {
   const hitPlayers = damageEntity.hit('Player');
   if (hitPlayers) {
-    hitPlayers.forEach(player => {
-      if (!player.hasTakenDamage) {
-        player.HP -= 20;
-        playerBufferTakingDamage(player);
+    hitPlayers.forEach(playerObj => {
+      const player = playerObj.obj;
+      if (!player.hasTakenDamage &&
+        parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
+        player.HP -= constants.HP_DAMAGE;
+        bufferDamageTime(player);
         io.emit('HPChange', {
-          playerId: player.id,
+          playerId: player.playerId,
           playerHP: player.HP
         });
       }
@@ -258,11 +292,11 @@ function lowerHP(damageEntity) {
   }
 }
 
-function playerBufferTakingDamage(player) {
+function bufferDamageTime(player) {
   player.hasTakenDamage = true;
   setTimeout(() => {
     player.hasTakenDamage = false;
-  }, 500);
+  }, constants.BUFFER_DAMAGE_TIME);
 }
 
 server.listen(3000, function () {
