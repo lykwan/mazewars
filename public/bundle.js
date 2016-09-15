@@ -132,6 +132,7 @@
 	      this.setUpAddNewPlayer();
 	      this.setUpPlacingWeapons();
 	      this.setUpCreateDamage();
+	      this.setUpHPChange();
 	    }
 	  }, {
 	    key: 'setUpConnection',
@@ -207,6 +208,19 @@
 	        data.damageCells.forEach(function (cell) {
 	          Crafty.e('Damage').at(cell[0], cell[1]).setUpCreator(data.creatorId).disappearAfter().color('#7ec0ee', 0.5);
 	        });
+	      });
+	    }
+	  }, {
+	    key: 'setUpHPChange',
+	    value: function setUpHPChange() {
+	      var _this5 = this;
+	
+	      socket.on('HPChange', function (data) {
+	        console.log('changing hp');
+	        var player = _this5.players[data.playerId];
+	        if (player) {
+	          player.HP = data.playerHP;
+	        }
 	      });
 	    }
 	  }]);
@@ -360,6 +374,16 @@
 	    init: function init() {
 	      this.requires('Actor, Color, Collision, Text');
 	      this.charSpeed = 2;
+	      this.HP = 100;
+	      this.hasTakenDamage = false;
+	    },
+	
+	    getCol: function getCol() {
+	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+	    },
+	
+	    getRow: function getRow() {
+	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
 	    },
 	
 	    bindingKeyEvents: function bindingKeyEvents() {
@@ -437,20 +461,13 @@
 	      this.socket.emit('shootWeapon', {
 	        playerId: this.playerId
 	      });
-	    },
-	
-	    getCol: function getCol() {
-	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
-	    },
-	
-	    getRow: function getRow() {
-	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
 	    }
 	  });
 	
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
 	      this.requires('Actor, Color');
+	      this.HP = 100;
 	    },
 	
 	    setUp: function setUp(playerId, playerColor, weaponDisplayId) {
@@ -733,7 +750,7 @@
 	
 	      setTimeout(function () {
 	        return _this.destroy();
-	      }, 500);
+	      }, 400);
 	      return this;
 	    }
 	  });

@@ -34,6 +34,7 @@ class Game {
     this.setUpAddNewPlayer();
     this.setUpPlacingWeapons();
     this.setUpCreateDamage();
+    this.setUpHPChange();
   }
 
   setUpConnection() {
@@ -113,6 +114,16 @@ class Game {
               .disappearAfter()
               .color('#7ec0ee', 0.5);
       });
+    });
+  }
+
+  setUpHPChange() {
+    socket.on('HPChange', data => {
+      console.log('changing hp');
+      const player = this.players[data.playerId];
+      if (player) {
+        player.HP = data.playerHP;
+      }
     });
   }
 }

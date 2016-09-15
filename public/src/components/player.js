@@ -8,6 +8,16 @@ module.exports = function(Crafty, model) {
     init: function() {
       this.requires('Actor, Color, Collision, Text');
       this.charSpeed = 2;
+      this.HP = 100;
+      this.hasTakenDamage = false;
+    },
+
+    getCol: function() {
+      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+    },
+
+    getRow: function() {
+      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
     },
 
     bindingKeyEvents() {
@@ -83,20 +93,13 @@ module.exports = function(Crafty, model) {
       this.socket.emit('shootWeapon', {
         playerId: this.playerId
       });
-    },
-
-    getCol: function() {
-      return Math.floor(this.x / mapGrid.TILE_WIDTH);
-    },
-
-    getRow: function() {
-      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
     }
   });
 
   Crafty.c('OtherPlayer', {
     init: function() {
       this.requires('Actor, Color');
+      this.HP = 100;
     },
 
     setUp: function(playerId, playerColor, weaponDisplayId) {

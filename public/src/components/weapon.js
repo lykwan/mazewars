@@ -24,7 +24,7 @@ module.exports = function(Crafty) {
     },
 
     disappearAfter() {
-      setTimeout(() => this.destroy(), 500);
+      setTimeout(() => this.destroy(), 400);
       return this;
     }
   });
