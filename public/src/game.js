@@ -47,13 +47,22 @@ class Game {
       let player = Crafty.e('Player')
                          .at(0, 0)
                          .setUp(data.selfId, data.playerColor)
-                         .setUpSocket(socket, data.playerId)
+                         .setUpSocket(socket)
                          .bindingKeyEvents();
+
+      $('#scoreboard')
+        .append(`<li class='player-${ data.selfId }'>
+                    ${ player.HP }
+                </li>`);
 
       data.playerIds.forEach(id => {
         let otherPlayer = Crafty.e('OtherPlayer')
                                 .at(0, 0)
                                 .setUp(id, colors[id]);
+        $('#scoreboard')
+          .append(`<li class='player-${ id }'>
+                      ${ otherPlayer.HP }
+                  </li>`);
         this.players[id] = otherPlayer;
       });
 
@@ -76,6 +85,10 @@ class Game {
       let otherPlayer = Crafty.e('OtherPlayer')
                               .at(0, 0)
                               .setUp(data.playerId, colors[data.playerId]);
+      $('#scoreboard')
+        .append(`<li class='player-${ data.playerId }'>
+                    ${ otherPlayer.HP }
+                </li>`);
       this.players[data.playerId] = otherPlayer;
     });
   }
@@ -120,6 +133,7 @@ class Game {
       const player = this.players[data.playerId];
       if (player) {
         player.HP = data.playerHP;
+        $(`.player-${ data.playerId }`).text(player.HP);
       }
     });
   }

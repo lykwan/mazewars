@@ -1,0 +1,16 @@
+#scoreboard {
+  position: relative;
+  left: 600px;
+}
+
+.player-0 {
+  color: blue;
+}
+
+.player-1 {
+  color: red;
+}
+
+body {
+  overflow: hidden;
+}
