@@ -119,7 +119,6 @@ class Game {
     socket.on('HPChange', data => {
       const player = this.players[data.playerId];
       if (player) {
-        console.log('got here killing someone!!');
         player.HP = data.playerHP;
       }
     });

@@ -136,7 +136,7 @@ function addWeapon(socket) {
       row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
     }
 
-    const type = weaponTypes.BFS;
+    const type = weaponTypes.DFS;
     const weapon = Crafty.e('Weapon')
                          .at(col, row)
                          .setUp(gameState.weaponId, type);
@@ -181,6 +181,8 @@ function setUpShootWeapon(socket) {
     let damageCells = [];
     if (player.weaponType === weaponTypes.BFS) {
       damageCells = shootBFSWeapon(player);
+    } else if (player.weaponType === weaponTypes.DFS) {
+      damageCells = shootDFSWeapon(player);
     }
 
     let idx = 0;
@@ -215,7 +217,7 @@ function shootBFSWeapon(player) {
   let initRow = player.getRow();
   let remainingDistance = constants.WEAPON_RANGE;
   let tileQueue = [[initCol, initRow]];
-  while (remainingDistance >= 0) {
+  while (remainingDistance > 0) {
     let [col, row] = tileQueue.shift();
     damageCells.push([col, row]);
     let tile = gameState.board.grid[col][row];
@@ -247,6 +249,53 @@ function shootBFSWeapon(player) {
   }
 
   return damageCells;
+}
+
+function shootDFSWeapon(player) {
+  let damageCells = [];
+  let col = player.getCol();
+  let row = player.getRow();
+  let remainingDistance = constants.WEAPON_RANGE;
+  let tileStack = [];
+  while (remainingDistance > 0) {
+    if (!hasCell(damageCells, [col, row])) {
+      damageCells.push([col, row]);
+    }
+    let tile = gameState.board.grid[col][row];
+    let untouchedPaths =
+      getUntouchedPaths(col, row, damageCells, tile.remainingPaths());
+    if (untouchedPaths.length !== 0) {
+      remainingDistance--;
+      tileStack.push([col, row]);
+      let randomIdx = Math.floor(Math.random() * untouchedPaths.length);
+      let path = untouchedPaths[randomIdx];
+      [col, row] = getNewColRow(col, row, path);
+    } else {
+      [col, row] = tileStack.pop();
+    }
+  }
+
+  return damageCells;
+}
+
+function getNewColRow(col, row, path) {
+  if (path === 'left') {
+    return [col - 1, row];
+  } else if (path === 'top') {
+    return [col, row - 1];
+  } else if (path === 'right') {
+    return [col + 1, row];
+  } else if (path === 'bottom') {
+    return [col, row + 1];
+  }
+}
+
+function getUntouchedPaths(col, row, damageCells, remainingPaths) {
+  let newPos;
+  return remainingPaths.filter((path) => {
+    newPos = getNewColRow(col, row, path);
+    return !hasCell(damageCells, newPos);
+  });
 }
 
 function hasCell(damageCells, damageCell) {
