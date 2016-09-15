@@ -145,10 +145,13 @@
 	        //                           .attr({ x: 600, y: 300 })
 	        //                           .createText(' ');
 	        // let weaponDisplayId = weaponDisplay[0];
-	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor).setUpSocket(socket, data.playerId).bindingKeyEvents();
+	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor).setUpSocket(socket).bindingKeyEvents();
+	
+	        $('#scoreboard').append('<li class=\'player-' + data.selfId + '\'>\n                    ' + player.HP + '\n                </li>');
 	
 	        data.playerIds.forEach(function (id) {
 	          var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(id, colors[id]);
+	          $('#scoreboard').append('<li class=\'player-' + id + '\'>\n                      ' + otherPlayer.HP + '\n                  </li>');
 	          _this.players[id] = otherPlayer;
 	        });
 	
@@ -170,6 +173,7 @@
 	      var colors = ['blue', 'red', 'yellow', 'green'];
 	      socket.on('addNewPlayer', function (data) {
 	        var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(data.playerId, colors[data.playerId]);
+	        $('#scoreboard').append('<li class=\'player-' + data.playerId + '\'>\n                    ' + otherPlayer.HP + '\n                </li>');
 	        _this2.players[data.playerId] = otherPlayer;
 	      });
 	    }
@@ -217,6 +221,7 @@
 	        var player = _this5.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
+	          $('.player-' + data.playerId).text(player.HP);
 	        }
 	      });
 	    }
@@ -239,12 +244,13 @@
 	var createSideBarComponent = __webpack_require__(7);
 	
 	module.exports = function (Crafty, model) {
-	  Crafty.init(700, 500);
+	  Crafty.init(500, 500);
 	
-	  createComponents(Crafty, model);
-	  createPlayerComponent(Crafty, model);
-	  createWeaponComponent(Crafty);
-	  createSideBarComponent(Crafty);
+	  Crafty.scene('Game', function () {
+	    createComponents(Crafty, model);
+	    createPlayerComponent(Crafty, model);
+	    createWeaponComponent(Crafty);
+	  });
 	};
 
 /***/ },

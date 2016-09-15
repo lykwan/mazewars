@@ -4,10 +4,11 @@ var createWeaponComponent = require('./weapon.js');
 var createSideBarComponent = require('./sidebar.js');
 
 module.exports = function(Crafty, model) {
-  Crafty.init(700, 500);
+  Crafty.init(500, 500);
 
-  createComponents(Crafty, model);
-  createPlayerComponent(Crafty, model);
-  createWeaponComponent(Crafty);
-  createSideBarComponent(Crafty);
+  Crafty.scene('Game', () => {
+    createComponents(Crafty, model);
+    createPlayerComponent(Crafty, model);
+    createWeaponComponent(Crafty);
+  });
 };
