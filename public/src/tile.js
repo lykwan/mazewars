@@ -35,6 +35,12 @@ class Tile {
                       .atWall(this.x, this.y, [0, 1]);
     }
   }
+
+  remainingPaths() {
+    return Object.keys(this.walls).filter((wall) => {
+      return !this.walls[wall];
+    });
+  }
 }
 
 module.exports = Tile;

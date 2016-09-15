@@ -71,11 +71,11 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _canvas = __webpack_require__(3);
+	var _canvas = __webpack_require__(2);
 	
 	var _canvas2 = _interopRequireDefault(_canvas);
 	
-	var _entities = __webpack_require__(4);
+	var _entities = __webpack_require__(3);
 	
 	var _entities2 = _interopRequireDefault(_entities);
 	
@@ -83,7 +83,7 @@
 	
 	var _player2 = _interopRequireDefault(_player);
 	
-	var _client_model = __webpack_require__(6);
+	var _client_model = __webpack_require__(8);
 	
 	var _client_model2 = _interopRequireDefault(_client_model);
 	
@@ -95,7 +95,7 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Constants = __webpack_require__(2);
+	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	
@@ -216,7 +216,6 @@
 	      socket.on('HPChange', function (data) {
 	        var player = _this5.players[data.playerId];
 	        if (player) {
-	          console.log('got here killing someone!!');
 	          player.HP = data.playerHP;
 	        }
 	      });
@@ -230,46 +229,14 @@
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	var mapGrid = {
-	  NUM_ROWS: 8,
-	  NUM_COLS: 8,
-	  WALL_THICKNESS: 3,
-	  TILE_WIDTH: 50,
-	  TILE_HEIGHT: 50,
-	  PLAYER_WIDTH: 30,
-	  PLAYER_HEIGHT: 30
-	};
-	
-	var wallDirection = {
-	  HORIZONTAL: 'HORIZONTAL',
-	  VERTICAL: 'VERTICAL'
-	};
-	
-	var weaponTypes = {
-	  BFS: 'BFS',
-	  DSF: 'DFS'
-	};
-	
-	module.exports = {
-	  mapGrid: mapGrid,
-	  wallDirection: wallDirection,
-	  weaponTypes: weaponTypes
-	};
-
-/***/ },
-/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var createComponents = __webpack_require__(4);
+	var createComponents = __webpack_require__(3);
 	var createPlayerComponent = __webpack_require__(5);
-	var createWeaponComponent = __webpack_require__(11);
-	var createSideBarComponent = __webpack_require__(12);
+	var createWeaponComponent = __webpack_require__(6);
+	var createSideBarComponent = __webpack_require__(7);
 	
 	module.exports = function (Crafty, model) {
 	  Crafty.init(700, 500);
@@ -281,14 +248,14 @@
 	};
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
-	var Constants = __webpack_require__(2);
+	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	/* globals Crafty */
@@ -357,13 +324,45 @@
 	};
 
 /***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var mapGrid = {
+	  NUM_ROWS: 8,
+	  NUM_COLS: 8,
+	  WALL_THICKNESS: 3,
+	  TILE_WIDTH: 50,
+	  TILE_HEIGHT: 50,
+	  PLAYER_WIDTH: 30,
+	  PLAYER_HEIGHT: 30
+	};
+	
+	var wallDirection = {
+	  HORIZONTAL: 'HORIZONTAL',
+	  VERTICAL: 'VERTICAL'
+	};
+	
+	var weaponTypes = {
+	  BFS: 'BFS',
+	  DSF: 'DFS'
+	};
+	
+	module.exports = {
+	  mapGrid: mapGrid,
+	  wallDirection: wallDirection,
+	  weaponTypes: weaponTypes
+	};
+
+/***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	/* globals Crafty */
-	var Constants = __webpack_require__(2);
+	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	
@@ -490,6 +489,81 @@
 
 	'use strict';
 	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('Weapon', {
+	    init: function init() {
+	      this.requires('Actor, Color, Collision');
+	    },
+	
+	    setUp: function setUp(weaponId, type) {
+	      this.weaponId = weaponId;
+	      this.type = type;
+	      return this;
+	    }
+	  });
+	
+	  Crafty.c('Damage', {
+	    init: function init() {
+	      this.requires('Actor, Color, Collision');
+	    },
+	
+	    setUpCreator: function setUpCreator(playerId) {
+	      this.creatorId = playerId;
+	      return this;
+	    },
+	    disappearAfter: function disappearAfter() {
+	      var _this = this;
+	
+	      setTimeout(function () {
+	        return _this.destroy();
+	      }, 400);
+	      return this;
+	    }
+	  });
+	};
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('PlayerScore', {
+	    init: function init() {
+	      this.requires('2D, DOM, Text');
+	    }
+	  });
+	
+	  Crafty.c('PlayerIcon', {
+	    init: function init() {
+	      this.requires('Actor, Color');
+	    }
+	  });
+	
+	  Crafty.c('WeaponDisplay', {
+	    init: function init() {
+	      this.requires('2D, DOM, Text, Color');
+	      this.color('white');
+	    },
+	
+	    createText: function createText(type) {
+	      this.text('Weapon: ' + type);
+	      return this;
+	    }
+	  });
+	};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
 	var ClientModel = {
 	  receiver: 'CLIENT',
 	  wallInit: function wallInit() {
@@ -501,8 +575,6 @@
 	module.exports = ClientModel;
 
 /***/ },
-/* 7 */,
-/* 8 */,
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -514,7 +586,7 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Constants = __webpack_require__(2);
+	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	var Tile = __webpack_require__(10);
@@ -669,7 +741,7 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Constants = __webpack_require__(2);
+	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	/* globals Crafty */
@@ -706,87 +778,21 @@
 	        Crafty.e('Wall').wallDir(wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 1]);
 	      }
 	    }
+	  }, {
+	    key: 'remainingPaths',
+	    value: function remainingPaths() {
+	      var _this = this;
+	
+	      return Object.keys(this.walls).filter(function (wall) {
+	        return !_this.walls[wall];
+	      });
+	    }
 	  }]);
 	
 	  return Tile;
 	}();
 	
 	module.exports = Tile;
-
-/***/ },
-/* 11 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	/* globals Crafty */
-	
-	module.exports = function (Crafty) {
-	  Crafty.c('Weapon', {
-	    init: function init() {
-	      this.requires('Actor, Color, Collision');
-	    },
-	
-	    setUp: function setUp(weaponId, type) {
-	      this.weaponId = weaponId;
-	      this.type = type;
-	      return this;
-	    }
-	  });
-	
-	  Crafty.c('Damage', {
-	    init: function init() {
-	      this.requires('Actor, Color, Collision');
-	    },
-	
-	    setUpCreator: function setUpCreator(playerId) {
-	      this.creatorId = playerId;
-	      return this;
-	    },
-	    disappearAfter: function disappearAfter() {
-	      var _this = this;
-	
-	      setTimeout(function () {
-	        return _this.destroy();
-	      }, 400);
-	      return this;
-	    }
-	  });
-	};
-
-/***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	/* globals Crafty */
-	
-	module.exports = function (Crafty) {
-	  Crafty.c('PlayerScore', {
-	    init: function init() {
-	      this.requires('2D, DOM, Text');
-	    }
-	  });
-	
-	  Crafty.c('PlayerIcon', {
-	    init: function init() {
-	      this.requires('Actor, Color');
-	    }
-	  });
-	
-	  Crafty.c('WeaponDisplay', {
-	    init: function init() {
-	      this.requires('2D, DOM, Text, Color');
-	      this.color('white');
-	    },
-	
-	    createText: function createText(type) {
-	      this.text('Weapon: ' + type);
-	      return this;
-	    }
-	  });
-	};
 
 /***/ }
 /******/ ]);
