@@ -13,6 +13,7 @@ const socket = io();
 
 class Game {
   constructor() {
+    this.players = {};
   }
 
   width() {
@@ -25,12 +26,28 @@ class Game {
 
   start() {
     createCanvas(Crafty, ClientModel);
+
+    this.setUpConnection();
+    this.setUpPlayersMove();
+    this.setUpAddPlayer();
+  }
+
+  setUpConnection() {
+    var colors = ['blue', 'red', 'yellow', 'green'];
     socket.on('connected', data => {
-        let player = Crafty.e('Player')
-                           .color('blue')
-                           .at(0, 0)
-                           .setUp(data.playerId, data.playerColor)
-                           .setUpSocket(socket, data.playerId);
+      let player = Crafty.e('Player')
+                         .at(0, 0)
+                         .setUp(data.selfId, data.playerColor)
+                         .setUpSocket(socket, data.playerId);
+
+      data.playerIds.forEach(id => {
+        let otherPlayer = Crafty.e('OtherPlayer')
+                                .at(0, 0)
+                                .setUp(id, colors[id]);
+        this.players[id] = otherPlayer;
+      });
+
+      this.players[data.selfId] = player;
       this.board =
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
 
@@ -38,6 +55,26 @@ class Game {
         for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
           this.board.grid[i][j].drawWalls(Crafty);
         }
+      }
+    });
+  }
+
+  setUpAddPlayer() {
+    var colors = ['blue', 'red', 'yellow', 'green'];
+    socket.on('addNewPlayer', data => {
+      let otherPlayer = Crafty.e('OtherPlayer')
+                              .at(0, 0)
+                              .setUp(data.playerId, colors[data.playerId]);
+      this.players[data.playerId] = otherPlayer;
+    });
+  }
+
+  setUpPlayersMove() {
+    socket.on('updatePos', data => {
+      const player = this.players[data.playerId];
+      if (player) {
+        player.x = data.x;
+        player.y = data.y;
       }
     });
   }

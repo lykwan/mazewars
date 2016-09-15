@@ -28,10 +28,12 @@ var gameState = {
 
 io.on('connection', function(socket) {
   console.log('a user connected');
-  socket.emit('connected', { playerId: gameState.playerId,
+  socket.emit('connected', { selfId: gameState.playerId,
                              seedRandomStr: gameState.seedRandomStr,
-                             playerColor: colors[gameState.playerId]
+                             playerColor: colors[gameState.playerId],
+                             playerIds: Object.keys(gameState.players)
                            });
+
   if (!gameState.board) {
     gameState.board =
       new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, gameState.seedRandomStr);
@@ -40,41 +42,49 @@ io.on('connection', function(socket) {
         gameState.board.grid[i][j].drawWalls(Crafty);
       }
     }
-    console.log(Crafty("*").length);
   }
+  setUpAddNewPlayer(socket);
+
   let player =
     Crafty.e('Player')
           .at(0, 0)
-          .setUp(gameState.playerId)
-          .stopOnSolids();
+          .setUp(gameState.playerId);
+
   gameState.players[gameState.playerId] = player;
   gameState.playerId++;
 
+
+  setUpDisconnect(socket);
+  setUpUpdatePos(socket);
+});
+
+function setUpDisconnect(socket) {
   socket.on('disconnect', function() {
     console.log('user disconnected');
   });
+}
 
+function setUpUpdatePos(socket) {
   socket.on('updatePos', function(data) {
-    console.log('updating pos');
     let movingPlayer = gameState.players[data.playerId];
     if (data.charMove.left) {
       movingPlayer.x -= movingPlayer.charSpeed;
-      if (movingPlayer.hit("Solid")) {
+      if (movingPlayer.hit("Wall")) {
         movingPlayer.x += movingPlayer.charSpeed;
       }
     } else if (data.charMove.right) {
       movingPlayer.x += movingPlayer.charSpeed;
-      if (movingPlayer.hit("Solid")) {
+      if (movingPlayer.hit("Wall")) {
         movingPlayer.x -= movingPlayer.charSpeed;
       }
     } else if (data.charMove.up) {
       movingPlayer.y -= movingPlayer.charSpeed;
-      if (movingPlayer.hit("Solid")) {
+      if (movingPlayer.hit("Wall")) {
         movingPlayer.y += movingPlayer.charSpeed;
       }
     } else if (data.charMove.down) {
       movingPlayer.y += movingPlayer.charSpeed;
-      if (movingPlayer.hit("Solid")) {
+      if (movingPlayer.hit("Wall")) {
         movingPlayer.y -= movingPlayer.charSpeed;
       }
     }
@@ -85,7 +95,13 @@ io.on('connection', function(socket) {
       y: movingPlayer.y
     });
   });
-});
+}
+
+function setUpAddNewPlayer(socket) {
+  socket.broadcast.emit('addNewPlayer', {
+    playerId: gameState.playerId
+  });
+}
 
 server.listen(3000, function () {
   console.log('Example app listening on port 3000!');
