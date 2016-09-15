@@ -1,78 +1,14 @@
-import createCanvas from './components/canvas.js';
-import createComponents from './components/entities.js';
-import createPlayerComponent from './components/player.js';
-import ClientModel from './model/client_model.js';
-import Board from './board.js';
-const Constants = require('./constants.js');
-const mapGrid = Constants.mapGrid;
-const wallDirection = Constants.wallDirection;
+module.exports = function(Crafty, socket, players, weapons) {
+  Crafty.scene('Game', () => {
+    setUpConnection();
+    setUpPlayersMove();
+    setUpAddNewPlayer();
+    setUpPlacingWeapons();
+    setUpCreateDamage();
+    setUpHPChange();
+  });
 
-const socket = io();
-/* globals Crafty */
-/* globals io */
-
-class Game {
-  constructor() {
-    this.players = {};
-    this.weapons = {};
-  }
-
-  width() {
-    return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-  }
-
-  height() {
-    return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
-  }
-
-  start() {
-    createCanvas(Crafty, ClientModel);
-    Crafty.background('#000000');
-
-    Crafty.scene('Loading', () => {
-      this.setUpLoadingScene.bind(this)();
-    });
-
-    Crafty.scene('Game', () => {
-      this.setUpConnection();
-      this.setUpPlayersMove();
-      this.setUpAddNewPlayer();
-      this.setUpPlacingWeapons();
-      this.setUpCreateDamage();
-      this.setUpHPChange();
-    });
-
-    // Crafty.scene('Loading');
-
-    Crafty.scene('Game');
-  }
-
-  setUpLoadingScene() {
-    let loadingScene =
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 0, y: 0 })
-            .text('A-maze Ball')
-            .textColor('white');
-
-    let playerTextY = 50;
-    socket.on('connected', data => {
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY })
-            .text(data.selfId)
-            .textColor(data.playerColor);
-      playerTextY += 30;
-    });
-
-    socket.on('addNewPlayer', data => {
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY })
-            .text(`connected with ${ data.playerId }`)
-            .textColor('white');
-      playerTextY += 30;
-    });
-  }
-
-  setUpConnection() {
+  function setUpConnection() {
     var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
     socket.on('connected', data => {
       // let weaponDisplay = Crafty.e('WeaponDisplay')
@@ -114,7 +50,7 @@ class Game {
     });
   }
 
-  setUpAddNewPlayer() {
+  function setUpAddNewPlayer() {
     var colors = ['blue', 'red', 'yellow', 'green'];
     socket.on('addNewPlayer', data => {
       let otherPlayer = Crafty.e('OtherPlayer')
@@ -128,7 +64,7 @@ class Game {
     });
   }
 
-  setUpPlayersMove() {
+  function setUpPlayersMove() {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
@@ -138,7 +74,7 @@ class Game {
     });
   }
 
-  setUpPlacingWeapons() {
+  function setUpPlacingWeapons() {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
                            .at(data.x, data.y)
@@ -153,7 +89,7 @@ class Game {
     });
   }
 
-  setUpCreateDamage() {
+  function setUpCreateDamage() {
     socket.on('createDamage', data => {
       Crafty.e('Damage')
             .at(data.damageCell[0], data.damageCell[1])
@@ -163,7 +99,7 @@ class Game {
     });
   }
 
-  setUpHPChange() {
+  function setUpHPChange() {
     socket.on('HPChange', data => {
       const player = this.players[data.playerId];
       if (player) {
@@ -172,6 +108,5 @@ class Game {
       }
     });
   }
-}
 
-export default Game;
+};

@@ -6,9 +6,7 @@ var createSideBarComponent = require('./sidebar.js');
 module.exports = function(Crafty, model) {
   Crafty.init(500, 500);
 
-  Crafty.scene('Game', () => {
-    createComponents(Crafty, model);
-    createPlayerComponent(Crafty, model);
-    createWeaponComponent(Crafty);
-  });
+  createComponents(Crafty, model);
+  createPlayerComponent(Crafty, model);
+  createWeaponComponent(Crafty);
 };
