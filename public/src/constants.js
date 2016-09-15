@@ -13,4 +13,13 @@ const wallDirection = {
   VERTICAL: 'VERTICAL'
 };
 
-module.exports = { mapGrid: mapGrid, wallDirection: wallDirection };
+const weaponTypes = {
+  BFS: 'BFS',
+  DSF: 'DFS'
+};
+
+module.exports = {
+  mapGrid: mapGrid,
+  wallDirection: wallDirection,
+  weaponTypes: weaponTypes
+};

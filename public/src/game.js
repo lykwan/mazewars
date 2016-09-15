@@ -29,7 +29,8 @@ class Game {
 
     this.setUpConnection();
     this.setUpPlayersMove();
-    this.setUpAddPlayer();
+    this.setUpAddNewPlayer();
+    this.setUpAddWeapon();
   }
 
   setUpConnection() {
@@ -59,7 +60,7 @@ class Game {
     });
   }
 
-  setUpAddPlayer() {
+  setUpAddNewPlayer() {
     var colors = ['blue', 'red', 'yellow', 'green'];
     socket.on('addNewPlayer', data => {
       let otherPlayer = Crafty.e('OtherPlayer')
@@ -76,6 +77,15 @@ class Game {
         player.x = data.x;
         player.y = data.y;
       }
+    });
+  }
+
+  setUpAddWeapon() {
+    socket.on('addWeapon', data => {
+      const weapon = Crafty.e('Weapon')
+                           .at(data.x, data.y)
+                           .type(data.type)
+                           .color(data.color);
     });
   }
 }
