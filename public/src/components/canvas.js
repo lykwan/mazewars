@@ -1,5 +1,6 @@
 var createComponents = require('./entities.js');
 var createPlayerComponent = require('./player.js');
+var createWeaponComponent = require('./weapon.js');
 
 module.exports = function(Crafty, model) {
   Crafty.init(700, 500);
@@ -10,4 +11,5 @@ module.exports = function(Crafty, model) {
 
   createComponents(Crafty, model);
   createPlayerComponent(Crafty, model);
+  createWeaponComponent(Crafty);
 };

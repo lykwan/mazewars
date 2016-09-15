@@ -20,14 +20,15 @@ module.exports = function(Crafty, model) {
       if (playerColor) {
         this.color(playerColor);
       }
-
       return this;
     },
 
     setUpSocket: function(socket) {
       this.socket = socket;
       return this;
-    }
+    },
+
+    
   });
 
   Crafty.c('OtherPlayer', {

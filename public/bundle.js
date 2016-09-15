@@ -127,7 +127,8 @@
 	
 	      this.setUpConnection();
 	      this.setUpPlayersMove();
-	      this.setUpAddPlayer();
+	      this.setUpAddNewPlayer();
+	      this.setUpAddWeapon();
 	    }
 	  }, {
 	    key: 'setUpConnection',
@@ -154,8 +155,8 @@
 	      });
 	    }
 	  }, {
-	    key: 'setUpAddPlayer',
-	    value: function setUpAddPlayer() {
+	    key: 'setUpAddNewPlayer',
+	    value: function setUpAddNewPlayer() {
 	      var _this2 = this;
 	
 	      var colors = ['blue', 'red', 'yellow', 'green'];
@@ -175,6 +176,13 @@
 	          player.x = data.x;
 	          player.y = data.y;
 	        }
+	      });
+	    }
+	  }, {
+	    key: 'setUpAddWeapon',
+	    value: function setUpAddWeapon() {
+	      socket.on('addWeapon', function (data) {
+	        var weapon = Crafty.e('Weapon').at(data.x, data.y).type(data.type).color(data.color);
 	      });
 	    }
 	  }]);
@@ -205,7 +213,16 @@
 	  VERTICAL: 'VERTICAL'
 	};
 	
-	module.exports = { mapGrid: mapGrid, wallDirection: wallDirection };
+	var weaponTypes = {
+	  BFS: 'BFS',
+	  DSF: 'DFS'
+	};
+	
+	module.exports = {
+	  mapGrid: mapGrid,
+	  wallDirection: wallDirection,
+	  weaponTypes: weaponTypes
+	};
 
 /***/ },
 /* 3 */
@@ -215,6 +232,7 @@
 	
 	var createComponents = __webpack_require__(4);
 	var createPlayerComponent = __webpack_require__(5);
+	var createWeaponComponent = __webpack_require__(11);
 	
 	module.exports = function (Crafty, model) {
 	  Crafty.init(700, 500);
@@ -225,6 +243,7 @@
 	
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
+	  createWeaponComponent(Crafty);
 	};
 
 /***/ },
@@ -331,7 +350,6 @@
 	      if (playerColor) {
 	        this.color(playerColor);
 	      }
-	
 	      return this;
 	    },
 	
@@ -339,6 +357,7 @@
 	      this.socket = socket;
 	      return this;
 	    }
+	
 	  });
 	
 	  Crafty.c('OtherPlayer', {
@@ -611,6 +630,31 @@
 	}();
 	
 	module.exports = Tile;
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('Weapon', {
+	    init: function init() {
+	      this.requires('Actor, Color, Collision');
+	    },
+	
+	    selfDestroy: function selfDestroy() {
+	      this.destroy();
+	    },
+	
+	    type: function type(_type) {
+	      this.type = _type;
+	      return this;
+	    }
+	  });
+	};
 
 /***/ }
 /******/ ]);
