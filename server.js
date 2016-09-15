@@ -180,10 +180,12 @@ function setUpShootWeapon(socket) {
     }
 
     for (let i = 0; i < damageCells.length; i++) {
-      Crafty.e('Damage')
+      const damage = Crafty.e('Damage')
             .at(damageCells[i][0], damageCells[i][1])
             .setUpCreator(data.playerId)
             .disappearAfter();
+
+      damage.onHit('Player', lowerHP.bind(null, damage));
     }
 
     io.emit('createDamage', {
@@ -238,6 +240,29 @@ function hasCell(damageCells, damageCell) {
   return damageCells.some(cell => {
     return cell[0] === damageCell[0] && cell[1] === damageCell[1];
   });
+}
+
+function lowerHP(damageEntity) {
+  const hitPlayers = damageEntity.hit('Player');
+  if (hitPlayers) {
+    hitPlayers.forEach(player => {
+      if (!player.hasTakenDamage) {
+        player.HP -= 20;
+        playerBufferTakingDamage(player);
+        io.emit('HPChange', {
+          playerId: player.id,
+          playerHP: player.HP
+        });
+      }
+    });
+  }
+}
+
+function playerBufferTakingDamage(player) {
+  player.hasTakenDamage = true;
+  setTimeout(() => {
+    player.hasTakenDamage = false;
+  }, 500);
 }
 
 server.listen(3000, function () {
