@@ -26,16 +26,11 @@ module.exports = function(Crafty, model) {
 
     setUpSocket: function(socket) {
       this.socket = socket;
-      this.socket.on('updatePos', data => {
-        this.x = data.x;
-        this.y = data.y;
-      });
-
       return this;
     }
   });
 
-  Crafty.c('otherPlayer', {
+  Crafty.c('OtherPlayer', {
     init: function() {
       this.requires('Actor, Color');
     },

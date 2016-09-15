@@ -106,6 +106,8 @@
 	var Game = function () {
 	  function Game() {
 	    _classCallCheck(this, Game);
+	
+	    this.players = {};
 	  }
 	
 	  _createClass(Game, [{
@@ -121,17 +123,57 @@
 	  }, {
 	    key: 'start',
 	    value: function start() {
+	      (0, _canvas2.default)(Crafty, _client_model2.default);
+	
+	      this.setUpConnection();
+	      this.setUpPlayersMove();
+	      this.setUpAddPlayer();
+	    }
+	  }, {
+	    key: 'setUpConnection',
+	    value: function setUpConnection() {
 	      var _this = this;
 	
-	      (0, _canvas2.default)(Crafty, _client_model2.default);
+	      var colors = ['blue', 'red', 'yellow', 'green'];
 	      socket.on('connected', function (data) {
-	        var player = Crafty.e('Player').color('blue').at(0, 0).setUp(data.playerId, data.playerColor).setUpSocket(socket, data.playerId);
+	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor).setUpSocket(socket, data.playerId);
+	
+	        data.playerIds.forEach(function (id) {
+	          var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(id, colors[id]);
+	          _this.players[id] = otherPlayer;
+	        });
+	
+	        _this.players[data.selfId] = player;
 	        _this.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
 	
 	        for (var i = 0; i < mapGrid.NUM_COLS; i++) {
 	          for (var j = 0; j < mapGrid.NUM_ROWS; j++) {
 	            _this.board.grid[i][j].drawWalls(Crafty);
 	          }
+	        }
+	      });
+	    }
+	  }, {
+	    key: 'setUpAddPlayer',
+	    value: function setUpAddPlayer() {
+	      var _this2 = this;
+	
+	      var colors = ['blue', 'red', 'yellow', 'green'];
+	      socket.on('addNewPlayer', function (data) {
+	        var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(data.playerId, colors[data.playerId]);
+	        _this2.players[data.playerId] = otherPlayer;
+	      });
+	    }
+	  }, {
+	    key: 'setUpPlayersMove',
+	    value: function setUpPlayersMove() {
+	      var _this3 = this;
+	
+	      socket.on('updatePos', function (data) {
+	        var player = _this3.players[data.playerId];
+	        if (player) {
+	          player.x = data.x;
+	          player.y = data.y;
 	        }
 	      });
 	    }
@@ -175,7 +217,7 @@
 	var createPlayerComponent = __webpack_require__(5);
 	
 	module.exports = function (Crafty, model) {
-	  Crafty.init(500, 500);
+	  Crafty.init(700, 500);
 	
 	  if (model.receiver === 'CLIENT') {
 	    Crafty.background('#000000');
@@ -294,19 +336,12 @@
 	    },
 	
 	    setUpSocket: function setUpSocket(socket) {
-	      var _this = this;
-	
 	      this.socket = socket;
-	      this.socket.on('updatePos', function (data) {
-	        _this.x = data.x;
-	        _this.y = data.y;
-	      });
-	
 	      return this;
 	    }
 	  });
 	
-	  Crafty.c('otherPlayer', {
+	  Crafty.c('OtherPlayer', {
 	    init: function init() {
 	      this.requires('Actor, Color');
 	    },
