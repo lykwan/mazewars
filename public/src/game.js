@@ -37,16 +37,15 @@ class Game {
   }
 
   setUpConnection() {
-    var colors = ['blue', 'red', 'yellow', 'green'];
+    var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
     socket.on('connected', data => {
-      let weaponDisplay = Crafty.e('WeaponDisplay')
-                                .attr({ x: 600, y: 300 })
-                                .createText(' ');
-      console.log(weaponDisplay);
-      let weaponDisplayId = weaponDisplay[0];
+      // let weaponDisplay = Crafty.e('WeaponDisplay')
+      //                           .attr({ x: 600, y: 300 })
+      //                           .createText(' ');
+      // let weaponDisplayId = weaponDisplay[0];
       let player = Crafty.e('Player')
                          .at(0, 0)
-                         .setUp(data.selfId, data.playerColor, weaponDisplayId)
+                         .setUp(data.selfId, data.playerColor)
                          .setUpSocket(socket, data.playerId)
                          .bindingKeyEvents();
 
@@ -107,7 +106,13 @@ class Game {
 
   setUpCreateDamage() {
     socket.on('createDamage', data => {
-      console.log(data);
+      data.damageCells.forEach(cell => {
+        Crafty.e('Damage')
+              .at(cell[0], cell[1])
+              .setUpCreator(data.creatorId)
+              .disappearAfter()
+              .color('#7ec0ee', 0.5);
+      });
     });
   }
 }

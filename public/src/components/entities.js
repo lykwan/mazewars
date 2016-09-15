@@ -12,9 +12,9 @@ module.exports = function(Crafty, model) {
       });
     },
 
-    at: function(row, col) {
-      const x = row * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
-      const y = col * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
+    at: function(col, row) {
+      const x = col * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
+      const y = row * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
       this.attr({ x: x, y: y });
       return this;
     }

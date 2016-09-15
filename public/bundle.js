@@ -138,12 +138,13 @@
 	    value: function setUpConnection() {
 	      var _this = this;
 	
-	      var colors = ['blue', 'red', 'yellow', 'green'];
+	      var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
 	      socket.on('connected', function (data) {
-	        var weaponDisplay = Crafty.e('WeaponDisplay').attr({ x: 600, y: 300 }).createText(' ');
-	        console.log(weaponDisplay);
-	        var weaponDisplayId = weaponDisplay[0];
-	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor, weaponDisplayId).setUpSocket(socket, data.playerId).bindingKeyEvents();
+	        // let weaponDisplay = Crafty.e('WeaponDisplay')
+	        //                           .attr({ x: 600, y: 300 })
+	        //                           .createText(' ');
+	        // let weaponDisplayId = weaponDisplay[0];
+	        var player = Crafty.e('Player').at(0, 0).setUp(data.selfId, data.playerColor).setUpSocket(socket, data.playerId).bindingKeyEvents();
 	
 	        data.playerIds.forEach(function (id) {
 	          var otherPlayer = Crafty.e('OtherPlayer').at(0, 0).setUp(id, colors[id]);
@@ -203,7 +204,9 @@
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
 	      socket.on('createDamage', function (data) {
-	        console.log(data);
+	        data.damageCells.forEach(function (cell) {
+	          Crafty.e('Damage').at(cell[0], cell[1]).setUpCreator(data.creatorId).disappearAfter().color('#7ec0ee', 0.5);
+	        });
 	      });
 	    }
 	  }]);
@@ -287,9 +290,9 @@
 	      });
 	    },
 	
-	    at: function at(row, col) {
-	      var x = row * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
-	      var y = col * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
+	    at: function at(col, row) {
+	      var x = col * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
+	      var y = row * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
 	      this.attr({ x: x, y: y });
 	      return this;
 	    }
@@ -402,12 +405,11 @@
 	    },
 	
 	
-	    setUp: function setUp(playerId, playerColor, weapons) {
+	    setUp: function setUp(playerId, playerColor) {
 	      this.playerId = playerId;
 	      if (playerColor) {
 	        this.color(playerColor);
 	      }
-	      this.existingWeapons = weapons;
 	      return this;
 	    },
 	
@@ -720,6 +722,19 @@
 	  Crafty.c('Damage', {
 	    init: function init() {
 	      this.requires('Actor, Color, Collision');
+	    },
+	
+	    setUpCreator: function setUpCreator(playerId) {
+	      this.creatorId = playerId;
+	      return this;
+	    },
+	    disappearAfter: function disappearAfter() {
+	      var _this = this;
+	
+	      setTimeout(function () {
+	        return _this.destroy();
+	      }, 500);
+	      return this;
 	    }
 	  });
 	};

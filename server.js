@@ -20,14 +20,14 @@ app.get('/', function (req, res) {
 
 createCanvas(Crafty, ServerModel);
 
-var colors = ['blue', 'red', 'yellow', 'green'];
+var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
 
 var gameState = {
   playerId: 0,
   weaponId: 0,
   players: {},
   weapons: {},
-  seedRandomStr: "random Strrrrr",
+  seedRandomStr: "whatever",
   board: null
 };
 
@@ -179,8 +179,17 @@ function setUpShootWeapon(socket) {
       damageCells = shootBFSWeapon(player);
     }
 
+    for (let i = 0; i < damageCells.length; i++) {
+      Crafty.e('Damage')
+            .at(damageCells[i][0], damageCells[i][1])
+            .setUpCreator(data.playerId)
+            .disappearAfter();
+    }
+
     io.emit('createDamage', {
-      damageCells: damageCells
+      damageCells: damageCells,
+      creatorId: data.playerId,
+      color: Constants.DAMAGE_COLOR
     });
   });
 }
