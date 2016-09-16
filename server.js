@@ -34,7 +34,8 @@ let gameState = {
   ball: null,
   seedRandomStr: "whatever",
   board: null,
-  timer: 60
+  timer: 60,
+  ballHolder: null
 };
 
 const constants = {
@@ -152,8 +153,36 @@ function addBall() {
   });
 }
 
-function pickUpBall(socket) {
+function pickUpBall() {
+  const player = gameState.ball.hit('Player')[0].obj;
+  gameState.ball.destroy();
+  gameState.ball = null;
+  gameState.ballHolder = player;
+  setBallTime(player);
 
+  // io.to(player.playerId).emit('pickUpBall');
+  io.emit('showBall', {
+    playerId: player.playerId
+  });
+}
+
+function setBallTime(player) {
+  player.currentBallHoldingTime = 0;
+  const intervalId = setInterval(() => {
+    if (player.playerId !== gameState.ballHolder.playerId) {
+      clearInterval(intervalId);
+    }
+
+    io.to(player.playerId).emit('setBallTime', {
+      currentBallHoldingTime: player.currentBallHoldingTime,
+      longestSecsHoldingBall: player.longestSecsHoldingBall
+    });
+
+    player.currentBallHoldingTime++;
+    if (player.currentBallHoldingTime > player.longestSecsHoldingBall) {
+      player.longestSecsHoldingBall = player.currentBallHoldingTime;
+    }
+  }, 1000);
 }
 
 function addTimer() {
@@ -208,7 +237,6 @@ function setUpUpdatePos(socket) {
   //   console.log(data.playerId);
   // });
   socket.on('updatePos', function(data) {
-    console.log(data);
     let movingPlayer = gameState.players[data.playerId];
     if (data.charMove.left) {
       movingPlayer.x -= movingPlayer.charSpeed;

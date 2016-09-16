@@ -10,6 +10,9 @@ module.exports = function(Crafty, model) {
       this.charSpeed = 2;
       this.HP = 100;
       this.hasTakenDamage = false;
+      this.longestSecsHoldingBall = 0;
+      this.currentBallHoldingTime = 0;
+      // this.hasBall = false;
     },
 
     getCol: function() {
@@ -81,6 +84,24 @@ module.exports = function(Crafty, model) {
       return this;
     },
 
+    autoPickUpBall: function() {
+      // this.socket.on('pickUpBall', () => {
+      //   this.hasBall = true;
+      // });
+      //
+      this.socket.on('setBallTime', data => {
+        this.currentBallHoldingTime = data.currentBallHoldingTime;
+        this.longestSecsHoldingBall = data.longestSecsHoldingBall;
+      });
+
+      return this;
+    },
+
+    pickUpBall: function() {
+      this.color('#76EEC6');
+      return this;
+    },
+
     pickUpWeapon: function() {
       this.socket.emit('pickUpWeapon', {
         playerId: this.playerId
@@ -103,7 +124,7 @@ module.exports = function(Crafty, model) {
 
   Crafty.c('OtherPlayer', {
     init: function() {
-      this.requires('Actor, Color');
+      this.requires('Actor, Color, Text');
       this.HP = 100;
     },
 
@@ -120,5 +141,11 @@ module.exports = function(Crafty, model) {
 
       return this;
     },
+
+    pickUpBall: function() {
+      this.color('#76EEC6');
+      return this;
+    }
+
   });
 };
