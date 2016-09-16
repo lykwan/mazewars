@@ -83,6 +83,7 @@ class Game {
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
       this.playersInfo[data.selfId] = playerText;
       this.selfId = data.selfId;
+
     });
 
     socket.on('addNewPlayer', data => {
@@ -108,6 +109,11 @@ class Game {
 
     socket.on('startNewGame', (data) => {
       Crafty.scene('Game', data);
+      // socket.emit('gotmessage', {
+      //   msg: 'hellow world',
+      //   playerId: this.selfId
+      // });
+
     });
   }
 
