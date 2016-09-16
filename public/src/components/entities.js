@@ -31,6 +31,7 @@ module.exports = function(Crafty, model) {
   Crafty.c('Wall', {
     init: function() {
       this.requires('2D, Canvas, Solid, Color, Collision');
+      this.z = 10;
     },
 
     wallDir: function(wallDir) {

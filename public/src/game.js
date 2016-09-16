@@ -56,13 +56,20 @@ class Game {
       this.setUpAddBall();
       this.setUpShowBall();
       this.setUpShowBallRecord();
+      this.setUpPickUpWeapon();
     });
 
-    Crafty.scene('GameOver', () => {
+    Crafty.scene('GameOver', (data) => {
       Crafty.e('2D, DOM, Text')
             .attr({ x: 0, y: 0, w: 300 })
             .text('Game Over')
             .textColor('white');
+
+      Crafty.e('2D, DOM, Text')
+        .attr({ x: 50, y: 50, w: 400})
+        .text(`player ${ data.winnerId }
+                has won with ${ data.winnerScore } secs`)
+        .textColor('white');
     });
 
     Crafty.scene('Loading');
@@ -74,6 +81,31 @@ class Game {
             .attr({ x: 0, y: 0, w: 300 })
             .text('A-maze Ball - Press s to start')
             .textColor('white');
+      Crafty.e('2D, DOM, Text')
+            .attr({ x: 0, y: 30, w: 300 })
+            .text('Game can only be started when there are more than 2 people in the room')
+            .textColor('white');
+
+
+
+    // Crafty.load(['../assets/blue.png',
+    //              '../assets/green.png',
+    //              '../assets/red.png',
+    //              '../assets/yellow.png'],
+    //   function() {
+    //     Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
+    //     Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
+    //     Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
+    //     Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
+    //   });
+
+    Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
+    Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
+    Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
+    Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
+    Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
+    Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
+    Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
 
     let playerTextY = 50;
     socket.on('connected', data => {
@@ -121,18 +153,51 @@ class Game {
   }
 
   setUpNewGame(data) {
+    $('#scoreboard').append(`<div id='hp'>
+                              <h2>HP</h2>
+                             </div>`);
+    $('#scoreboard').append(`<div id='timer'>
+                              <h2>Timer</h2>
+                              <span id='timer-countdown'>
+                                ${ data.timer }
+                              </span>
+                             </div>`);
+    $('#scoreboard').append(`<div id='self-record'>
+                                <h2>Ball Duration</h2>
+                                Longest Duration Time: 0
+                             </div>`);
+    $('#scoreboard').append(`<div id="weapon">
+                                <h2>Weapon</h2>
+                                <div id='weapon-img'></div>
+                                <div id='weapon-type'></div>
+                             </div>`);
+
     data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
-        let player = Crafty.e('Player')
-                           .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
-                           .setUp(playerInfo.playerId, playerInfo.playerColor)
-                           .setUpSocket(socket)
-                           .color(playerInfo.playerColor)
-                           .autoPickUpBall()
-                           .bindingKeyEvents();
+        let player =
+             Crafty.e('Player')
+                   .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
+                   .setUp(playerInfo.playerId, playerInfo.playerColor)
+                   .setUpSocket(socket)
+                   .autoPickUpBall()
+                   .bindingKeyEvents();
 
-        $('#scoreboard').append(`<div class='player-${ playerInfo.playerId }'>
-                                  ${ player.HP }
+        if (player.playerColor === 'red') {
+          player.addComponent('spr_red')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (player.playerColor === 'green') {
+          player.addComponent('spr_green')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (player.playerColor === 'blue') {
+          player.addComponent('spr_blue')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (player.playerColor === 'yellow') {
+          player.addComponent('spr_yellow')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        }
+
+        $('#hp').append(`<div class='player-${ playerInfo.playerId }'>
+                                  Player ${playerInfo.playerId}: ${ player.HP }
                                  </div>`);
 
         this.players[playerInfo.playerId] = player;
@@ -140,12 +205,25 @@ class Game {
         let otherPlayer =
           Crafty.e('OtherPlayer')
                 .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
-                .setUp(data.players.playerId, playerInfo.playerColor)
-                .color(playerInfo.playerColor);
+                .setUp(data.players.playerId, playerInfo.playerColor);
 
-        $('#scoreboard').append(`<div class='player-${ playerInfo.playerId }'>
-                                  ${ otherPlayer.HP }
-                                 </div>`);
+        if (otherPlayer.playerColor === 'red') {
+          otherPlayer.addComponent('spr_red')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (otherPlayer.playerColor === 'green') {
+          otherPlayer.addComponent('spr_green')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (otherPlayer.playerColor === 'blue') {
+          otherPlayer.addComponent('spr_blue')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        } else if (otherPlayer.playerColor === 'yellow') {
+          otherPlayer.addComponent('spr_yellow')
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        }
+
+        $('#hp').append(`<div class='player-${ playerInfo.playerId }'>
+                            Player ${playerInfo.playerId}: ${ otherPlayer.HP }
+                           </div>`);
 
         this.players[playerInfo.playerId] = otherPlayer;
       }
@@ -157,10 +235,11 @@ class Game {
       }
     }
 
-    $('#scoreboard').append(`<div id='timer'>${ data.timer }</div>`);
-    $('#scoreboard').append(`<div id='self-record'>
-                                Longest Duration Time: 0
-                             </div>`);
+    // Crafty.sprite('assets/weapons.png', {
+    //   spr_bfs: [0, 0],
+    //   spr_dfs: [0, 1]
+    // });
+
   }
 
   // setUpAddNewPlayer() {
@@ -191,8 +270,15 @@ class Game {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
                            .at(data.x, data.y)
-                           .setUp(data.weaponId, data.type)
-                           .color(data.color);
+                           .setUp(data.weaponId, data.type);
+
+      if (data.type === 'BFS') {
+        weapon.addComponent('spr_bfs')
+              .attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
+      } else if (data.type === 'DFS') {
+        weapon.addComponent('spr_dfs')
+              .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+      }
       this.weapons[data.weaponId] = weapon;
     });
 
@@ -206,9 +292,10 @@ class Game {
     socket.on('createDamage', data => {
       Crafty.e('Damage')
             .at(data.damageCell[0], data.damageCell[1])
+            .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT })
             .setUpCreator(data.creatorId)
             .disappearAfter()
-            .color('#7ec0ee', 0.5);
+            .color(this.players[data.creatorId].playerColor, 0.5);
     });
   }
 
@@ -217,28 +304,29 @@ class Game {
       const player = this.players[data.playerId];
       if (player) {
         player.HP = data.playerHP;
-        $(`.player-${ data.playerId }`).text(player.HP);
+        $(`.player-${ data.playerId }`)
+          .text(`Player ${data.playerId}: ${ data.playerHP }`);
       }
     });
   }
 
   setUpTimer() {
     socket.on('countDown', data => {
-      console.log('got hereeee counting down');
-
-      $('#timer').text(data.timer);
+      $('#timer-countdown').text(data.timer);
     });
   }
 
   setUpGameOver() {
     socket.on('gameOver', data => {
-      Crafty.scene('GameOver');
+      Crafty.scene('GameOver', data);
     });
   }
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      this.ball = Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+      this.ball = Crafty.e('Ball')
+                    .at(data.col, data.row)
+                    .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
     });
   }
 
@@ -250,21 +338,37 @@ class Game {
 
     socket.on('removeBall', data => {
       this.players[data.playerId]
-                  .color(this.players[data.playerId].playerColor);
+                  .color('black');
     });
   }
 
   setUpShowBallRecord() {
     socket.on('showBallRecord', data => {
       $('#self-record')
-        .html(`<span>
-                Longest Duration Time: ${ data.longestSecsHoldingBall }
-               </span>
-               <span>
-                Current Duration Time: ${ data.currentBallHoldingTime }
-               </span>`);
+        .html(`
+          <h2>Ball Duration</h2>
+          <span>
+            Longest Duration Time: ${ data.longestSecsHoldingBall }
+          </span>
+          <span>
+            Current Duration Time: ${ data.currentBallHoldingTime }
+          </span>`);
 
-      $('#ball-record')
+      // $('#ball-record')
+    });
+  }
+
+  setUpPickUpWeapon() {
+    socket.on('pickUpWeapon', data => {
+      this.players[this.selfId].weaponType = data.type;
+      $('#weapon-type').text(data.type);
+      if (data.type === 'BFS') {
+        $('#weapon-img').append(`<img src='../assets/bfs_weapon.png'
+                                      height='50'></img>`);
+      } else if (data.type === 'DFS') {
+        $('#weapon-img').append(`<img src='../assets/dfs_weapon.png'
+                                      height='50'></img>`);
+      }
     });
   }
 }

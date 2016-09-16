@@ -20,7 +20,21 @@ app.get('/', function (req, res) {
 
 createCanvas(Crafty, ServerModel);
 
-var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
+var colors = ['blue', 'red', 'yellow', 'green'];
+
+const constants = {
+  WEAPON_COLORS: {
+    BFS: '#ffa500',
+    DFS: '#551a8b'
+  },
+  WEAPON_RANGE: 10,
+  BUFFER_DAMAGE_TIME: 400,
+  WEAPON_SPAWN_TIME: 10000,
+  DAMAGE_ANIMATION_TIME: 100,
+  HP_DAMAGE: 10,
+  BALL_COLOR: '#008080',
+  GAME_DURATION: 30
+};
 
 let gameState = {
   weaponId: 0,
@@ -34,23 +48,11 @@ let gameState = {
   ball: null,
   seedRandomStr: "whatever",
   board: null,
-  timer: 60,
-  ballHolder: null
+  timer: constants.GAME_DURATION,
+  ballHolder: null,
+  addWeaponIntervalId: null
 };
 
-const constants = {
-  WEAPON_COLORS: {
-    BFS: '#ffa500',
-    DFS: '#551a8b'
-  },
-  WEAPON_RANGE: 10,
-  DAMAGE_COLOR: 'purple',
-  BUFFER_DAMAGE_TIME: 400,
-  WEAPON_SPAWN_TIME: 10000,
-  DAMAGE_ANIMATION_TIME: 100,
-  HP_DAMAGE: 10,
-  BALL_COLOR: '#008080'
-};
 
 io.on('connection', function(socket) {
   console.log(`a user connected`);
@@ -87,7 +89,7 @@ io.on('connection', function(socket) {
   setUpAddNewPlayer(socket, selfId, colors[selfId - 1]);
 
   let player =  Crafty.e('Player')
-                      .at(0, 0)
+                      .at(1, 1)
                       .setUp(selfId, colors[selfId - 1]);
 
   gameState.players[selfId] = player;
@@ -102,7 +104,6 @@ io.on('connection', function(socket) {
 
 function setUpStartGame(socket) {
   socket.on('startNewGame', data => {
-    console.log('starting new game');
       const players = Object.keys(gameState.players).filter((playerId) => {
         return gameState.players[playerId] !== null;
       }).map(playerId => {
@@ -204,8 +205,29 @@ function addTimer() {
 }
 
 function gameOver() {
-  io.emit('gameOver', {
+  clearInterval(gameState.addWeaponIntervalId);
+  let winner = gameState.players["1"];
+  let winnerScore = gameState.players["1"].longestSecsHoldingBall;
+  winner.longestSecsHoldingBall = 0;
+  winner.currentBallHoldingTime = 0;
+  let playerIds = Object.keys(gameState.players);
+  for (let i = 1; i < playerIds.length; i++) {
+    let player = gameState.players[playerIds[i]];
+    if (player) {
+      let playerScore = player.longestSecsHoldingBall;
+      if (playerScore > winnerScore) {
+        winner = player;
+        winnerScore = playerScore;
+      }
+      player.longestSecsHoldingBall = 0;
+      player.currentBallHoldingTime = 0;
+    }
+  }
 
+  gameState.timer = constants.GAME_DURATION;
+  io.emit('gameOver', {
+    winnerId: winner.playerId,
+    winnerScore: winnerScore
   });
 }
 
@@ -277,7 +299,7 @@ function setUpAddNewPlayer(socket, playerId, color) {
 }
 
 function addWeapon() {
-  setInterval(function() {
+  gameState.addWeaponIntervalId = setInterval(function() {
     let col = Math.floor(Math.random() * mapGrid.NUM_COLS);
     let row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
     while (gameState.weapons[[col, row]]) {

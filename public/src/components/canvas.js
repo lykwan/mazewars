@@ -10,7 +10,7 @@ module.exports = function(Crafty, model) {
   const width = mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
   const height = mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
 
-  Crafty.init(width, height);
+  Crafty.init(width, height, 'stage');
 
   createComponents(Crafty, model);
   createPlayerComponent(Crafty, model);
