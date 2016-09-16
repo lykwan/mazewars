@@ -1,77 +1,29 @@
-## Oddball
+# A-maze Ball
 
-### Background
+[game live][game]
 
-Oddball is a multiplayer game in a maze map. The goal of the game is to locate the ball on the map and keep possession of it for the longest period of time. The player that holds onto the ball for the longest period of time wins that round of the game.
+[game]: lilykwan.me:3000
 
-### Functionality & MVP  
+A-maze Ball is a multi-player game with web sockets. The goal of the game is to hold onto the ball for the longest duration of time. Other players can kill the player holding the ball by picking up weapons and shooting at him/her. Once he/she is killed, the ball is released and another player can pick up the ball.
 
-This game has several features:
-- [ ] A player can hold onto the ball, and the timer for that duration would start as soon as the player gets the hold of the ball.
-- [ ] A ranking of the duration of holding onto the ball
-- [ ] A randomly generated maze each game
-- [ ] The players can use weapons to make a player lose the possession of the ball
+## Features & Implementation
 
-In addition, this project will include:
+### Maze Map
 
-- [ ] An About modal describing the background and rules of the game
-- [ ] A production Readme
+The map of the maze is randomly generated each time using Prim's algorithm. The Prim's algorithm was chosen to make this maze because it makes a lot of small dead-ends, as opposed to long, winding paths, making it more suitable for this game because players will be running around a lot.
 
-### Wireframes
+![CatchingBall](screenshots/catching_ball.png)
 
-In this app, there will be a screen with a maze as the gameboard, game controls, and a ranking list indicating which player is currently in the lead. Game controls will explain the keys used to play in this game. There will be several players in the gameboard, which can all move around, and a ball which could be captured.
+### Weapons
 
-![wireframes](img/oddball.png)
+There are two types of weapons: BFS range, and DFS range. BFS weapon finds the path using BFS algorithm, and vice versa for DFS. This way, the players have two options when they pick a weapon. If they want an area-of-effect, closer-range weapon, they can pick BFS weapon. If they want a more targeted, longer-range weapon, they can pick the DFS weapon.
 
-### Architecture and Technologies
+![ShootingWeapon](screenshots/shooting_weapon.png)
 
-This project will be implemented with the following technologies:
+### Multi-player feature
+This game is implemented with a server to serve multiple clients playing the game at once. This means that the game was built on both the server-side, and the client-side. The game state is stored mainly on the server-side, such as player movements, player catching the ball, and player scores. This is to communicate game state across all clients, and to prevent cheating from clients.
 
-- Vanilla JavaScript and `jquery` for overall structure and game logic,
-- CraftyJS for implementing the entities (players, walls, ball) and the maze map
-- Prim's algorithm to generate the random maze
-- Webpack to bundle and serve up the various scripts.
-
-In addition to the webpack entry file, there will be three scripts involved in this project:
-
-`board.js`: this script will handle the logic for creating and updating the necessary `CraftJS` elements and rendering them to the DOM.
-
-`player.js`: this script will handle the logic of players, in terms of movement, catching the ball, and using weapons on other players.
-
-`ball.js`: this script will handle the logic of the ball, starting the timer as a player possess the ball, keeping track of the ranking
-
-`weapon.js`: this script will handle the logic of weapon. What actions these weapons take, etc.
-
-`game.js`: this script will deal with all the logic of the game. It is the controller that deals with all the objects in this game.
-
-### Implementation Timeline
-
-**Day 1**: Implementing the maze, learning how craftyJS work, and create entities (players, ball, wall, etc.)
-
-- Get a green bundle with `webpack`
-- Learn enough `CraftyJS` to render an object to the `Canvas` element
-
-**Day 2**: Implementing the gameplay, like the players logic, and the ball logic and the ranking system.
-
-- Implementing the player.js file
-- Implementing the ball.js file
-- incorporating with the game.js file
-
-**Day 3**: Creating the weapon and control how the a player gets hold of a weapon and uses it
-
-- Randomly places weapon at random times
-- Allow the user to get hold onto the weapon
-- Deals with the logic of weapon getting to the enemies and kill them
-
-**Day 4**: Making it multiplayer with different key controls, finish polishing up the game
-
-- Making it multiplayer
-- Implementing the minor things and fixes bugs
-- Make it look presentable
-
-### Bonus features
-
-If time permits:
-
-- [ ] Implementing different weapons, and different ways weapons can reach to an enemy
-- [ ] Special weapons for the person containing the ball
+## Technologies used
+Node.js
+Craftyjs
+Socket.io

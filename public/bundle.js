@@ -412,9 +412,9 @@
 	        _this10.players[_this10.selfId].weaponType = data.type;
 	        $('#weapon-type').text(data.type);
 	        if (data.type === 'BFS') {
-	          $('#weapon-img').append('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
+	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
 	        } else if (data.type === 'DFS') {
-	          $('#weapon-img').append('<img src=\'../assets/dfs_weapon.png\'\n                                      height=\'50\'></img>');
+	          $('#weapon-img').html('<img src=\'../assets/dfs_weapon.png\'\n                                      height=\'50\'></img>');
 	        }
 	      });
 	    }
