@@ -32,16 +32,34 @@ class Game {
     createCanvas(Crafty, ClientModel);
     Crafty.background('#000000');
 
-    Crafty.scene('Loading', () => {
-      this.setUpLoadingScene.bind(this)();
+    let game = this;
+    Crafty.scene('Loading', function() {
+      game.setUpLoadingScene.bind(game)();
+      this.startGame = this.bind('KeyDown', function(e) {
+        if (e.keyCode === Crafty.keys.S) {
+          socket.emit('startNewGame');
+        }
+      });
+    }, function() {
+      this.unbind('KeyDown', this.startGame);
     });
 
-    Crafty.scene('Game', (players) => {
-      this.setUpNewGame(players);
+    Crafty.scene('Game', (data) => {
+      this.setUpNewGame(data);
       this.setUpPlayersMove();
       this.setUpPlacingWeapons();
       this.setUpCreateDamage();
       this.setUpHPChange();
+      this.setUpTimer();
+      this.setUpGameOver();
+      this.setUpAddBall();
+    });
+
+    Crafty.scene('GameOver', () => {
+      Crafty.e('2D, DOM, Text')
+            .attr({ x: 0, y: 0, w: 300 })
+            .text('Game Over')
+            .textColor('white');
     });
 
     Crafty.scene('Loading');
@@ -52,12 +70,7 @@ class Game {
       Crafty.e('2D, DOM, Text')
             .attr({ x: 0, y: 0, w: 300 })
             .text('A-maze Ball - Press s to start')
-            .textColor('white')
-            .bind('KeyDown', function(e) {
-              if (e.keyCode === Crafty.keys.S) {
-                socket.emit('startNewGame');
-              }
-            });
+            .textColor('white');
 
     let playerTextY = 50;
     socket.on('connected', data => {
@@ -94,14 +107,13 @@ class Game {
     });
 
     socket.on('startNewGame', (data) => {
-      Crafty.scene('Game', data.players);
+      Crafty.scene('Game', data);
     });
   }
 
-  setUpNewGame(players) {
-    players.forEach(playerInfo => {
+  setUpNewGame(data) {
+    data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
-        console.log('got here... ever?');
         let player = Crafty.e('Player')
                            .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
                            .setUp(playerInfo.playerId, playerInfo.playerColor)
@@ -109,21 +121,21 @@ class Game {
                            .color(playerInfo.playerColor)
                            .bindingKeyEvents();
 
-        $('#scoreboard').append(`<li class='player-${ playerInfo.playerId }'>
+        $('#scoreboard').append(`<div class='player-${ playerInfo.playerId }'>
                                   ${ player.HP }
-                                 </li>`);
+                                 </div>`);
 
         this.players[playerInfo.playerId] = player;
       } else {
         let otherPlayer =
           Crafty.e('OtherPlayer')
                 .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
-                .setUp(players.playerId, playerInfo.playerColor)
+                .setUp(data.players.playerId, playerInfo.playerColor)
                 .color(playerInfo.playerColor);
 
-        $('#scoreboard').append(`<li class='player-${ playerInfo.playerId }'>
+        $('#scoreboard').append(`<div class='player-${ playerInfo.playerId }'>
                                   ${ otherPlayer.HP }
-                                 </li>`);
+                                 </div>`);
 
         this.players[playerInfo.playerId] = otherPlayer;
       }
@@ -134,6 +146,8 @@ class Game {
         this.board.grid[i][j].drawWalls(Crafty);
       }
     }
+
+    $('#scoreboard').append(`<div id='timer'>${ data.timer }</div>`);
   }
 
   // setUpAddNewPlayer() {
@@ -192,6 +206,26 @@ class Game {
         player.HP = data.playerHP;
         $(`.player-${ data.playerId }`).text(player.HP);
       }
+    });
+  }
+
+  setUpTimer() {
+    socket.on('countDown', data => {
+      console.log('got hereeee counting down');
+
+      $('#timer').text(data.timer);
+    });
+  }
+
+  setUpGameOver() {
+    socket.on('gameOver', data => {
+      Crafty.scene('GameOver');
+    });
+  }
+
+  setUpAddBall() {
+    socket.on('addBall', data => {
+      Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
     });
   }
 }

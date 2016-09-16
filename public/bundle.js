@@ -132,16 +132,31 @@
 	      (0, _canvas2.default)(Crafty, _client_model2.default);
 	      Crafty.background('#000000');
 	
+	      var game = this;
 	      Crafty.scene('Loading', function () {
-	        _this.setUpLoadingScene.bind(_this)();
+	        game.setUpLoadingScene.bind(game)();
+	        this.startGame = this.bind('KeyDown', function (e) {
+	          if (e.keyCode === Crafty.keys.S) {
+	            socket.emit('startNewGame');
+	          }
+	        });
+	      }, function () {
+	        this.unbind('KeyDown', this.startGame);
 	      });
 	
-	      Crafty.scene('Game', function (players) {
-	        _this.setUpNewGame(players);
+	      Crafty.scene('Game', function (data) {
+	        _this.setUpNewGame(data);
 	        _this.setUpPlayersMove();
 	        _this.setUpPlacingWeapons();
 	        _this.setUpCreateDamage();
 	        _this.setUpHPChange();
+	        _this.setUpTimer();
+	        _this.setUpGameOver();
+	        _this.setUpAddBall();
+	      });
+	
+	      Crafty.scene('GameOver', function () {
+	        Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('Game Over').textColor('white');
 	      });
 	
 	      Crafty.scene('Loading');
@@ -151,11 +166,7 @@
 	    value: function setUpLoadingScene() {
 	      var _this2 = this;
 	
-	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white').bind('KeyDown', function (e) {
-	        if (e.keyCode === Crafty.keys.S) {
-	          socket.emit('startNewGame');
-	        }
-	      });
+	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
 	
 	      var playerTextY = 50;
 	      socket.on('connected', function (data) {
@@ -185,26 +196,25 @@
 	      });
 	
 	      socket.on('startNewGame', function (data) {
-	        Crafty.scene('Game', data.players);
+	        Crafty.scene('Game', data);
 	      });
 	    }
 	  }, {
 	    key: 'setUpNewGame',
-	    value: function setUpNewGame(players) {
+	    value: function setUpNewGame(data) {
 	      var _this3 = this;
 	
-	      players.forEach(function (playerInfo) {
+	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
-	          console.log('got here... ever?');
 	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).color(playerInfo.playerColor).bindingKeyEvents();
 	
-	          $('#scoreboard').append('<li class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + player.HP + '\n                                 </li>');
+	          $('#scoreboard').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + player.HP + '\n                                 </div>');
 	
 	          _this3.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(players.playerId, playerInfo.playerColor).color(playerInfo.playerColor);
+	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(data.players.playerId, playerInfo.playerColor).color(playerInfo.playerColor);
 	
-	          $('#scoreboard').append('<li class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + otherPlayer.HP + '\n                                 </li>');
+	          $('#scoreboard').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + otherPlayer.HP + '\n                                 </div>');
 	
 	          _this3.players[playerInfo.playerId] = otherPlayer;
 	        }
@@ -215,6 +225,8 @@
 	          this.board.grid[i][j].drawWalls(Crafty);
 	        }
 	      }
+	
+	      $('#scoreboard').append('<div id=\'timer\'>' + data.timer + '</div>');
 	    }
 	
 	    // setUpAddNewPlayer() {
@@ -279,6 +291,29 @@
 	        }
 	      });
 	    }
+	  }, {
+	    key: 'setUpTimer',
+	    value: function setUpTimer() {
+	      socket.on('countDown', function (data) {
+	        console.log('got hereeee counting down');
+	
+	        $('#timer').text(data.timer);
+	      });
+	    }
+	  }, {
+	    key: 'setUpGameOver',
+	    value: function setUpGameOver() {
+	      socket.on('gameOver', function (data) {
+	        Crafty.scene('GameOver');
+	      });
+	    }
+	  }, {
+	    key: 'setUpAddBall',
+	    value: function setUpAddBall() {
+	      socket.on('addBall', function (data) {
+	        Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+	      });
+	    }
 	  }]);
 	
 	  return Game;
@@ -296,6 +331,7 @@
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(6);
 	var createSideBarComponent = __webpack_require__(7);
+	var createBallComponent = __webpack_require__(11);
 	
 	module.exports = function (Crafty, model) {
 	  Crafty.init(500, 500);
@@ -303,6 +339,7 @@
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
 	  createWeaponComponent(Crafty);
+	  createBallComponent(Crafty);
 	};
 
 /***/ },
@@ -446,10 +483,12 @@
 	
 	      this.bind('EnterFrame', function () {
 	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
+	          console.log('getting hereeeeeeeeeeeeeee');
 	          this.socket.emit('updatePos', {
 	            playerId: this.playerId,
 	            charMove: this.charMove
 	          });
+	          console.log('getting here after socket');
 	        }
 	      });
 	
@@ -851,6 +890,22 @@
 	}();
 	
 	module.exports = Tile;
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('Ball', {
+	    init: function init() {
+	      this.requires('Actor, Color, Collision');
+	    }
+	  });
+	};
 
 /***/ }
 /******/ ]);

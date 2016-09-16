@@ -26,10 +26,12 @@ module.exports = function(Crafty, model) {
       this.bind('EnterFrame', function() {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
+              console.log('getting hereeeeeeeeeeeeeee');
           this.socket.emit('updatePos', {
             playerId: this.playerId,
             charMove: this.charMove
           });
+          console.log('getting here after socket');
         }
       });
 

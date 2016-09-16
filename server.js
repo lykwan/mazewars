@@ -31,8 +31,10 @@ let gameState = {
     4: null
   },
   weapons: {},
+  ball: null,
   seedRandomStr: "whatever",
-  board: null
+  board: null,
+  timer: 60
 };
 
 const constants = {
@@ -43,9 +45,10 @@ const constants = {
   WEAPON_RANGE: 10,
   DAMAGE_COLOR: 'purple',
   BUFFER_DAMAGE_TIME: 400,
-  WEAPON_SPAWN_TIME: 5000,
+  WEAPON_SPAWN_TIME: 10000,
   DAMAGE_ANIMATION_TIME: 100,
-  HP_DAMAGE: 10
+  HP_DAMAGE: 10,
+  BALL_COLOR: '#008080'
 };
 
 io.on('connection', function(socket) {
@@ -94,6 +97,7 @@ io.on('connection', function(socket) {
 
 function setUpStartGame(socket) {
   socket.on('startNewGame', data => {
+    console.log('starting new game');
       const players = Object.keys(gameState.players).filter((playerId) => {
         return gameState.players[playerId] !== null;
       }).map(playerId => {
@@ -107,16 +111,19 @@ function setUpStartGame(socket) {
 
       if (players.length >= 2) {
         io.emit('startNewGame', {
-          players: players
+          players: players,
+          timer: gameState.timer
         });
       }
 
+      addBall(socket);
       setUpUpdatePos(socket);
       setUpPickUpWeapon(socket);
       setUpShootWeapon(socket);
+      setUpTimer(socket);
       addWeapon(socket);
 
-  }, 10000);
+  });
 }
 
 // function extractPlayersInfo() {
@@ -130,6 +137,46 @@ function setUpStartGame(socket) {
 //   return playersInfo;
 // }
 
+function addBall(socket) {
+  const col = Math.floor(mapGrid.NUM_COLS / 2);
+  const row = Math.floor(mapGrid.NUM_ROWS / 2);
+  gameState.ball =
+    Crafty.e('Ball')
+          .at(col, row)
+          .onHit('Player', pickUpBall);
+  io.emit('addBall', {
+    col: col,
+    row: row,
+    ballColor: constants.BALL_COLOR
+  });
+}
+
+function pickUpBall(socket) {
+
+}
+
+function setUpTimer(socket) {
+  gameState.timer--;
+  let intervalId = setInterval(() => {
+    io.emit('countDown', {
+      timer: gameState.timer
+    });
+
+
+    if (gameState.timer <= 0) {
+      clearInterval(intervalId);
+      gameOver(socket);
+    }
+
+    gameState.timer--;
+  }, 1000);
+}
+
+function gameOver(socket) {
+  io.emit('gameOver', {
+
+  });
+}
 
 function drawBoard() {
   if (!gameState.board) {
@@ -156,6 +203,7 @@ function setUpDisconnect(socket, playerId) {
 
 function setUpUpdatePos(socket) {
   socket.on('updatePos', function(data) {
+    console.log(data);
     let movingPlayer = gameState.players[data.playerId];
     if (data.charMove.left) {
       movingPlayer.x -= movingPlayer.charSpeed;
@@ -321,7 +369,6 @@ function shootBFSWeapon(player) {
 }
 
 function shootDFSWeapon(player) {
-  console.log('dfs');
   let damageCells = [];
   let col = player.getCol();
   let row = player.getRow();
@@ -345,7 +392,6 @@ function shootDFSWeapon(player) {
     }
   }
 
-  console.log(damageCells);
   return damageCells;
 }
 
