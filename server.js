@@ -121,8 +121,11 @@ function setUpStartGame(socket) {
         });
       }
 
+    const col = Math.floor(mapGrid.NUM_COLS / 2);
+    const row = Math.floor(mapGrid.NUM_ROWS / 2);
+
+    addBall(col, row);
     addWeapon();
-    addBall();
     addTimer();
 
   });
@@ -139,9 +142,7 @@ function setUpStartGame(socket) {
 //   return playersInfo;
 // }
 
-function addBall() {
-  const col = Math.floor(mapGrid.NUM_COLS / 2);
-  const row = Math.floor(mapGrid.NUM_ROWS / 2);
+function addBall(col, row) {
   gameState.ball =
     Crafty.e('Ball')
           .at(col, row)
@@ -173,7 +174,7 @@ function setBallTime(player) {
       clearInterval(intervalId);
     }
 
-    io.to(player.playerId).emit('setBallTime', {
+    io.to(player.playerId).emit('showBallRecord', {
       currentBallHoldingTime: player.currentBallHoldingTime,
       longestSecsHoldingBall: player.longestSecsHoldingBall
     });
@@ -481,6 +482,9 @@ function lowerHP(damageEntity) {
       if (!player.hasTakenDamage &&
         parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
         player.HP -= constants.HP_DAMAGE;
+        if (player.HP <= 0) {
+          respawnPlayer(player);
+        }
         bufferDamageTime(player);
         io.emit('HPChange', {
           playerId: player.playerId,
@@ -489,6 +493,24 @@ function lowerHP(damageEntity) {
       }
     });
   }
+}
+
+function respawnPlayer(player) {
+  player.HP = 100;
+  if (player.playerId === gameState.ballHolder.playerId) {
+    addBall(player.getCol(), player.getRow());
+    io.emit('removeBall', {
+      playerId: player.playerId
+    });
+  }
+  player.at(0, 0);
+
+  io.emit('updatePos', {
+    playerId: player.playerId,
+    x: player.x,
+    y: player.y
+  });
+
 }
 
 function bufferDamageTime(player) {

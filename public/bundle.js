@@ -155,6 +155,7 @@
 	        _this.setUpGameOver();
 	        _this.setUpAddBall();
 	        _this.setUpShowBall();
+	        _this.setUpShowBallRecord();
 	      });
 	
 	      Crafty.scene('GameOver', function () {
@@ -233,6 +234,7 @@
 	      }
 	
 	      $('#scoreboard').append('<div id=\'timer\'>' + data.timer + '</div>');
+	      $('#scoreboard').append('<div id=\'self-record\'>\n                                Longest Duration Time: 0\n                             </div>');
 	    }
 	
 	    // setUpAddNewPlayer() {
@@ -330,9 +332,19 @@
 	      socket.on('showBall', function (data) {
 	        _this8.ball.destroy();
 	        _this8.players[data.playerId].pickUpBall();
-	        // if (data.playerId === data.selfId) {
-	        //
-	        // }
+	      });
+	
+	      socket.on('removeBall', function (data) {
+	        _this8.players[data.playerId].color(_this8.players[data.playerId].playerColor);
+	      });
+	    }
+	  }, {
+	    key: 'setUpShowBallRecord',
+	    value: function setUpShowBallRecord() {
+	      socket.on('showBallRecord', function (data) {
+	        $('#self-record').html('<span>\n                Longest Duration Time: ' + data.longestSecsHoldingBall + '\n               </span>\n               <span>\n                Current Duration Time: ' + data.currentBallHoldingTime + '\n               </span>');
+	
+	        $('#ball-record');
 	      });
 	    }
 	  }]);
@@ -491,6 +503,7 @@
 	      this.hasTakenDamage = false;
 	      this.longestSecsHoldingBall = 0;
 	      this.currentBallHoldingTime = 0;
+	      this.weaponType = null;
 	      // this.hasBall = false;
 	    },
 	
@@ -534,7 +547,7 @@
 	          this.pickUpWeapon();
 	        }
 	
-	        if (e.keyCode === Crafty.keys.X) {
+	        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
 	          this.shootWeapon();
 	        }
 	      });

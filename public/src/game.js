@@ -55,6 +55,7 @@ class Game {
       this.setUpGameOver();
       this.setUpAddBall();
       this.setUpShowBall();
+      this.setUpShowBallRecord();
     });
 
     Crafty.scene('GameOver', () => {
@@ -157,6 +158,9 @@ class Game {
     }
 
     $('#scoreboard').append(`<div id='timer'>${ data.timer }</div>`);
+    $('#scoreboard').append(`<div id='self-record'>
+                                Longest Duration Time: 0
+                             </div>`);
   }
 
   // setUpAddNewPlayer() {
@@ -242,9 +246,25 @@ class Game {
     socket.on('showBall', data => {
       this.ball.destroy();
       this.players[data.playerId].pickUpBall();
-      // if (data.playerId === data.selfId) {
-      //
-      // }
+    });
+
+    socket.on('removeBall', data => {
+      this.players[data.playerId]
+                  .color(this.players[data.playerId].playerColor);
+    });
+  }
+
+  setUpShowBallRecord() {
+    socket.on('showBallRecord', data => {
+      $('#self-record')
+        .html(`<span>
+                Longest Duration Time: ${ data.longestSecsHoldingBall }
+               </span>
+               <span>
+                Current Duration Time: ${ data.currentBallHoldingTime }
+               </span>`);
+
+      $('#ball-record')
     });
   }
 }
