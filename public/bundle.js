@@ -365,9 +365,14 @@
 	var createWeaponComponent = __webpack_require__(6);
 	var createSideBarComponent = __webpack_require__(7);
 	var createBallComponent = __webpack_require__(11);
+	var Constants = __webpack_require__(4);
+	var mapGrid = Constants.mapGrid;
 	
 	module.exports = function (Crafty, model) {
-	  Crafty.init(500, 500);
+	  var width = mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
+	  var height = mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+	
+	  Crafty.init(width, height);
 	
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
@@ -458,13 +463,13 @@
 	'use strict';
 	
 	var mapGrid = {
-	  NUM_ROWS: 8,
-	  NUM_COLS: 8,
+	  NUM_ROWS: 10,
+	  NUM_COLS: 10,
 	  WALL_THICKNESS: 3,
-	  TILE_WIDTH: 50,
-	  TILE_HEIGHT: 50,
-	  PLAYER_WIDTH: 30,
-	  PLAYER_HEIGHT: 30
+	  TILE_WIDTH: 40,
+	  TILE_HEIGHT: 40,
+	  PLAYER_WIDTH: 20,
+	  PLAYER_HEIGHT: 20
 	};
 	
 	var wallDirection = {
