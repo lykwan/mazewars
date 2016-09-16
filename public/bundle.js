@@ -156,10 +156,13 @@
 	        _this.setUpAddBall();
 	        _this.setUpShowBall();
 	        _this.setUpShowBallRecord();
+	        _this.setUpPickUpWeapon();
 	      });
 	
-	      Crafty.scene('GameOver', function () {
+	      Crafty.scene('GameOver', function (data) {
 	        Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('Game Over').textColor('white');
+	
+	        Crafty.e('2D, DOM, Text').attr({ x: 50, y: 50, w: 400 }).text('player ' + data.winnerId + '\n                has won with ' + data.winnerScore + ' secs').textColor('white');
 	      });
 	
 	      Crafty.scene('Loading');
@@ -170,6 +173,26 @@
 	      var _this2 = this;
 	
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
+	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when there are more than 2 people in the room').textColor('white');
+	
+	      // Crafty.load(['../assets/blue.png',
+	      //              '../assets/green.png',
+	      //              '../assets/red.png',
+	      //              '../assets/yellow.png'],
+	      //   function() {
+	      //     Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
+	      //     Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
+	      //     Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
+	      //     Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
+	      //   });
+	
+	      Crafty.sprite("../assets/red.png", { spr_red: [0, 0, 174, 116] });
+	      Crafty.sprite("../assets/green.png", { spr_green: [0, 0, 166, 108] });
+	      Crafty.sprite("../assets/blue.png", { spr_blue: [0, 0, 154, 100] });
+	      Crafty.sprite("../assets/yellow.png", { spr_yellow: [0, 0, 167, 128] });
+	      Crafty.sprite("../assets/ball.png", { spr_ball: [0, 0, 144, 144] });
+	      Crafty.sprite("../assets/bfs_weapon.png", { spr_bfs: [0, 0, 144, 102] });
+	      Crafty.sprite("../assets/dfs_weapon.png", { spr_dfs: [0, 0, 288, 88] });
 	
 	      var playerTextY = 50;
 	      socket.on('connected', function (data) {
@@ -211,17 +234,42 @@
 	    value: function setUpNewGame(data) {
 	      var _this3 = this;
 	
+	      $('#scoreboard').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
+	      $('#scoreboard').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
+	      $('#scoreboard').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                             </div>');
+	      $('#scoreboard').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
+	
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
-	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).color(playerInfo.playerColor).autoPickUpBall().bindingKeyEvents();
+	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).autoPickUpBall().bindingKeyEvents();
 	
-	          $('#scoreboard').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + player.HP + '\n                                 </div>');
+	          if (player.playerColor === 'red') {
+	            player.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (player.playerColor === 'green') {
+	            player.addComponent('spr_green').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (player.playerColor === 'blue') {
+	            player.addComponent('spr_blue').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (player.playerColor === 'yellow') {
+	            player.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          }
+	
+	          $('#hp').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </div>');
 	
 	          _this3.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(data.players.playerId, playerInfo.playerColor).color(playerInfo.playerColor);
+	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(data.players.playerId, playerInfo.playerColor);
 	
-	          $('#scoreboard').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + otherPlayer.HP + '\n                                 </div>');
+	          if (otherPlayer.playerColor === 'red') {
+	            otherPlayer.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (otherPlayer.playerColor === 'green') {
+	            otherPlayer.addComponent('spr_green').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (otherPlayer.playerColor === 'blue') {
+	            otherPlayer.addComponent('spr_blue').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          } else if (otherPlayer.playerColor === 'yellow') {
+	            otherPlayer.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          }
+	
+	          $('#hp').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </div>');
 	
 	          _this3.players[playerInfo.playerId] = otherPlayer;
 	        }
@@ -233,8 +281,10 @@
 	        }
 	      }
 	
-	      $('#scoreboard').append('<div id=\'timer\'>' + data.timer + '</div>');
-	      $('#scoreboard').append('<div id=\'self-record\'>\n                                Longest Duration Time: 0\n                             </div>');
+	      // Crafty.sprite('assets/weapons.png', {
+	      //   spr_bfs: [0, 0],
+	      //   spr_dfs: [0, 1]
+	      // });
 	    }
 	
 	    // setUpAddNewPlayer() {
@@ -270,7 +320,13 @@
 	      var _this5 = this;
 	
 	      socket.on('addWeapon', function (data) {
-	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.weaponId, data.type).color(data.color);
+	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.weaponId, data.type);
+	
+	        if (data.type === 'BFS') {
+	          weapon.addComponent('spr_bfs').attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
+	        } else if (data.type === 'DFS') {
+	          weapon.addComponent('spr_dfs').attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+	        }
 	        _this5.weapons[data.weaponId] = weapon;
 	      });
 	
@@ -282,20 +338,22 @@
 	  }, {
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
+	      var _this6 = this;
+	
 	      socket.on('createDamage', function (data) {
-	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).setUpCreator(data.creatorId).disappearAfter().color('#7ec0ee', 0.5);
+	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter().color(_this6.players[data.creatorId].playerColor, 0.5);
 	      });
 	    }
 	  }, {
 	    key: 'setUpHPChange',
 	    value: function setUpHPChange() {
-	      var _this6 = this;
+	      var _this7 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        var player = _this6.players[data.playerId];
+	        var player = _this7.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
-	          $('.player-' + data.playerId).text(player.HP);
+	          $('.player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
 	        }
 	      });
 	    }
@@ -303,48 +361,61 @@
 	    key: 'setUpTimer',
 	    value: function setUpTimer() {
 	      socket.on('countDown', function (data) {
-	        console.log('got hereeee counting down');
-	
-	        $('#timer').text(data.timer);
+	        $('#timer-countdown').text(data.timer);
 	      });
 	    }
 	  }, {
 	    key: 'setUpGameOver',
 	    value: function setUpGameOver() {
 	      socket.on('gameOver', function (data) {
-	        Crafty.scene('GameOver');
+	        Crafty.scene('GameOver', data);
 	      });
 	    }
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this7 = this;
+	      var _this8 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this7.ball = Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+	        _this8.ball = Crafty.e('Ball').at(data.col, data.row).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this8 = this;
+	      var _this9 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this8.ball.destroy();
-	        _this8.players[data.playerId].pickUpBall();
+	        _this9.ball.destroy();
+	        _this9.players[data.playerId].pickUpBall();
 	      });
 	
 	      socket.on('removeBall', function (data) {
-	        _this8.players[data.playerId].color(_this8.players[data.playerId].playerColor);
+	        _this9.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBallRecord',
 	    value: function setUpShowBallRecord() {
 	      socket.on('showBallRecord', function (data) {
-	        $('#self-record').html('<span>\n                Longest Duration Time: ' + data.longestSecsHoldingBall + '\n               </span>\n               <span>\n                Current Duration Time: ' + data.currentBallHoldingTime + '\n               </span>');
+	        $('#self-record').html('\n          <h2>Ball Duration</h2>\n          <span>\n            Longest Duration Time: ' + data.longestSecsHoldingBall + '\n          </span>\n          <span>\n            Current Duration Time: ' + data.currentBallHoldingTime + '\n          </span>');
 	
-	        $('#ball-record');
+	        // $('#ball-record')
+	      });
+	    }
+	  }, {
+	    key: 'setUpPickUpWeapon',
+	    value: function setUpPickUpWeapon() {
+	      var _this10 = this;
+	
+	      socket.on('pickUpWeapon', function (data) {
+	        _this10.players[_this10.selfId].weaponType = data.type;
+	        $('#weapon-type').text(data.type);
+	        if (data.type === 'BFS') {
+	          $('#weapon-img').append('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
+	        } else if (data.type === 'DFS') {
+	          $('#weapon-img').append('<img src=\'../assets/dfs_weapon.png\'\n                                      height=\'50\'></img>');
+	        }
 	      });
 	    }
 	  }]);
@@ -372,7 +443,7 @@
 	  var width = mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
 	  var height = mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
 	
-	  Crafty.init(width, height);
+	  Crafty.init(width, height, 'stage');
 	
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
@@ -419,6 +490,7 @@
 	  Crafty.c('Wall', {
 	    init: function init() {
 	      this.requires('2D, Canvas, Solid, Color, Collision');
+	      this.z = 10;
 	    },
 	
 	    wallDir: function wallDir(_wallDir) {
@@ -463,13 +535,19 @@
 	'use strict';
 	
 	var mapGrid = {
-	  NUM_ROWS: 10,
-	  NUM_COLS: 10,
+	  NUM_ROWS: 13,
+	  NUM_COLS: 13,
 	  WALL_THICKNESS: 3,
-	  TILE_WIDTH: 40,
-	  TILE_HEIGHT: 40,
-	  PLAYER_WIDTH: 20,
-	  PLAYER_HEIGHT: 20
+	  TILE_WIDTH: 45,
+	  TILE_HEIGHT: 45,
+	  PLAYER_WIDTH: 34,
+	  PLAYER_HEIGHT: 26,
+	  BALL_WIDTH: 40,
+	  BALL_HEIGHT: 40,
+	  DFS_WIDTH: 50,
+	  DFS_HEIGHT: 0.30 * 50,
+	  BFS_WIDTH: 40,
+	  BFS_HEIGHT: 0.70 * 40
 	};
 	
 	var wallDirection = {
@@ -502,7 +580,7 @@
 	module.exports = function (Crafty, model) {
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('Actor, Color, Collision, Text');
+	      this.requires('2D, DOM, Tile, Collision, Color');
 	      this.charSpeed = 2;
 	      this.HP = 100;
 	      this.hasTakenDamage = false;
@@ -533,7 +611,6 @@
 	            playerId: this.playerId,
 	            charMove: this.charMove
 	          });
-	          console.log('getting here after socket');
 	        }
 	      });
 	
@@ -597,22 +674,13 @@
 	    },
 	
 	    pickUpBall: function pickUpBall() {
-	      this.color('#76EEC6');
+	      this.color('white');
 	      return this;
 	    },
 	
 	    pickUpWeapon: function pickUpWeapon() {
-	      var _this2 = this;
-	
 	      this.socket.emit('pickUpWeapon', {
 	        playerId: this.playerId
-	      });
-	
-	      this.socket.on('pickUpWeapon', function (data) {
-	        _this2.weaponType = data.type;
-	        _this2.color('white');
-	        // const weaponDisplay = Crafty(this.weaponDisplayId);
-	        // weaponDisplay.createText(this.weaponType);
 	      });
 	    },
 	
@@ -625,7 +693,7 @@
 	
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
-	      this.requires('Actor, Color, Text');
+	      this.requires('2D, DOM, Tile, Color');
 	      this.HP = 100;
 	    },
 	
@@ -644,7 +712,7 @@
 	    },
 	
 	    pickUpBall: function pickUpBall() {
-	      this.color('#76EEC6');
+	      this.color('white');
 	      return this;
 	    }
 	
@@ -973,7 +1041,7 @@
 	module.exports = function (Crafty) {
 	  Crafty.c('Ball', {
 	    init: function init() {
-	      this.requires('Actor, Color, Collision');
+	      this.requires('Actor, spr_ball, Collision');
 	    }
 	  });
 	};

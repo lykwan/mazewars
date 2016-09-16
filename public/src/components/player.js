@@ -6,7 +6,7 @@ const wallDirection = Constants.wallDirection;
 module.exports = function(Crafty, model) {
   Crafty.c('Player', {
     init: function() {
-      this.requires('Actor, Color, Collision, Text');
+      this.requires('2D, DOM, Tile, Collision, Color');
       this.charSpeed = 2;
       this.HP = 100;
       this.hasTakenDamage = false;
@@ -38,7 +38,6 @@ module.exports = function(Crafty, model) {
             playerId: this.playerId,
             charMove: this.charMove
           });
-          console.log('getting here after socket');
         }
       });
 
@@ -99,7 +98,7 @@ module.exports = function(Crafty, model) {
     },
 
     pickUpBall: function() {
-      this.color('#76EEC6');
+      this.color('white');
       return this;
     },
 
@@ -108,12 +107,6 @@ module.exports = function(Crafty, model) {
         playerId: this.playerId
       });
 
-      this.socket.on('pickUpWeapon', data => {
-        this.weaponType = data.type;
-        this.color('white');
-        // const weaponDisplay = Crafty(this.weaponDisplayId);
-        // weaponDisplay.createText(this.weaponType);
-      });
     },
 
     shootWeapon: function() {
@@ -125,7 +118,7 @@ module.exports = function(Crafty, model) {
 
   Crafty.c('OtherPlayer', {
     init: function() {
-      this.requires('Actor, Color, Text');
+      this.requires('2D, DOM, Tile, Color');
       this.HP = 100;
     },
 
@@ -144,7 +137,7 @@ module.exports = function(Crafty, model) {
     },
 
     pickUpBall: function() {
-      this.color('#76EEC6');
+      this.color('white');
       return this;
     }
 

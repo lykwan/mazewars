@@ -1,7 +1,25 @@
 #scoreboard {
-  position: relative;
-  left: 600px;
   display: inline-block;
+  width: 200px;
+  height: 585px;
+  background-color: black;
+}
+
+#game span {
+  display: block;
+}
+
+#stage {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#instructions {
+  display: inline-block;
+  background-color: black;
+  width: 200px;
+  height: 585px;
+  vertical-align: top;
 }
 
 .player-1 {
@@ -12,6 +30,20 @@
   color: red;
 }
 
+.player-3 {
+  color: yellow;
+}
+
+.player-4 {
+  color: green;
+}
+
 body {
   overflow: hidden;
+}
+
+#game {
+  margin: auto;
+  width: 1000px;
+  color: white;
 }
