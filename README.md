@@ -24,6 +24,6 @@ There are two types of weapons: BFS range, and DFS range. BFS weapon finds the p
 This game is implemented with a server to serve multiple clients playing the game at once. This means that the game was built on both the server-side, and the client-side. The game state is stored mainly on the server-side, such as player movements, player catching the ball, and player scores. This is to communicate game state across all clients, and to prevent cheating from clients.
 
 ## Technologies used
-Node.js
-Craftyjs
-Socket.io
+- Node.js
+- Craftyjs
+- Socket.io
