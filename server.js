@@ -93,8 +93,7 @@ io.on('connection', function(socket) {
 });
 
 function setUpStartGame(socket) {
-  setTimeout(() => {
-    // socket.on('startNewGame', data => {
+  socket.on('startNewGame', data => {
       const players = Object.keys(gameState.players).filter((playerId) => {
         return gameState.players[playerId] !== null;
       }).map(playerId => {
@@ -117,7 +116,6 @@ function setUpStartGame(socket) {
       setUpShootWeapon(socket);
       addWeapon(socket);
 
-    // });
   }, 10000);
 }
 
@@ -207,9 +205,7 @@ function addWeapon(socket) {
 
     const randomIdx =
       Math.floor(Math.random() * Object.keys(weaponTypes).length);
-    console.log(randomIdx);
     const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
-    console.log(type);
     const weapon = Crafty.e('Weapon')
                          .at(col, row)
                          .setUp(gameState.weaponId, type);
@@ -251,12 +247,10 @@ function setUpPickUpWeapon(socket) {
 function setUpShootWeapon(socket) {
   socket.on('shootWeapon', data => {
     const player = gameState.players[data.playerId];
-    console.log(player.weaponType);
     let damageCells = [];
     if (player.weaponType === weaponTypes.BFS) {
       damageCells = shootBFSWeapon(player);
     } else if (player.weaponType === weaponTypes.DFS) {
-      console.log('got here');
       damageCells = shootDFSWeapon(player);
     }
 
@@ -323,7 +317,6 @@ function shootBFSWeapon(player) {
     remainingDistance--;
   }
 
-  console.log(damageCells);
   return damageCells;
 }
 

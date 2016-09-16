@@ -26,10 +26,6 @@ module.exports = function(Crafty, model) {
       this.bind('EnterFrame', function() {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
-          console.log('updating Pos');
-          console.log(this.socket);
-          console.log(this.playerId);
-          console.log(this.charMove);
           this.socket.emit('updatePos', {
             playerId: this.playerId,
             charMove: this.charMove

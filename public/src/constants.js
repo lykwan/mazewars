@@ -15,7 +15,7 @@ const wallDirection = {
 
 const weaponTypes = {
   BFS: 'BFS',
-  DSF: 'DFS'
+  DFS: 'DFS'
 };
 
 module.exports = {
