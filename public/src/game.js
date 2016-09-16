@@ -55,7 +55,7 @@ class Game {
             .textColor('white')
             .bind('KeyDown', function(e) {
               if (e.keyCode === Crafty.keys.S) {
-                // socket.emit('startNewGame');
+                socket.emit('startNewGame');
               }
             });
 

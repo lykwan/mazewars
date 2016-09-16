@@ -153,7 +153,7 @@
 	
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white').bind('KeyDown', function (e) {
 	        if (e.keyCode === Crafty.keys.S) {
-	          // socket.emit('startNewGame');
+	          socket.emit('startNewGame');
 	        }
 	      });
 	
@@ -404,7 +404,7 @@
 	
 	var weaponTypes = {
 	  BFS: 'BFS',
-	  DSF: 'DFS'
+	  DFS: 'DFS'
 	};
 	
 	module.exports = {
@@ -446,10 +446,6 @@
 	
 	      this.bind('EnterFrame', function () {
 	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
-	          console.log('updating Pos');
-	          console.log(this.socket);
-	          console.log(this.playerId);
-	          console.log(this.charMove);
 	          this.socket.emit('updatePos', {
 	            playerId: this.playerId,
 	            charMove: this.charMove
