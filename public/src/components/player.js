@@ -12,6 +12,7 @@ module.exports = function(Crafty, model) {
       this.hasTakenDamage = false;
       this.longestSecsHoldingBall = 0;
       this.currentBallHoldingTime = 0;
+      this.weaponType = null;
       // this.hasBall = false;
     },
 
@@ -56,7 +57,7 @@ module.exports = function(Crafty, model) {
           this.pickUpWeapon();
         }
 
-        if (e.keyCode === Crafty.keys.X) {
+        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
           this.shootWeapon();
         }
       });
