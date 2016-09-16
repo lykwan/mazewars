@@ -18,6 +18,7 @@ class Game {
     this.playersInfo = {};
     this.board = null;
     this.selfId = null;
+    this.ball = null;
   }
 
   width() {
@@ -53,6 +54,7 @@ class Game {
       this.setUpTimer();
       this.setUpGameOver();
       this.setUpAddBall();
+      this.setUpShowBall();
     });
 
     Crafty.scene('GameOver', () => {
@@ -125,6 +127,7 @@ class Game {
                            .setUp(playerInfo.playerId, playerInfo.playerColor)
                            .setUpSocket(socket)
                            .color(playerInfo.playerColor)
+                           .autoPickUpBall()
                            .bindingKeyEvents();
 
         $('#scoreboard').append(`<div class='player-${ playerInfo.playerId }'>
@@ -231,7 +234,17 @@ class Game {
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+      this.ball = Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+    });
+  }
+
+  setUpShowBall() {
+    socket.on('showBall', data => {
+      this.ball.destroy();
+      this.players[data.playerId].pickUpBall();
+      // if (data.playerId === data.selfId) {
+      //
+      // }
     });
   }
 }

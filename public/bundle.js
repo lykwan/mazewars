@@ -112,6 +112,7 @@
 	    this.playersInfo = {};
 	    this.board = null;
 	    this.selfId = null;
+	    this.ball = null;
 	  }
 	
 	  _createClass(Game, [{
@@ -153,6 +154,7 @@
 	        _this.setUpTimer();
 	        _this.setUpGameOver();
 	        _this.setUpAddBall();
+	        _this.setUpShowBall();
 	      });
 	
 	      Crafty.scene('GameOver', function () {
@@ -210,7 +212,7 @@
 	
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
-	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).color(playerInfo.playerColor).bindingKeyEvents();
+	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).color(playerInfo.playerColor).autoPickUpBall().bindingKeyEvents();
 	
 	          $('#scoreboard').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  ' + player.HP + '\n                                 </div>');
 	
@@ -314,8 +316,23 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
+	      var _this7 = this;
+	
 	      socket.on('addBall', function (data) {
-	        Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+	        _this7.ball = Crafty.e('Ball').at(data.col, data.row).color(data.ballColor);
+	      });
+	    }
+	  }, {
+	    key: 'setUpShowBall',
+	    value: function setUpShowBall() {
+	      var _this8 = this;
+	
+	      socket.on('showBall', function (data) {
+	        _this8.ball.destroy();
+	        _this8.players[data.playerId].pickUpBall();
+	        // if (data.playerId === data.selfId) {
+	        //
+	        // }
 	      });
 	    }
 	  }]);
@@ -472,6 +489,9 @@
 	      this.charSpeed = 2;
 	      this.HP = 100;
 	      this.hasTakenDamage = false;
+	      this.longestSecsHoldingBall = 0;
+	      this.currentBallHoldingTime = 0;
+	      // this.hasBall = false;
 	    },
 	
 	    getCol: function getCol() {
@@ -543,16 +563,36 @@
 	      return this;
 	    },
 	
-	    pickUpWeapon: function pickUpWeapon() {
+	    autoPickUpBall: function autoPickUpBall() {
 	      var _this = this;
+	
+	      // this.socket.on('pickUpBall', () => {
+	      //   this.hasBall = true;
+	      // });
+	      //
+	      this.socket.on('setBallTime', function (data) {
+	        _this.currentBallHoldingTime = data.currentBallHoldingTime;
+	        _this.longestSecsHoldingBall = data.longestSecsHoldingBall;
+	      });
+	
+	      return this;
+	    },
+	
+	    pickUpBall: function pickUpBall() {
+	      this.color('#76EEC6');
+	      return this;
+	    },
+	
+	    pickUpWeapon: function pickUpWeapon() {
+	      var _this2 = this;
 	
 	      this.socket.emit('pickUpWeapon', {
 	        playerId: this.playerId
 	      });
 	
 	      this.socket.on('pickUpWeapon', function (data) {
-	        _this.weaponType = data.type;
-	        _this.color('white');
+	        _this2.weaponType = data.type;
+	        _this2.color('white');
 	        // const weaponDisplay = Crafty(this.weaponDisplayId);
 	        // weaponDisplay.createText(this.weaponType);
 	      });
@@ -567,7 +607,7 @@
 	
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
-	      this.requires('Actor, Color');
+	      this.requires('Actor, Color, Text');
 	      this.HP = 100;
 	    },
 	
@@ -583,7 +623,13 @@
 	      }
 	
 	      return this;
+	    },
+	
+	    pickUpBall: function pickUpBall() {
+	      this.color('#76EEC6');
+	      return this;
 	    }
+	
 	  });
 	};
 
