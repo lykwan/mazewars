@@ -26,6 +26,10 @@ module.exports = function(Crafty, model) {
       this.bind('EnterFrame', function() {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
+          console.log('updating Pos');
+          console.log(this.socket);
+          console.log(this.playerId);
+          console.log(this.charMove);
           this.socket.emit('updatePos', {
             playerId: this.playerId,
             charMove: this.charMove
@@ -66,7 +70,7 @@ module.exports = function(Crafty, model) {
     setUp: function(playerId, playerColor) {
       this.playerId = playerId;
       if (playerColor) {
-        this.color(playerColor);
+        this.playerColor = playerColor;
       }
       return this;
     },
@@ -106,7 +110,7 @@ module.exports = function(Crafty, model) {
       this.playerId = playerId;
 
       if (playerColor) {
-        this.color(playerColor);
+        this.playerColor = playerColor;
       }
 
       if (weaponDisplayId) {

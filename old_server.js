@@ -23,23 +23,16 @@ createCanvas(Crafty, ServerModel);
 var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
 
 let gameState = {
+  playerId: 0,
   weaponId: 0,
-  players: {
-    1: null,
-    2: null,
-    3: null,
-    4: null
-  },
+  players: {},
   weapons: {},
   seedRandomStr: "whatever",
   board: null
 };
 
 const constants = {
-  WEAPON_COLORS: {
-    BFS: '#ffa500',
-    DFS: '#551a8b'
-  },
+  WEAPON_COLOR: 'orange',
   WEAPON_RANGE: 10,
   DAMAGE_COLOR: 'purple',
   BUFFER_DAMAGE_TIME: 400,
@@ -49,89 +42,32 @@ const constants = {
 };
 
 io.on('connection', function(socket) {
-  console.log(`a user connected`);
-
-  let selfId;
-  for (let i = 1; i <= Object.keys(gameState.players).length; i++) {
-    if (gameState.players[i] === null) {
-      selfId = i;
-      break;
-    }
-  }
-
-  if (selfId === undefined) {
-    return;
-  }
-
-  socket.emit('connected', { selfId: selfId,
+  console.log('a user connected');
+  socket.emit('connected', { selfId: gameState.playerId,
                              seedRandomStr: gameState.seedRandomStr,
-                             playerColor: colors[selfId - 1]
+                             playerColor: colors[gameState.playerId],
+                             playerIds: Object.keys(gameState.players)
                            });
 
-  Object.keys(gameState.players).forEach((id) => {
-     if (gameState.players[id] !== null) {
-       socket.emit('addNewPlayer', {
-         playerId: id,
-         playerColor: colors[id - 1]
-       });
-     }
-  });
-
-  socket.join(selfId);
+  socket.join(gameState.playerId);
 
   drawBoard();
-  setUpAddNewPlayer(socket, selfId, colors[selfId - 1]);
+  setUpAddNewPlayer(socket);
 
   let player =  Crafty.e('Player')
                       .at(0, 0)
-                      .setUp(selfId, colors[selfId - 1]);
+                      .setUp(gameState.playerId);
 
-  gameState.players[selfId] = player;
+  gameState.players[gameState.playerId] = player;
+  gameState.playerId++;
 
-  setUpDisconnect(socket, selfId);
-  setUpStartGame(socket);
+
+  setUpDisconnect(socket);
+  setUpUpdatePos(socket);
+  setUpPickUpWeapon(socket);
+  setUpShootWeapon(socket);
+  addWeapon(socket);
 });
-
-function setUpStartGame(socket) {
-  setTimeout(() => {
-    // socket.on('startNewGame', data => {
-      const players = Object.keys(gameState.players).filter((playerId) => {
-        return gameState.players[playerId] !== null;
-      }).map(playerId => {
-        return {
-          playerId: playerId,
-          playerColor: gameState.players[playerId].playerColor,
-          playerPos: [gameState.players[playerId].getCol(),
-                      gameState.players[playerId].getRow()]
-        };
-      });
-
-      if (players.length >= 2) {
-        io.emit('startNewGame', {
-          players: players
-        });
-      }
-
-      setUpUpdatePos(socket);
-      setUpPickUpWeapon(socket);
-      setUpShootWeapon(socket);
-      addWeapon(socket);
-
-    // });
-  }, 10000);
-}
-
-// function extractPlayersInfo() {
-//   let playersInfo = {};
-//   Object.keys(gameState.players).forEach((id) => {
-//     if (gameState.players[id] !== null) {
-//       playersInfo[id] = colors[id];
-//     }
-//   });
-//
-//   return playersInfo;
-// }
-
 
 function drawBoard() {
   if (!gameState.board) {
@@ -145,14 +81,10 @@ function drawBoard() {
   }
 }
 
-function setUpDisconnect(socket, playerId) {
+function setUpDisconnect(socket) {
   socket.on('disconnect', function() {
     console.log('user disconnected');
-    gameState.players[playerId].destroy();
-    gameState.players[playerId] = null;
-    io.emit('othersDisconnected', {
-      playerId: playerId
-    });
+
   });
 }
 
@@ -189,10 +121,9 @@ function setUpUpdatePos(socket) {
   });
 }
 
-function setUpAddNewPlayer(socket, playerId, color) {
+function setUpAddNewPlayer(socket) {
   socket.broadcast.emit('addNewPlayer', {
-    playerId: playerId,
-    playerColor: color
+    playerId: gameState.playerId
   });
 }
 
@@ -205,11 +136,7 @@ function addWeapon(socket) {
       row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
     }
 
-    const randomIdx =
-      Math.floor(Math.random() * Object.keys(weaponTypes).length);
-    console.log(randomIdx);
-    const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
-    console.log(type);
+    const type = weaponTypes.DFS;
     const weapon = Crafty.e('Weapon')
                          .at(col, row)
                          .setUp(gameState.weaponId, type);
@@ -219,7 +146,7 @@ function addWeapon(socket) {
       x: col,
       y: row,
       type: type,
-      color: constants.WEAPON_COLORS[type],
+      color: constants.WEAPON_COLOR,
       weaponId: gameState.weaponId
     });
 
@@ -251,12 +178,10 @@ function setUpPickUpWeapon(socket) {
 function setUpShootWeapon(socket) {
   socket.on('shootWeapon', data => {
     const player = gameState.players[data.playerId];
-    console.log(player.weaponType);
     let damageCells = [];
     if (player.weaponType === weaponTypes.BFS) {
       damageCells = shootBFSWeapon(player);
     } else if (player.weaponType === weaponTypes.DFS) {
-      console.log('got here');
       damageCells = shootDFSWeapon(player);
     }
 
@@ -323,12 +248,10 @@ function shootBFSWeapon(player) {
     remainingDistance--;
   }
 
-  console.log(damageCells);
   return damageCells;
 }
 
 function shootDFSWeapon(player) {
-  console.log('dfs');
   let damageCells = [];
   let col = player.getCol();
   let row = player.getRow();
@@ -352,7 +275,6 @@ function shootDFSWeapon(player) {
     }
   }
 
-  console.log(damageCells);
   return damageCells;
 }
 

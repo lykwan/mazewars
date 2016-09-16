@@ -15,6 +15,9 @@ class Game {
   constructor() {
     this.players = {};
     this.weapons = {};
+    this.playersInfo = {};
+    this.board = null;
+    this.selfId = null;
   }
 
   width() {
@@ -33,100 +36,119 @@ class Game {
       this.setUpLoadingScene.bind(this)();
     });
 
-    Crafty.scene('Game', () => {
-      this.setUpConnection();
+    Crafty.scene('Game', (players) => {
+      this.setUpNewGame(players);
       this.setUpPlayersMove();
-      this.setUpAddNewPlayer();
       this.setUpPlacingWeapons();
       this.setUpCreateDamage();
       this.setUpHPChange();
     });
 
-    // Crafty.scene('Loading');
-
-    Crafty.scene('Game');
+    Crafty.scene('Loading');
   }
 
   setUpLoadingScene() {
     let loadingScene =
       Crafty.e('2D, DOM, Text')
-            .attr({ x: 0, y: 0 })
-            .text('A-maze Ball')
-            .textColor('white');
+            .attr({ x: 0, y: 0, w: 300 })
+            .text('A-maze Ball - Press s to start')
+            .textColor('white')
+            .bind('KeyDown', function(e) {
+              if (e.keyCode === Crafty.keys.S) {
+                // socket.emit('startNewGame');
+              }
+            });
 
     let playerTextY = 50;
     socket.on('connected', data => {
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY })
-            .text(data.selfId)
+      let playerText = Crafty.e('2D, DOM, Text')
+            .attr({ x: 50, y: playerTextY, w: 200 })
+            .text(`You are player ${data.selfId}`)
             .textColor(data.playerColor);
       playerTextY += 30;
-    });
-
-    socket.on('addNewPlayer', data => {
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY })
-            .text(`connected with ${ data.playerId }`)
-            .textColor('white');
-      playerTextY += 30;
-    });
-  }
-
-  setUpConnection() {
-    var colors = ['#7ec0ee', 'red', 'yellow', 'green'];
-    socket.on('connected', data => {
-      // let weaponDisplay = Crafty.e('WeaponDisplay')
-      //                           .attr({ x: 600, y: 300 })
-      //                           .createText(' ');
-      // let weaponDisplayId = weaponDisplay[0];
-      let player = Crafty.e('Player')
-                         .at(0, 0)
-                         .setUp(data.selfId, data.playerColor)
-                         .setUpSocket(socket)
-                         .bindingKeyEvents();
-
-      $('#scoreboard')
-        .append(`<li class='player-${ data.selfId }'>
-                    ${ player.HP }
-                </li>`);
-
-      data.playerIds.forEach(id => {
-        let otherPlayer = Crafty.e('OtherPlayer')
-                                .at(0, 0)
-                                .setUp(id, colors[id]);
-        $('#scoreboard')
-          .append(`<li class='player-${ id }'>
-                      ${ otherPlayer.HP }
-                  </li>`);
-        this.players[id] = otherPlayer;
-      });
-
-      this.players[data.selfId] = player;
       this.board =
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
+      this.playersInfo[data.selfId] = playerText;
+      this.selfId = data.selfId;
+    });
 
-      for (let i = 0; i < mapGrid.NUM_COLS; i++) {
-        for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
-          this.board.grid[i][j].drawWalls(Crafty);
-        }
+    socket.on('addNewPlayer', data => {
+      let playerText = Crafty.e('2D, DOM, Text')
+            .attr({ x: 50, y: playerTextY, w: 200 })
+            .text(`connected with player ${ data.playerId }`)
+            .textColor(data.playerColor);
+      playerTextY += 30;
+      this.playersInfo[data.playerId] = playerText;
+    });
+
+    socket.on('othersDisconnected', data => {
+      if (this.players[data.playerId]) {
+        this.players[data.playerId].destroy();
+        delete this.players[data.playerId];
       }
 
+      if (this.playersInfo[data.playerId]) {
+        this.playersInfo[data.playerId].destroy();
+        delete this.playersInfo[data.playerId];
+      }
+    });
+
+    socket.on('startNewGame', (data) => {
+      Crafty.scene('Game', data.players);
     });
   }
 
-  setUpAddNewPlayer() {
-    var colors = ['blue', 'red', 'yellow', 'green'];
-    socket.on('addNewPlayer', data => {
-      let otherPlayer = Crafty.e('OtherPlayer')
-                              .at(0, 0)
-                              .setUp(data.playerId, colors[data.playerId]);
-      $('#scoreboard')
-        .append(`<li class='player-${ data.playerId }'>
-                    ${ otherPlayer.HP }
-                </li>`);
-      this.players[data.playerId] = otherPlayer;
+  setUpNewGame(players) {
+    players.forEach(playerInfo => {
+      if (parseInt(playerInfo.playerId) === this.selfId) {
+        console.log('got here... ever?');
+        let player = Crafty.e('Player')
+                           .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
+                           .setUp(playerInfo.playerId, playerInfo.playerColor)
+                           .setUpSocket(socket)
+                           .color(playerInfo.playerColor)
+                           .bindingKeyEvents();
+
+        $('#scoreboard').append(`<li class='player-${ playerInfo.playerId }'>
+                                  ${ player.HP }
+                                 </li>`);
+
+        this.players[playerInfo.playerId] = player;
+      } else {
+        let otherPlayer =
+          Crafty.e('OtherPlayer')
+                .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
+                .setUp(players.playerId, playerInfo.playerColor)
+                .color(playerInfo.playerColor);
+
+        $('#scoreboard').append(`<li class='player-${ playerInfo.playerId }'>
+                                  ${ otherPlayer.HP }
+                                 </li>`);
+
+        this.players[playerInfo.playerId] = otherPlayer;
+      }
     });
+
+    for (let i = 0; i < mapGrid.NUM_COLS; i++) {
+      for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
+        this.board.grid[i][j].drawWalls(Crafty);
+      }
+    }
   }
+
+  // setUpAddNewPlayer() {
+  //   var colors = ['blue', 'red', 'yellow', 'green'];
+  //   socket.on('addNewPlayer', data => {
+  //     let otherPlayer = Crafty.e('OtherPlayer')
+  //                             .at(0, 0)
+  //                             .setUp(data.playerId, colors[data.playerId]);
+  //     $('#scoreboard')
+  //       .append(`<li class='player-${ data.playerId }'>
+  //                   ${ otherPlayer.HP }
+  //               </li>`);
+  //     this.players[data.playerId] = otherPlayer;
+  //   });
+  // }
 
   setUpPlayersMove() {
     socket.on('updatePos', data => {
