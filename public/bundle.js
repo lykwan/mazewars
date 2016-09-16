@@ -197,6 +197,10 @@
 	
 	      socket.on('startNewGame', function (data) {
 	        Crafty.scene('Game', data);
+	        // socket.emit('gotmessage', {
+	        //   msg: 'hellow world',
+	        //   playerId: this.selfId
+	        // });
 	      });
 	    }
 	  }, {
@@ -483,7 +487,10 @@
 	
 	      this.bind('EnterFrame', function () {
 	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
-	          console.log('getting hereeeeeeeeeeeeeee');
+	          // this.socket.emit('gotmessage', {
+	          //   msg: 'hellow world',
+	          //   playerId: this.playerId
+	          // });
 	          this.socket.emit('updatePos', {
 	            playerId: this.playerId,
 	            charMove: this.charMove

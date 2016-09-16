@@ -93,6 +93,10 @@ io.on('connection', function(socket) {
 
   setUpDisconnect(socket, selfId);
   setUpStartGame(socket);
+  setUpUpdatePos(socket);
+  setUpPickUpWeapon(socket);
+  setUpShootWeapon(socket);
+
 });
 
 function setUpStartGame(socket) {
@@ -116,12 +120,9 @@ function setUpStartGame(socket) {
         });
       }
 
-      addBall(socket);
-      setUpUpdatePos(socket);
-      setUpPickUpWeapon(socket);
-      setUpShootWeapon(socket);
-      setUpTimer(socket);
-      addWeapon(socket);
+    addWeapon();
+    addBall();
+    addTimer();
 
   });
 }
@@ -137,7 +138,7 @@ function setUpStartGame(socket) {
 //   return playersInfo;
 // }
 
-function addBall(socket) {
+function addBall() {
   const col = Math.floor(mapGrid.NUM_COLS / 2);
   const row = Math.floor(mapGrid.NUM_ROWS / 2);
   gameState.ball =
@@ -155,7 +156,7 @@ function pickUpBall(socket) {
 
 }
 
-function setUpTimer(socket) {
+function addTimer() {
   gameState.timer--;
   let intervalId = setInterval(() => {
     io.emit('countDown', {
@@ -165,14 +166,14 @@ function setUpTimer(socket) {
 
     if (gameState.timer <= 0) {
       clearInterval(intervalId);
-      gameOver(socket);
+      gameOver();
     }
 
     gameState.timer--;
   }, 1000);
 }
 
-function gameOver(socket) {
+function gameOver() {
   io.emit('gameOver', {
 
   });
@@ -202,6 +203,10 @@ function setUpDisconnect(socket, playerId) {
 }
 
 function setUpUpdatePos(socket) {
+  // socket.on('gotmessage', data => {
+  //   console.log(data.msg);
+  //   console.log(data.playerId);
+  // });
   socket.on('updatePos', function(data) {
     console.log(data);
     let movingPlayer = gameState.players[data.playerId];
@@ -242,7 +247,7 @@ function setUpAddNewPlayer(socket, playerId, color) {
   });
 }
 
-function addWeapon(socket) {
+function addWeapon() {
   setInterval(function() {
     let col = Math.floor(Math.random() * mapGrid.NUM_COLS);
     let row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
