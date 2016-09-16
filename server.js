@@ -33,7 +33,7 @@ const constants = {
   DAMAGE_ANIMATION_TIME: 100,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
-  GAME_DURATION: 30
+  GAME_DURATION: 150
 };
 
 let gameState = {
