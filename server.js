@@ -550,7 +550,11 @@ function respawnPlayer(player) {
       playerId: player.playerId
     });
   }
-  player.at(0, 0);
+
+  const initPlayerPos = getPlayerInitPos();
+  const randomPos =
+    initPlayerPos[Math.floor(Math.random() * initPlayerPos.length)];
+  player.at(randomPos[0], randomPos[1]);
 
   io.emit('updatePos', {
     playerId: player.playerId,
