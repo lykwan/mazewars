@@ -162,7 +162,14 @@
 	      Crafty.scene('GameOver', function (data) {
 	        Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('Game Over').textColor('white');
 	
-	        Crafty.e('2D, DOM, Text').attr({ x: 50, y: 50, w: 400 }).text('player ' + data.winnerId + '\n                has won with ' + data.winnerScore + ' secs').textColor('white');
+	        var winnerText = void 0;
+	        if (data.winnerId !== undefined) {
+	          winnerText = 'player ' + data.winnderId + ' has\n                won with ' + data.winnerScore + ' secs';
+	        } else {
+	          winnerText = 'No one won!';
+	        }
+	
+	        Crafty.e('2D, DOM, Text').attr({ x: 50, y: 50, w: 400 }).text(winnerText).textColor('white');
 	      });
 	
 	      Crafty.scene('Loading');
@@ -173,7 +180,7 @@
 	      var _this2 = this;
 	
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
-	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when there are more than 2 people in the room').textColor('white');
+	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when\n                   there are more than 2 people in the room').textColor('white');
 	
 	      // Crafty.load(['../assets/blue.png',
 	      //              '../assets/green.png',
@@ -238,7 +245,7 @@
 	      $('#scoreboard').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
 	      $('#scoreboard').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                             </div>');
 	      $('#scoreboard').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
-	
+	      console.log(data.players);
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
 	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).autoPickUpBall().bindingKeyEvents();
@@ -540,8 +547,8 @@
 	  WALL_THICKNESS: 3,
 	  TILE_WIDTH: 45,
 	  TILE_HEIGHT: 45,
-	  PLAYER_WIDTH: 34,
-	  PLAYER_HEIGHT: 26,
+	  PLAYER_WIDTH: 30,
+	  PLAYER_HEIGHT: 24,
 	  BALL_WIDTH: 40,
 	  BALL_HEIGHT: 40,
 	  DFS_WIDTH: 50,
@@ -587,7 +594,6 @@
 	      this.longestSecsHoldingBall = 0;
 	      this.currentBallHoldingTime = 0;
 	      this.weaponType = null;
-	      // this.hasBall = false;
 	    },
 	
 	    getCol: function getCol() {
@@ -603,6 +609,7 @@
 	
 	      this.bind('EnterFrame', function () {
 	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
+	          console.log('updating pos', this.playerId, this.charMove);
 	          // this.socket.emit('gotmessage', {
 	          //   msg: 'hellow world',
 	          //   playerId: this.playerId

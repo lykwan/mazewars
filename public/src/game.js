@@ -65,10 +65,17 @@ class Game {
             .text('Game Over')
             .textColor('white');
 
+      let winnerText;
+      if (data.winnerId !== undefined) {
+        winnerText = `player ${ data.winnderId} has
+                won with ${ data.winnerScore } secs`;
+      } else {
+        winnerText = 'No one won!';
+      }
+
       Crafty.e('2D, DOM, Text')
         .attr({ x: 50, y: 50, w: 400})
-        .text(`player ${ data.winnerId }
-                has won with ${ data.winnerScore } secs`)
+        .text(winnerText)
         .textColor('white');
     });
 
@@ -83,7 +90,8 @@ class Game {
             .textColor('white');
       Crafty.e('2D, DOM, Text')
             .attr({ x: 0, y: 30, w: 300 })
-            .text('Game can only be started when there are more than 2 people in the room')
+            .text(`Game can only be started when
+                   there are more than 2 people in the room`)
             .textColor('white');
 
 
@@ -171,7 +179,7 @@ class Game {
                                 <div id='weapon-img'></div>
                                 <div id='weapon-type'></div>
                              </div>`);
-
+    console.log(data.players);
     data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
