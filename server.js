@@ -33,7 +33,7 @@ const constants = {
   DAMAGE_ANIMATION_TIME: 100,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
-  GAME_DURATION: 150
+  GAME_DURATION: 30
 };
 
 let gameState = {
@@ -46,7 +46,7 @@ let gameState = {
   },
   weapons: {},
   ball: null,
-  seedRandomStr: "whatever",
+  seedRandomStr: "randomStr" + Math.floor(Math.random() * 10).toString(),
   board: null,
   timer: constants.GAME_DURATION,
   ballHolder: null,
@@ -88,11 +88,7 @@ io.on('connection', function(socket) {
   drawBoard();
   setUpAddNewPlayer(socket, selfId, colors[selfId - 1]);
 
-  let player =  Crafty.e('Player')
-                      .at(1, 1)
-                      .setUp(selfId, colors[selfId - 1]);
-
-  gameState.players[selfId] = player;
+  gameState.players[selfId] = true;
 
   setUpDisconnect(socket, selfId);
   setUpStartGame(socket);
@@ -102,17 +98,40 @@ io.on('connection', function(socket) {
 
 });
 
+function getPlayerInitPos() {
+  let playerPos = [];
+  for (let i = 0; i <= 1 ; i++) {
+    for (let j = 0; j <= 1; j++) {
+      const col = j * (mapGrid.NUM_COLS - 1);
+      const row = i * (mapGrid.NUM_ROWS - 1);
+      playerPos.push([col, row]);
+    }
+  }
+  console.log(playerPos);
+  return playerPos;
+}
+
 function setUpStartGame(socket) {
+  const playerPos = getPlayerInitPos();
   socket.on('startNewGame', data => {
       const players = Object.keys(gameState.players).filter((playerId) => {
         return gameState.players[playerId] !== null;
       }).map(playerId => {
         return {
           playerId: playerId,
-          playerColor: gameState.players[playerId].playerColor,
-          playerPos: [gameState.players[playerId].getCol(),
-                      gameState.players[playerId].getRow()]
+          playerColor: colors[playerId - 1],
+          playerPos: [playerPos[playerId - 1][0], playerPos[playerId - 1][1]]
         };
+      });
+
+      Object.keys(gameState.players).filter((playerId) => {
+        return gameState.players[playerId] !== null;
+      }).forEach(playerId => {
+        let player =
+          Crafty.e('Player')
+                .at(playerPos[playerId - 1][0], playerPos[playerId - 1][1])
+                .setUp(playerId, colors[playerId - 1]);
+        gameState.players[playerId] = player;
       });
 
       if (players.length >= 2) {
@@ -206,12 +225,10 @@ function addTimer() {
 
 function gameOver() {
   clearInterval(gameState.addWeaponIntervalId);
-  let winner = gameState.players["1"];
-  let winnerScore = gameState.players["1"].longestSecsHoldingBall;
-  winner.longestSecsHoldingBall = 0;
-  winner.currentBallHoldingTime = 0;
+  let winner = null;
+  let winnerScore = 0;
   let playerIds = Object.keys(gameState.players);
-  for (let i = 1; i < playerIds.length; i++) {
+  for (let i = 0; i < playerIds.length; i++) {
     let player = gameState.players[playerIds[i]];
     if (player) {
       let playerScore = player.longestSecsHoldingBall;
@@ -219,14 +236,20 @@ function gameOver() {
         winner = player;
         winnerScore = playerScore;
       }
-      player.longestSecsHoldingBall = 0;
-      player.currentBallHoldingTime = 0;
+      // player.longestSecsHoldingBall = 0;
+      // player.currentBallHoldingTime = 0;
     }
   }
 
   gameState.timer = constants.GAME_DURATION;
+
+  let winnerId;
+  if (winner !== null) {
+    winnerId = winner.playerId;
+  }
+
   io.emit('gameOver', {
-    winnerId: winner.playerId,
+    winnerId: winnerId,
     winnerScore: winnerScore
   });
 }
@@ -246,7 +269,9 @@ function drawBoard() {
 function setUpDisconnect(socket, playerId) {
   socket.on('disconnect', function() {
     console.log('user disconnected');
-    gameState.players[playerId].destroy();
+    if (gameState.players[playerId] !== true) {
+      gameState.players[playerId].destroy();
+    }
     gameState.players[playerId] = null;
     io.emit('othersDisconnected', {
       playerId: playerId

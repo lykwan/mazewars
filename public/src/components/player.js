@@ -13,7 +13,6 @@ module.exports = function(Crafty, model) {
       this.longestSecsHoldingBall = 0;
       this.currentBallHoldingTime = 0;
       this.weaponType = null;
-      // this.hasBall = false;
     },
 
     getCol: function() {
@@ -30,6 +29,7 @@ module.exports = function(Crafty, model) {
       this.bind('EnterFrame', function() {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
+              console.log('updating pos', this.playerId, this.charMove);
           // this.socket.emit('gotmessage', {
           //   msg: 'hellow world',
           //   playerId: this.playerId
