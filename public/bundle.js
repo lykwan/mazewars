@@ -241,10 +241,11 @@
 	    value: function setUpNewGame(data) {
 	      var _this3 = this;
 	
-	      $('#scoreboard').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
-	      $('#scoreboard').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
-	      $('#scoreboard').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                                Current Duration Time: 0\n                             </div>');
-	      $('#scoreboard').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
+	      $('#game-status').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
+	      $('#game-status').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
+	      $('#game-status').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                                Current Duration Time: 0\n                             </div>');
+	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
+	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
 	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).autoPickUpBall().bindingKeyEvents();
@@ -259,7 +260,8 @@
 	            player.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 	          }
 	
-	          $('#hp').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </div>');
+	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
+	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
 	
 	          _this3.players[playerInfo.playerId] = player;
 	        } else {
@@ -275,7 +277,8 @@
 	            otherPlayer.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 	          }
 	
-	          $('#hp').append('<div class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </div>');
+	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
+	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
 	
 	          _this3.players[playerInfo.playerId] = otherPlayer;
 	        }
@@ -286,27 +289,7 @@
 	          this.board.grid[i][j].drawWalls(Crafty);
 	        }
 	      }
-	
-	      // Crafty.sprite('assets/weapons.png', {
-	      //   spr_bfs: [0, 0],
-	      //   spr_dfs: [0, 1]
-	      // });
 	    }
-	
-	    // setUpAddNewPlayer() {
-	    //   var colors = ['blue', 'red', 'yellow', 'green'];
-	    //   socket.on('addNewPlayer', data => {
-	    //     let otherPlayer = Crafty.e('OtherPlayer')
-	    //                             .at(0, 0)
-	    //                             .setUp(data.playerId, colors[data.playerId]);
-	    //     $('#scoreboard')
-	    //       .append(`<li class='player-${ data.playerId }'>
-	    //                   ${ otherPlayer.HP }
-	    //               </li>`);
-	    //     this.players[data.playerId] = otherPlayer;
-	    //   });
-	    // }
-	
 	  }, {
 	    key: 'setUpPlayersMove',
 	    value: function setUpPlayersMove() {
@@ -361,7 +344,7 @@
 	        var player = _this7.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
-	          $('.player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
+	          $('#hp .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
 	        }
 	      });
 	    }
@@ -407,8 +390,10 @@
 	    value: function setUpShowBallRecord() {
 	      socket.on('showSelfScore', function (data) {
 	        $('#self-record').html('\n          <h2>Ball Duration</h2>\n          <span>\n            Longest Duration Time: ' + data.longestBallHoldingTime + '\n          </span>\n          <span>\n            Current Duration Time: ' + data.currentBallHoldingTime + '\n          </span>');
+	      });
 	
-	        // $('#ball-record')
+	      socket.on('showScoreboard', function (data) {
+	        $('#scoreboard .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.score);
 	      });
 	    }
 	  }, {

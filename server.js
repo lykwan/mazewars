@@ -49,7 +49,8 @@ let gameState = {
   board: null,
   timer: constants.GAME_DURATION,
   ballHolder: null,
-  addWeaponIntervalId: null
+  addWeaponIntervalId: null,
+  setScoreIntervalId: null
 };
 
 
@@ -186,20 +187,27 @@ function pickUpBall() {
 }
 
 function setBallTime(player) {
-  player.currentBallHoldingTime = 1;
-  const intervalId = setInterval(() => {
+  gameState.setScoreIntervalId = setInterval(() => {
     if (!gameState.ballHolder ||
         player.playerId !== gameState.ballHolder.playerId) {
-      clearInterval(intervalId);
+      clearInterval(gameState.setScoreIntervalId);
     }
-
-    showSelfScore(player);
 
     player.currentBallHoldingTime++;
     if (player.currentBallHoldingTime > player.longestBallHoldingTime) {
       player.longestBallHoldingTime = player.currentBallHoldingTime;
+      showScoreboard(player);
     }
+
+    showSelfScore(player);
   }, 1000);
+}
+
+function showScoreboard(player) {
+  io.emit('showScoreboard', {
+    playerId: player.playerId,
+    score: player.longestBallHoldingTime
+  });
 }
 
 function addTimer() {
@@ -221,6 +229,7 @@ function addTimer() {
 
 function gameOver() {
   clearInterval(gameState.addWeaponIntervalId);
+  clearInterval(gameState.setScoreIntervalId);
   let winner = null;
   let winnerScore = 0;
   let playerIds = Object.keys(gameState.players);
@@ -302,10 +311,6 @@ function setUpDisconnect(socket, playerId) {
 }
 
 function setUpUpdatePos(socket) {
-  // socket.on('gotmessage', data => {
-  //   console.log(data.msg);
-  //   console.log(data.playerId);
-  // });
   socket.on('updatePos', function(data) {
     let movingPlayer = gameState.players[data.playerId];
     if (data.charMove.left) {

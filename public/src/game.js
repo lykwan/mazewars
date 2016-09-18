@@ -161,24 +161,27 @@ class Game {
   }
 
   setUpNewGame(data) {
-    $('#scoreboard').append(`<div id='hp'>
+    $('#game-status').append(`<div id='hp'>
                               <h2>HP</h2>
                              </div>`);
-    $('#scoreboard').append(`<div id='timer'>
+    $('#game-status').append(`<div id='timer'>
                               <h2>Timer</h2>
                               <span id='timer-countdown'>
                                 ${ data.timer }
                               </span>
                              </div>`);
-    $('#scoreboard').append(`<div id='self-record'>
+    $('#game-status').append(`<div id='self-record'>
                                 <h2>Ball Duration</h2>
                                 Longest Duration Time: 0
                                 Current Duration Time: 0
                              </div>`);
-    $('#scoreboard').append(`<div id="weapon">
+    $('#game-status').append(`<div id="weapon">
                                 <h2>Weapon</h2>
                                 <div id='weapon-img'></div>
                                 <div id='weapon-type'></div>
+                             </div>`);
+    $('#game-status').append(`<div id='scoreboard'>
+                              <h2>Scoreboard</h2>
                              </div>`);
     data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
@@ -204,9 +207,12 @@ class Game {
                 .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
         }
 
-        $('#hp').append(`<div class='player-${ playerInfo.playerId }'>
+        $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                                   Player ${playerInfo.playerId}: ${ player.HP }
-                                 </div>`);
+                                 </span>`);
+        $('#scoreboard').append(`<span class='player-${ playerInfo.playerId }'>
+              Player ${playerInfo.playerId}: ${ player.longestBallHoldingTime }
+                                 </span>`);
 
         this.players[playerInfo.playerId] = player;
       } else {
@@ -229,9 +235,12 @@ class Game {
                 .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
         }
 
-        $('#hp').append(`<div class='player-${ playerInfo.playerId }'>
+        $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                             Player ${playerInfo.playerId}: ${ otherPlayer.HP }
-                           </div>`);
+                           </span>`);
+        $('#scoreboard').append(`<span class='player-${ playerInfo.playerId }'>
+          Player ${playerInfo.playerId}: 0
+                                 </span>`);
 
         this.players[playerInfo.playerId] = otherPlayer;
       }
@@ -242,27 +251,7 @@ class Game {
         this.board.grid[i][j].drawWalls(Crafty);
       }
     }
-
-    // Crafty.sprite('assets/weapons.png', {
-    //   spr_bfs: [0, 0],
-    //   spr_dfs: [0, 1]
-    // });
-
   }
-
-  // setUpAddNewPlayer() {
-  //   var colors = ['blue', 'red', 'yellow', 'green'];
-  //   socket.on('addNewPlayer', data => {
-  //     let otherPlayer = Crafty.e('OtherPlayer')
-  //                             .at(0, 0)
-  //                             .setUp(data.playerId, colors[data.playerId]);
-  //     $('#scoreboard')
-  //       .append(`<li class='player-${ data.playerId }'>
-  //                   ${ otherPlayer.HP }
-  //               </li>`);
-  //     this.players[data.playerId] = otherPlayer;
-  //   });
-  // }
 
   setUpPlayersMove() {
     socket.on('updatePos', data => {
@@ -314,7 +303,7 @@ class Game {
       const player = this.players[data.playerId];
       if (player) {
         player.HP = data.playerHP;
-        $(`.player-${ data.playerId }`)
+        $(`#hp .player-${ data.playerId }`)
           .text(`Player ${data.playerId}: ${ data.playerHP }`);
       }
     });
@@ -363,8 +352,11 @@ class Game {
           <span>
             Current Duration Time: ${ data.currentBallHoldingTime }
           </span>`);
+    });
 
-      // $('#ball-record')
+    socket.on('showScoreboard', data => {
+      $(`#scoreboard .player-${ data.playerId }`).text(
+        `Player ${data.playerId}: ${ data.score }`);
     });
   }
 
