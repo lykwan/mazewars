@@ -29,11 +29,11 @@ const constants = {
   },
   WEAPON_RANGE: 10,
   BUFFER_DAMAGE_TIME: 400,
-  WEAPON_SPAWN_TIME: 10000,
+  WEAPON_SPAWN_TIME: 5000,
   DAMAGE_ANIMATION_TIME: 100,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
-  GAME_DURATION: 30
+  GAME_DURATION: 60
 };
 
 let gameState = {
@@ -107,7 +107,6 @@ function getPlayerInitPos() {
       playerPos.push([col, row]);
     }
   }
-  console.log(playerPos);
   return playerPos;
 }
 
@@ -188,20 +187,21 @@ function pickUpBall() {
 }
 
 function setBallTime(player) {
-  player.currentBallHoldingTime = 0;
+  player.currentBallHoldingTime = 1;
   const intervalId = setInterval(() => {
-    if (player.playerId !== gameState.ballHolder.playerId) {
+    if (!gameState.ballHolder ||
+        player.playerId !== gameState.ballHolder.playerId) {
       clearInterval(intervalId);
     }
 
     io.to(player.playerId).emit('showBallRecord', {
       currentBallHoldingTime: player.currentBallHoldingTime,
-      longestSecsHoldingBall: player.longestSecsHoldingBall
+      longestBallHoldingTime: player.longestBallHoldingTime
     });
 
     player.currentBallHoldingTime++;
-    if (player.currentBallHoldingTime > player.longestSecsHoldingBall) {
-      player.longestSecsHoldingBall = player.currentBallHoldingTime;
+    if (player.currentBallHoldingTime > player.longestBallHoldingTime) {
+      player.longestBallHoldingTime = player.currentBallHoldingTime;
     }
   }, 1000);
 }
@@ -231,12 +231,12 @@ function gameOver() {
   for (let i = 0; i < playerIds.length; i++) {
     let player = gameState.players[playerIds[i]];
     if (player) {
-      let playerScore = player.longestSecsHoldingBall;
+      let playerScore = player.longestBallHoldingTime;
       if (playerScore > winnerScore) {
         winner = player;
         winnerScore = playerScore;
       }
-      // player.longestSecsHoldingBall = 0;
+      // player.longestBallHoldingTime = 0;
       // player.currentBallHoldingTime = 0;
     }
   }
@@ -545,10 +545,7 @@ function lowerHP(damageEntity) {
 function respawnPlayer(player) {
   player.HP = 100;
   if (player.playerId === gameState.ballHolder.playerId) {
-    addBall(player.getCol(), player.getRow());
-    io.emit('removeBall', {
-      playerId: player.playerId
-    });
+    loseBall(player);
   }
 
   const initPlayerPos = getPlayerInitPos();
@@ -561,7 +558,21 @@ function respawnPlayer(player) {
     x: player.x,
     y: player.y
   });
+}
 
+function loseBall(player) {
+  addBall(player.getCol(), player.getRow());
+  gameState.ballHolder = null;
+
+  io.emit('loseBall', {
+    playerId: player.playerId
+  });
+
+  player.currentBallHoldingTime = 0;
+  io.to(player.playerId).emit('showSelfScore', {
+    currentBallHoldingTime: player.currentBallHoldingTime,
+    longestBallHoldingTime: player.longestBallHoldingTime
+  });
 }
 
 function bufferDamageTime(player) {

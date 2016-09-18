@@ -10,7 +10,7 @@ module.exports = function(Crafty, model) {
       this.charSpeed = 2;
       this.HP = 100;
       this.hasTakenDamage = false;
-      this.longestSecsHoldingBall = 0;
+      this.longestBallHoldingTime = 0;
       this.currentBallHoldingTime = 0;
       this.weaponType = null;
     },

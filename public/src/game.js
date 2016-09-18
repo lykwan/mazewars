@@ -67,7 +67,7 @@ class Game {
 
       let winnerText;
       if (data.winnerId !== undefined) {
-        winnerText = `player ${ data.winnderId} has
+        winnerText = `player ${ data.winnerId } has
                 won with ${ data.winnerScore } secs`;
       } else {
         winnerText = 'No one won!';
@@ -173,13 +173,13 @@ class Game {
     $('#scoreboard').append(`<div id='self-record'>
                                 <h2>Ball Duration</h2>
                                 Longest Duration Time: 0
+                                Current Duration Time: 0
                              </div>`);
     $('#scoreboard').append(`<div id="weapon">
                                 <h2>Weapon</h2>
                                 <div id='weapon-img'></div>
                                 <div id='weapon-type'></div>
                              </div>`);
-    console.log(data.players);
     data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
@@ -344,19 +344,19 @@ class Game {
       this.players[data.playerId].pickUpBall();
     });
 
-    socket.on('removeBall', data => {
+    socket.on('loseBall', data => {
       this.players[data.playerId]
                   .color('black');
     });
   }
 
   setUpShowBallRecord() {
-    socket.on('showBallRecord', data => {
+    socket.on('showSelfScore', data => {
       $('#self-record')
         .html(`
           <h2>Ball Duration</h2>
           <span>
-            Longest Duration Time: ${ data.longestSecsHoldingBall }
+            Longest Duration Time: ${ data.longestBallHoldingTime }
           </span>
           <span>
             Current Duration Time: ${ data.currentBallHoldingTime }
