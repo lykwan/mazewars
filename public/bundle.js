@@ -326,18 +326,20 @@
 	      var _this5 = this;
 	
 	      socket.on('addWeapon', function (data) {
-	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.weaponId, data.type);
+	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.type);
 	
 	        if (data.type === 'BFS') {
 	          weapon.addComponent('spr_bfs').attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
 	        } else if (data.type === 'DFS') {
 	          weapon.addComponent('spr_dfs').attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
 	        }
-	        _this5.weapons[data.weaponId] = weapon;
+	        var col = weapon.getCol();
+	        var row = weapon.getRow();
+	        _this5.weapons[[col, row]] = weapon;
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this5.weapons[data.weaponId];
+	        var weapon = _this5.weapons[[data.col, data.row]];
 	        weapon.destroy();
 	      });
 	    }
@@ -484,6 +486,14 @@
 	      var y = row * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
 	      this.attr({ x: x, y: y });
 	      return this;
+	    },
+	
+	    getCol: function getCol() {
+	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+	    },
+	
+	    getRow: function getRow() {
+	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
 	    }
 	  });
 	
@@ -595,24 +605,11 @@
 	      this.weaponType = null;
 	    },
 	
-	    getCol: function getCol() {
-	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
-	    },
-	
-	    getRow: function getRow() {
-	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
-	    },
-	
 	    bindingKeyEvents: function bindingKeyEvents() {
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	
 	      this.bind('EnterFrame', function () {
 	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
-	          console.log('updating pos', this.playerId, this.charMove);
-	          // this.socket.emit('gotmessage', {
-	          //   msg: 'hellow world',
-	          //   playerId: this.playerId
-	          // });
 	          this.socket.emit('updatePos', {
 	            playerId: this.playerId,
 	            charMove: this.charMove
@@ -739,8 +736,7 @@
 	      this.requires('Actor, Color, Collision');
 	    },
 	
-	    setUp: function setUp(weaponId, type) {
-	      this.weaponId = weaponId;
+	    setUp: function setUp(type) {
 	      this.type = type;
 	      return this;
 	    }

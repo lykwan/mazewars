@@ -6,8 +6,7 @@ module.exports = function(Crafty) {
       this.requires('Actor, Color, Collision');
     },
 
-    setUp: function(weaponId, type) {
-      this.weaponId = weaponId;
+    setUp: function(type) {
       this.type = type;
       return this;
     }

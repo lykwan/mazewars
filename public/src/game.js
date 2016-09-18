@@ -278,7 +278,7 @@ class Game {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
                            .at(data.x, data.y)
-                           .setUp(data.weaponId, data.type);
+                           .setUp(data.type);
 
       if (data.type === 'BFS') {
         weapon.addComponent('spr_bfs')
@@ -287,11 +287,13 @@ class Game {
         weapon.addComponent('spr_dfs')
               .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
       }
-      this.weapons[data.weaponId] = weapon;
+      const col = weapon.getCol();
+      const row = weapon.getRow();
+      this.weapons[[col, row]] = weapon;
     });
 
     socket.on('destroyWeapon', data => {
-      const weapon = this.weapons[data.weaponId];
+      const weapon = this.weapons[[data.col, data.row]];
       weapon.destroy();
     });
   }

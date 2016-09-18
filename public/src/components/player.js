@@ -15,25 +15,12 @@ module.exports = function(Crafty, model) {
       this.weaponType = null;
     },
 
-    getCol: function() {
-      return Math.floor(this.x / mapGrid.TILE_WIDTH);
-    },
-
-    getRow: function() {
-      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
-    },
-
     bindingKeyEvents() {
       this.charMove = { left: false, right: false, up: false, down: false };
 
       this.bind('EnterFrame', function() {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
-              console.log('updating pos', this.playerId, this.charMove);
-          // this.socket.emit('gotmessage', {
-          //   msg: 'hellow world',
-          //   playerId: this.playerId
-          // });
           this.socket.emit('updatePos', {
             playerId: this.playerId,
             charMove: this.charMove
