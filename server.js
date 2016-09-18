@@ -37,7 +37,6 @@ const constants = {
 };
 
 let gameState = {
-  weaponId: 0,
   players: {
     1: null,
     2: null,
@@ -46,7 +45,7 @@ let gameState = {
   },
   weapons: {},
   ball: null,
-  seedRandomStr: "randomStr" + Math.floor(Math.random() * 10).toString(),
+  seedRandomStr: "randomStr" + Math.floor(Math.random() * 30).toString(),
   board: null,
   timer: constants.GAME_DURATION,
   ballHolder: null,
@@ -85,7 +84,6 @@ io.on('connection', function(socket) {
 
   socket.join(selfId);
 
-  drawBoard();
   setUpAddNewPlayer(socket, selfId, colors[selfId - 1]);
 
   gameState.players[selfId] = true;
@@ -111,6 +109,7 @@ function getPlayerInitPos() {
 }
 
 function setUpStartGame(socket) {
+  drawBoard();
   const playerPos = getPlayerInitPos();
   socket.on('startNewGame', data => {
       const players = Object.keys(gameState.players).filter((playerId) => {
@@ -194,10 +193,7 @@ function setBallTime(player) {
       clearInterval(intervalId);
     }
 
-    io.to(player.playerId).emit('showBallRecord', {
-      currentBallHoldingTime: player.currentBallHoldingTime,
-      longestBallHoldingTime: player.longestBallHoldingTime
-    });
+    showSelfScore(player);
 
     player.currentBallHoldingTime++;
     if (player.currentBallHoldingTime > player.longestBallHoldingTime) {
@@ -236,12 +232,8 @@ function gameOver() {
         winner = player;
         winnerScore = playerScore;
       }
-      // player.longestBallHoldingTime = 0;
-      // player.currentBallHoldingTime = 0;
     }
   }
-
-  gameState.timer = constants.GAME_DURATION;
 
   let winnerId;
   if (winner !== null) {
@@ -252,16 +244,46 @@ function gameOver() {
     winnerId: winnerId,
     winnerScore: winnerScore
   });
+
+  clearGameState();
+}
+
+function clearGameState() {
+  Object.keys(gameState.players).map(id => {
+    if (gameState.players[id] !== null) {
+      gameState.players[id].destroy();
+      gameState.players[id] = true;
+    }
+  });
+
+  Object.keys(gameState.weapons).forEach(weaponPos => {
+    gameState.weapons[weaponPos].destroy();
+  });
+  gameState.weapons = {};
+
+  if (gameState.ball !== null) {
+    gameState.ball.destroy();
+    gameState.ball = null;
+  }
+
+  gameState.seedRandomStr =
+    "randomStr" + Math.floor(Math.random() * 30).toString();
+  gameState.board = null;
+  gameState.timer = constants.GAME_DURATION;
+  gameState.ballHolder = null;
+  gameState.addWeaponIntervalId = null;
+
+  Crafty('Wall').each(function(i) {
+    this.destroy();
+  });
 }
 
 function drawBoard() {
-  if (!gameState.board) {
-    gameState.board =
-      new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, gameState.seedRandomStr);
-    for (let i = 0; i < mapGrid.NUM_COLS; i++) {
-      for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
-        gameState.board.grid[i][j].drawWalls(Crafty);
-      }
+  gameState.board =
+    new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, gameState.seedRandomStr);
+  for (let i = 0; i < mapGrid.NUM_COLS; i++) {
+    for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
+      gameState.board.grid[i][j].drawWalls(Crafty);
     }
   }
 }
@@ -337,18 +359,16 @@ function addWeapon() {
     const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
     const weapon = Crafty.e('Weapon')
                          .at(col, row)
-                         .setUp(gameState.weaponId, type);
-    gameState.weapons[gameState.weaponId] = weapon;
+                         .setUp(type);
+    gameState.weapons[[col, row]] = weapon;
 
     io.emit('addWeapon', {
       x: col,
       y: row,
       type: type,
       color: constants.WEAPON_COLORS[type],
-      weaponId: gameState.weaponId
     });
 
-    gameState.weaponId++;
   }, constants.WEAPON_SPAWN_TIME);
 }
 
@@ -358,16 +378,17 @@ function setUpPickUpWeapon(socket) {
     const collidedWeapons = player.hit('Weapon');
     if (collidedWeapons) {
       const weapon = collidedWeapons[0].obj;
-      const weaponId = weapon.weaponId;
       player.weaponType = weapon.type;
       io.to(data.playerId).emit('pickUpWeapon', {
         type: weapon.type
       });
 
+      const [col, row] = [weapon.getCol(), weapon.getRow()];
       weapon.destroy();
-      delete gameState.weapons[weaponId];
+      delete gameState.weapons[[col, row]];
       io.emit('destroyWeapon', {
-        weaponId: weaponId
+        col: col,
+        row: row
       });
     }
   });
@@ -502,25 +523,6 @@ function hasCell(damageCells, damageCell) {
   });
 }
 
-// function checkDamage(creatorId) {
-//   console.log('creat', creatorId);
-//   return setInterval(() => {
-//     Object.keys(gameState.players).forEach(playerId => {
-//       const player = gameState.players[playerId];
-//       console.log(player.hit('Damage'));
-//       if (player.hit('Damage') &&
-//          (parseInt(playerId, 10) !== parseInt(creatorId, 10))) {
-//         player.HP -= 10;
-//         console.log('killing someone on server')
-//         io.emit('HPChange', {
-//           playerId: player.playerId,
-//           playerHP: player.HP
-//         });
-//       }
-//     });
-//   }, 100);
-// }
-
 function lowerHP(damageEntity) {
   const hitPlayers = damageEntity.hit('Player');
   if (hitPlayers) {
@@ -569,6 +571,10 @@ function loseBall(player) {
   });
 
   player.currentBallHoldingTime = 0;
+  showSelfScore(player);
+}
+
+function showSelfScore(player) {
   io.to(player.playerId).emit('showSelfScore', {
     currentBallHoldingTime: player.currentBallHoldingTime,
     longestBallHoldingTime: player.longestBallHoldingTime

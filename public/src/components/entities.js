@@ -17,6 +17,14 @@ module.exports = function(Crafty, model) {
       const y = row * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
       this.attr({ x: x, y: y });
       return this;
+    },
+
+    getCol: function() {
+      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+    },
+
+    getRow: function() {
+      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
     }
   });
 
