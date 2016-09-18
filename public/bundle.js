@@ -83,11 +83,11 @@
 	
 	var _player2 = _interopRequireDefault(_player);
 	
-	var _client_model = __webpack_require__(8);
+	var _client_model = __webpack_require__(9);
 	
 	var _client_model2 = _interopRequireDefault(_client_model);
 	
-	var _board = __webpack_require__(9);
+	var _board = __webpack_require__(10);
 	
 	var _board2 = _interopRequireDefault(_board);
 	
@@ -164,7 +164,7 @@
 	
 	        var winnerText = void 0;
 	        if (data.winnerId !== undefined) {
-	          winnerText = 'player ' + data.winnderId + ' has\n                won with ' + data.winnerScore + ' secs';
+	          winnerText = 'player ' + data.winnerId + ' has\n                won with ' + data.winnerScore + ' secs';
 	        } else {
 	          winnerText = 'No one won!';
 	        }
@@ -243,9 +243,8 @@
 	
 	      $('#scoreboard').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
 	      $('#scoreboard').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
-	      $('#scoreboard').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                             </div>');
+	      $('#scoreboard').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                                Current Duration Time: 0\n                             </div>');
 	      $('#scoreboard').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
-	      console.log(data.players);
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
 	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).autoPickUpBall().bindingKeyEvents();
@@ -397,15 +396,15 @@
 	        _this9.players[data.playerId].pickUpBall();
 	      });
 	
-	      socket.on('removeBall', function (data) {
+	      socket.on('loseBall', function (data) {
 	        _this9.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBallRecord',
 	    value: function setUpShowBallRecord() {
-	      socket.on('showBallRecord', function (data) {
-	        $('#self-record').html('\n          <h2>Ball Duration</h2>\n          <span>\n            Longest Duration Time: ' + data.longestSecsHoldingBall + '\n          </span>\n          <span>\n            Current Duration Time: ' + data.currentBallHoldingTime + '\n          </span>');
+	      socket.on('showSelfScore', function (data) {
+	        $('#self-record').html('\n          <h2>Ball Duration</h2>\n          <span>\n            Longest Duration Time: ' + data.longestBallHoldingTime + '\n          </span>\n          <span>\n            Current Duration Time: ' + data.currentBallHoldingTime + '\n          </span>');
 	
 	        // $('#ball-record')
 	      });
@@ -442,7 +441,7 @@
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(6);
 	var createSideBarComponent = __webpack_require__(7);
-	var createBallComponent = __webpack_require__(11);
+	var createBallComponent = __webpack_require__(8);
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	
@@ -591,7 +590,7 @@
 	      this.charSpeed = 2;
 	      this.HP = 100;
 	      this.hasTakenDamage = false;
-	      this.longestSecsHoldingBall = 0;
+	      this.longestBallHoldingTime = 0;
 	      this.currentBallHoldingTime = 0;
 	      this.weaponType = null;
 	    },
@@ -807,6 +806,22 @@
 
 	'use strict';
 	
+	/* globals Crafty */
+	
+	module.exports = function (Crafty) {
+	  Crafty.c('Ball', {
+	    init: function init() {
+	      this.requires('Actor, spr_ball, Collision');
+	    }
+	  });
+	};
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
 	var ClientModel = {
 	  receiver: 'CLIENT',
 	  wallInit: function wallInit() {
@@ -818,7 +833,7 @@
 	module.exports = ClientModel;
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -832,7 +847,7 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
-	var Tile = __webpack_require__(10);
+	var Tile = __webpack_require__(11);
 	
 	var DIRECTION = {
 	  left: 'left',
@@ -975,7 +990,7 @@
 	module.exports = Board;
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1036,22 +1051,6 @@
 	}();
 	
 	module.exports = Tile;
-
-/***/ },
-/* 11 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	/* globals Crafty */
-	
-	module.exports = function (Crafty) {
-	  Crafty.c('Ball', {
-	    init: function init() {
-	      this.requires('Actor, spr_ball, Collision');
-	    }
-	  });
-	};
 
 /***/ }
 /******/ ]);
