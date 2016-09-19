@@ -28,9 +28,11 @@ const constants = {
     DFS: '#551a8b'
   },
   WEAPON_RANGE: 10,
-  BUFFER_DAMAGE_TIME: 400,
+  BUFFER_DAMAGE_TIME: 1000,
+  BUFFER_SHOOTING_TIME: 1500,
   WEAPON_SPAWN_TIME: 5000,
   DAMAGE_ANIMATION_TIME: 100,
+  DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
   GAME_DURATION: 60
@@ -146,7 +148,6 @@ function setUpStartGame(socket) {
     addBall(col, row);
     addWeapon();
     addTimer();
-
   });
 }
 
@@ -285,6 +286,10 @@ function clearGameState() {
   Crafty('Wall').each(function(i) {
     this.destroy();
   });
+
+  Crafty('Damage').each(function(i) {
+    this.destroy();
+  });
 }
 
 function drawBoard() {
@@ -352,6 +357,7 @@ function setUpAddNewPlayer(socket, playerId, color) {
 
 function addWeapon() {
   gameState.addWeaponIntervalId = setInterval(function() {
+    // Pick a random col, row
     let col = Math.floor(Math.random() * mapGrid.NUM_COLS);
     let row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
     while (gameState.weapons[[col, row]]) {
@@ -402,38 +408,49 @@ function setUpPickUpWeapon(socket) {
 function setUpShootWeapon(socket) {
   socket.on('shootWeapon', data => {
     const player = gameState.players[data.playerId];
-    let damageCells = [];
-    if (player.weaponType === weaponTypes.BFS) {
-      damageCells = shootBFSWeapon(player);
-    } else if (player.weaponType === weaponTypes.DFS) {
-      damageCells = shootDFSWeapon(player);
-    }
-
-    let idx = 0;
-    let intervalId = setInterval(() => {
-      const damage = Crafty.e('Damage')
-            .at(damageCells[idx][0], damageCells[idx][1])
-            .setUpCreator(data.playerId)
-            .disappearAfter();
-
-      damage.onHit('Player', lowerHP.bind(null, damage));
-
-      io.emit('createDamage', {
-        damageCell: damageCells[idx],
-        creatorId: data.playerId,
-        color: Constants.DAMAGE_COLOR
-      });
-
-      idx++;
-
-      if (idx === damageCells.length) {
-        clearInterval(intervalId);
+    if (!player.weaponCoolingDown) {
+      let damageCells = [];
+      if (player.weaponType === weaponTypes.BFS) {
+        damageCells = shootBFSWeapon(player);
+      } else if (player.weaponType === weaponTypes.DFS) {
+        damageCells = shootDFSWeapon(player);
       }
 
-    }, constants.DAMAGE_ANIMATION_TIME);
+      bufferShootingTime(player);
 
+      let idx = 0;
+      let intervalId = setInterval(() => {
+        const damage = Crafty.e('Damage')
+              .at(damageCells[idx][0], damageCells[idx][1])
+              .setUpCreator(data.playerId)
+              .disappearAfter(constants.DAMAGE_DISAPPEAR_TIME);
+
+        damage.onHit('Player', lowerHP.bind(null, damage));
+
+        io.emit('createDamage', {
+          damageCell: damageCells[idx],
+          creatorId: data.playerId,
+          disappearTime: constants.DAMAGE_DISAPPEAR_TIME
+        });
+
+        idx++;
+
+        if (idx === damageCells.length) {
+          clearInterval(intervalId);
+        }
+
+      }, constants.DAMAGE_ANIMATION_TIME);
+    }
   });
 }
+
+function bufferShootingTime(player) {
+  player.weaponCoolingDown = true;
+  setTimeout(() => {
+    player.weaponCoolingDown = false;
+  }, constants.BUFFER_SHOOTING_TIME);
+}
+
 
 function shootBFSWeapon(player) {
   let damageCells = [];
@@ -551,9 +568,13 @@ function lowerHP(damageEntity) {
 
 function respawnPlayer(player) {
   player.HP = 100;
-  if (player.playerId === gameState.ballHolder.playerId) {
+  if (gameState.ballHolder &&
+      player.playerId === gameState.ballHolder.playerId) {
     loseBall(player);
   }
+
+  player.weaponType = null;
+  io.to(player.playerId).emit('loseWeapon');
 
   const initPlayerPos = getPlayerInitPos();
   const randomPos =
