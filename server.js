@@ -35,7 +35,7 @@ const constants = {
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
-  GAME_DURATION: 60
+  GAME_DURATION: 200
 };
 
 let gameState = {
@@ -144,6 +144,9 @@ function setUpStartGame(socket) {
 
     const col = Math.floor(mapGrid.NUM_COLS / 2);
     const row = Math.floor(mapGrid.NUM_ROWS / 2);
+    // const col = 1;
+    // const row = 1;
+
 
     addBall(col, row);
     addWeapon();
@@ -255,17 +258,12 @@ function gameOver() {
     winnerScore: winnerScore
   });
 
-  clearGameState();
+  setTimeout(() => {
+    clearGameState();
+  }, 300);
 }
 
 function clearGameState() {
-  Object.keys(gameState.players).map(id => {
-    if (gameState.players[id] !== null) {
-      gameState.players[id].destroy();
-      gameState.players[id] = true;
-    }
-  });
-
   Object.keys(gameState.weapons).forEach(weaponPos => {
     gameState.weapons[weaponPos].destroy();
   });
@@ -290,6 +288,14 @@ function clearGameState() {
   Crafty('Damage').each(function(i) {
     this.destroy();
   });
+
+  Object.keys(gameState.players).map(id => {
+    if (gameState.players[id] !== null && gameState.players[id] !== true) {
+      gameState.players[id].destroy();
+      gameState.players[id] = true;
+    }
+  });
+
 }
 
 function drawBoard() {
