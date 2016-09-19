@@ -131,7 +131,8 @@
 	      var _this = this;
 	
 	      (0, _canvas2.default)(Crafty, _client_model2.default);
-	      Crafty.background('#000000');
+	      //TODO: DELETE MODEL
+	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
 	
 	      var game = this;
 	      Crafty.scene('Loading', function () {
@@ -156,7 +157,7 @@
 	        _this.setUpAddBall();
 	        _this.setUpShowBall();
 	        _this.setUpShowBallRecord();
-	        _this.setUpPickUpWeapon();
+	        _this.setUpHaveWeapon();
 	      });
 	
 	      Crafty.scene('GameOver', function (data) {
@@ -244,11 +245,11 @@
 	      $('#game-status').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
 	      $('#game-status').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
 	      $('#game-status').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                                Current Duration Time: 0\n                             </div>');
-	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
 	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
+	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
 	      data.players.forEach(function (playerInfo) {
 	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
-	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).autoPickUpBall().bindingKeyEvents();
+	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents();
 	
 	          if (player.playerColor === 'red') {
 	            player.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
@@ -332,7 +333,7 @@
 	      var _this6 = this;
 	
 	      socket.on('createDamage', function (data) {
-	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter().color(_this6.players[data.creatorId].playerColor, 0.5);
+	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this6.players[data.creatorId].playerColor, 0.5);
 	      });
 	    }
 	  }, {
@@ -397,8 +398,8 @@
 	      });
 	    }
 	  }, {
-	    key: 'setUpPickUpWeapon',
-	    value: function setUpPickUpWeapon() {
+	    key: 'setUpHaveWeapon',
+	    value: function setUpHaveWeapon() {
 	      var _this10 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
@@ -409,6 +410,12 @@
 	        } else if (data.type === 'DFS') {
 	          $('#weapon-img').html('<img src=\'../assets/dfs_weapon.png\'\n                                      height=\'50\'></img>');
 	        }
+	      });
+	
+	      socket.on('loseWeapon', function (data) {
+	        _this10.players[_this10.selfId].weaponType = null;
+	        $('#weapon-type').empty();
+	        $('#weapon-img').empty();
 	      });
 	    }
 	  }]);
@@ -427,7 +434,6 @@
 	var createComponents = __webpack_require__(3);
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(6);
-	var createSideBarComponent = __webpack_require__(7);
 	var createBallComponent = __webpack_require__(8);
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
@@ -588,6 +594,8 @@
 	      this.longestBallHoldingTime = 0;
 	      this.currentBallHoldingTime = 0;
 	      this.weaponType = null;
+	      this.weaponCoolingdown = false;
+	      this.z = 9;
 	    },
 	
 	    bindingKeyEvents: function bindingKeyEvents() {
@@ -646,13 +654,9 @@
 	      return this;
 	    },
 	
-	    autoPickUpBall: function autoPickUpBall() {
+	    setUpSetBallTime: function setUpSetBallTime() {
 	      var _this = this;
 	
-	      // this.socket.on('pickUpBall', () => {
-	      //   this.hasBall = true;
-	      // });
-	      //
 	      this.socket.on('setBallTime', function (data) {
 	        _this.currentBallHoldingTime = data.currentBallHoldingTime;
 	        _this.longestSecsHoldingBall = data.longestSecsHoldingBall;
@@ -661,15 +665,15 @@
 	      return this;
 	    },
 	
-	    pickUpBall: function pickUpBall() {
-	      this.color('white');
-	      return this;
-	    },
-	
 	    pickUpWeapon: function pickUpWeapon() {
 	      this.socket.emit('pickUpWeapon', {
 	        playerId: this.playerId
 	      });
+	    },
+	
+	    pickUpBall: function pickUpBall() {
+	      this.color('white');
+	      return this;
 	    },
 	
 	    shootWeapon: function shootWeapon() {
@@ -736,52 +740,19 @@
 	      this.creatorId = playerId;
 	      return this;
 	    },
-	    disappearAfter: function disappearAfter() {
+	    disappearAfter: function disappearAfter(disappearTime) {
 	      var _this = this;
 	
 	      setTimeout(function () {
 	        return _this.destroy();
-	      }, 400);
+	      }, disappearTime);
 	      return this;
 	    }
 	  });
 	};
 
 /***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	/* globals Crafty */
-	
-	module.exports = function (Crafty) {
-	  Crafty.c('PlayerScore', {
-	    init: function init() {
-	      this.requires('2D, DOM, Text');
-	    }
-	  });
-	
-	  Crafty.c('PlayerIcon', {
-	    init: function init() {
-	      this.requires('Actor, Color');
-	    }
-	  });
-	
-	  Crafty.c('WeaponDisplay', {
-	    init: function init() {
-	      this.requires('2D, DOM, Text, Color');
-	      this.color('white');
-	    },
-	
-	    createText: function createText(type) {
-	      this.text('Weapon: ' + type);
-	      return this;
-	    }
-	  });
-	};
-
-/***/ },
+/* 7 */,
 /* 8 */
 /***/ function(module, exports) {
 
@@ -793,6 +764,8 @@
 	  Crafty.c('Ball', {
 	    init: function init() {
 	      this.requires('Actor, spr_ball, Collision');
+	      //TODO: change spr_ball
+	      this.z = 8;
 	    }
 	  });
 	};
@@ -1022,8 +995,8 @@
 	    value: function remainingPaths() {
 	      var _this = this;
 	
-	      return Object.keys(this.walls).filter(function (wall) {
-	        return !_this.walls[wall];
+	      return Object.keys(this.walls).filter(function (dir) {
+	        return !_this.walls[dir];
 	      });
 	    }
 	  }]);

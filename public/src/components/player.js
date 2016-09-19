@@ -13,6 +13,8 @@ module.exports = function(Crafty, model) {
       this.longestBallHoldingTime = 0;
       this.currentBallHoldingTime = 0;
       this.weaponType = null;
+      this.weaponCoolingdown = false;
+      this.z = 9;
     },
 
     bindingKeyEvents() {
@@ -71,11 +73,7 @@ module.exports = function(Crafty, model) {
       return this;
     },
 
-    autoPickUpBall: function() {
-      // this.socket.on('pickUpBall', () => {
-      //   this.hasBall = true;
-      // });
-      //
+    setUpSetBallTime: function() {
       this.socket.on('setBallTime', data => {
         this.currentBallHoldingTime = data.currentBallHoldingTime;
         this.longestSecsHoldingBall = data.longestSecsHoldingBall;
@@ -84,16 +82,15 @@ module.exports = function(Crafty, model) {
       return this;
     },
 
-    pickUpBall: function() {
-      this.color('white');
-      return this;
-    },
-
     pickUpWeapon: function() {
       this.socket.emit('pickUpWeapon', {
         playerId: this.playerId
       });
+    },
 
+    pickUpBall: function() {
+      this.color('white');
+      return this;
     },
 
     shootWeapon: function() {

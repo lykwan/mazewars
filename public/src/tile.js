@@ -37,8 +37,8 @@ class Tile {
   }
 
   remainingPaths() {
-    return Object.keys(this.walls).filter((wall) => {
-      return !this.walls[wall];
+    return Object.keys(this.walls).filter((dir) => {
+      return !this.walls[dir];
     });
   }
 }

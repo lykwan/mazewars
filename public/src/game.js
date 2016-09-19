@@ -31,7 +31,8 @@ class Game {
 
   start() {
     createCanvas(Crafty, ClientModel);
-    Crafty.background('#000000');
+    //TODO: DELETE MODEL
+    Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
     let game = this;
     Crafty.scene('Loading', function() {
@@ -56,7 +57,7 @@ class Game {
       this.setUpAddBall();
       this.setUpShowBall();
       this.setUpShowBallRecord();
-      this.setUpPickUpWeapon();
+      this.setUpHaveWeapon();
     });
 
     Crafty.scene('GameOver', (data) => {
@@ -175,13 +176,13 @@ class Game {
                                 Longest Duration Time: 0
                                 Current Duration Time: 0
                              </div>`);
+    $('#game-status').append(`<div id='scoreboard'>
+                              <h2>Scoreboard</h2>
+                             </div>`);
     $('#game-status').append(`<div id="weapon">
                                 <h2>Weapon</h2>
                                 <div id='weapon-img'></div>
                                 <div id='weapon-type'></div>
-                             </div>`);
-    $('#game-status').append(`<div id='scoreboard'>
-                              <h2>Scoreboard</h2>
                              </div>`);
     data.players.forEach(playerInfo => {
       if (parseInt(playerInfo.playerId) === this.selfId) {
@@ -190,7 +191,7 @@ class Game {
                    .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
                    .setUp(playerInfo.playerId, playerInfo.playerColor)
                    .setUpSocket(socket)
-                   .autoPickUpBall()
+                   .setUpSetBallTime()
                    .bindingKeyEvents();
 
         if (player.playerColor === 'red') {
@@ -293,7 +294,7 @@ class Game {
             .at(data.damageCell[0], data.damageCell[1])
             .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT })
             .setUpCreator(data.creatorId)
-            .disappearAfter()
+            .disappearAfter(data.disappearTime)
             .color(this.players[data.creatorId].playerColor, 0.5);
     });
   }
@@ -360,7 +361,7 @@ class Game {
     });
   }
 
-  setUpPickUpWeapon() {
+  setUpHaveWeapon() {
     socket.on('pickUpWeapon', data => {
       this.players[this.selfId].weaponType = data.type;
       $('#weapon-type').text(data.type);
@@ -371,6 +372,12 @@ class Game {
         $('#weapon-img').html(`<img src='../assets/dfs_weapon.png'
                                       height='50'></img>`);
       }
+    });
+
+    socket.on('loseWeapon', data => {
+      this.players[this.selfId].weaponType = null;
+      $('#weapon-type').empty();
+      $('#weapon-img').empty();
     });
   }
 }
