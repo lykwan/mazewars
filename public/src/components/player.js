@@ -97,6 +97,10 @@ module.exports = function(Crafty, model) {
       this.socket.emit('shootWeapon', {
         playerId: this.playerId
       });
+    },
+
+    loseWeapon: function() {
+      this.weaponType = null;
     }
   });
 
@@ -123,6 +127,10 @@ module.exports = function(Crafty, model) {
     pickUpBall: function() {
       this.color('white');
       return this;
+    },
+
+    loseWeapon: function() {
+
     }
 
   });

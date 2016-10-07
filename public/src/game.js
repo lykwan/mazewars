@@ -88,6 +88,7 @@ class Game {
       game.setUpLoadingScene.bind(game)();
       this.startGame = this.bind('KeyDown', function(e) {
         if (e.keyCode === Crafty.keys.S) {
+          console.log('got here!!!!!');
           socket.emit('startNewGame');
         }
       });
@@ -203,11 +204,6 @@ class Game {
 
     socket.on('startNewGame', (data) => {
       Crafty.scene('Game', data);
-      // socket.emit('gotmessage', {
-      //   msg: 'hellow world',
-      //   playerId: this.selfId
-      // });
-
     });
   }
 
@@ -425,7 +421,7 @@ class Game {
     });
 
     socket.on('loseWeapon', data => {
-      this.players[this.selfId].weaponType = null;
+      this.players[data.playerId].loseWeapon();
       $('#weapon-type').empty();
       $('#weapon-img').empty();
     });

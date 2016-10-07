@@ -191,6 +191,7 @@
 	        game.setUpLoadingScene.bind(game)();
 	        this.startGame = this.bind('KeyDown', function (e) {
 	          if (e.keyCode === Crafty.keys.S) {
+	            console.log('got here!!!!!');
 	            socket.emit('startNewGame');
 	          }
 	        });
@@ -284,10 +285,6 @@
 	
 	      socket.on('startNewGame', function (data) {
 	        Crafty.scene('Game', data);
-	        // socket.emit('gotmessage', {
-	        //   msg: 'hellow world',
-	        //   playerId: this.selfId
-	        // });
 	      });
 	    }
 	  }, {
@@ -466,7 +463,7 @@
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this11.players[_this11.selfId].weaponType = null;
+	        _this11.players[data.playerId].loseWeapon();
 	        $('#weapon-type').empty();
 	        $('#weapon-img').empty();
 	      });
@@ -733,6 +730,10 @@
 	      this.socket.emit('shootWeapon', {
 	        playerId: this.playerId
 	      });
+	    },
+	
+	    loseWeapon: function loseWeapon() {
+	      this.weaponType = null;
 	    }
 	  });
 	
@@ -759,7 +760,9 @@
 	    pickUpBall: function pickUpBall() {
 	      this.color('white');
 	      return this;
-	    }
+	    },
+	
+	    loseWeapon: function loseWeapon() {}
 	
 	  });
 	};
