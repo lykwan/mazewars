@@ -311,18 +311,6 @@ function drawBoard() {
   }
 }
 
-function setUpDisconnect(socket, playerId) {
-  socket.on('disconnect', function() {
-    console.log('user disconnected');
-    if (gameState.players[playerId] !== true) {
-      gameState.players[playerId].destroy();
-    }
-    gameState.players[playerId] = null;
-    io.emit('othersDisconnected', {
-      playerId: playerId
-    });
-  });
-}
 
 function setUpUpdatePos(socket) {
   socket.on('updatePos', function(data) {
@@ -354,13 +342,6 @@ function setUpUpdatePos(socket) {
       x: movingPlayer.x,
       y: movingPlayer.y
     });
-  });
-}
-
-function setUpAddNewPlayer(socket, playerId, color) {
-  socket.broadcast.emit('addNewPlayer', {
-    playerId: playerId,
-    playerColor: color
   });
 }
 

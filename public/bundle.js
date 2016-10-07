@@ -150,6 +150,8 @@
 	  }, {
 	    key: 'setUpJoinRoom',
 	    value: function setUpJoinRoom() {
+	      var _this = this;
+	
 	      socket.on('joinRoom', function (data) {
 	        var param = '?room_id=' + data.roomId;
 	        $('#game').append('<span>\n                           Link: amazeball.lilykwan.me/' + param + '\n                         </span>');
@@ -158,6 +160,8 @@
 	        if (data.isNewRoom) {
 	          window.history.replaceState({}, '', param);
 	        }
+	
+	        _this.start();
 	      });
 	    }
 	  }, {
@@ -174,11 +178,13 @@
 	  }, {
 	    key: 'start',
 	    value: function start() {
-	      var _this = this;
+	      var _this2 = this;
 	
 	      (0, _canvas2.default)(Crafty, _client_model2.default);
 	      //TODO: DELETE MODEL
 	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
+	
+	      socket.emit('setUpLoadingScene');
 	
 	      var game = this;
 	      Crafty.scene('Loading', function () {
@@ -193,17 +199,17 @@
 	      });
 	
 	      Crafty.scene('Game', function (data) {
-	        _this.setUpNewGame(data);
-	        _this.setUpPlayersMove();
-	        _this.setUpPlacingWeapons();
-	        _this.setUpCreateDamage();
-	        _this.setUpHPChange();
-	        _this.setUpTimer();
-	        _this.setUpGameOver();
-	        _this.setUpAddBall();
-	        _this.setUpShowBall();
-	        _this.setUpShowBallRecord();
-	        _this.setUpHaveWeapon();
+	        _this2.setUpNewGame(data);
+	        _this2.setUpPlayersMove();
+	        _this2.setUpPlacingWeapons();
+	        _this2.setUpCreateDamage();
+	        _this2.setUpHPChange();
+	        _this2.setUpTimer();
+	        _this2.setUpGameOver();
+	        _this2.setUpAddBall();
+	        _this2.setUpShowBall();
+	        _this2.setUpShowBallRecord();
+	        _this2.setUpHaveWeapon();
 	      });
 	
 	      Crafty.scene('GameOver', function (data) {
@@ -224,7 +230,7 @@
 	  }, {
 	    key: 'setUpLoadingScene',
 	    value: function setUpLoadingScene() {
-	      var _this2 = this;
+	      var _this3 = this;
 	
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
 	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when\n                   there are more than 2 people in the room').textColor('white');
@@ -250,28 +256,29 @@
 	
 	      var playerTextY = 50;
 	      socket.on('joinGame', function (data) {
+	        console.log(data.selfId);
 	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('You are player ' + data.selfId).textColor(data.playerColor);
 	        playerTextY += 30;
-	        _this2.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
-	        _this2.playersInfo[data.selfId] = playerText;
-	        _this2.selfId = data.selfId;
+	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
+	        _this3.playersInfo[data.selfId] = playerText;
+	        _this3.selfId = data.selfId;
 	      });
 	
 	      socket.on('addNewPlayer', function (data) {
 	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('connected with player ' + data.playerId).textColor(data.playerColor);
 	        playerTextY += 30;
-	        _this2.playersInfo[data.playerId] = playerText;
+	        _this3.playersInfo[data.playerId] = playerText;
 	      });
 	
 	      socket.on('othersDisconnected', function (data) {
-	        if (_this2.players[data.playerId]) {
-	          _this2.players[data.playerId].destroy();
-	          delete _this2.players[data.playerId];
+	        if (_this3.players[data.playerId]) {
+	          _this3.players[data.playerId].destroy();
+	          delete _this3.players[data.playerId];
 	        }
 	
-	        if (_this2.playersInfo[data.playerId]) {
-	          _this2.playersInfo[data.playerId].destroy();
-	          delete _this2.playersInfo[data.playerId];
+	        if (_this3.playersInfo[data.playerId]) {
+	          _this3.playersInfo[data.playerId].destroy();
+	          delete _this3.playersInfo[data.playerId];
 	        }
 	      });
 	
@@ -286,7 +293,7 @@
 	  }, {
 	    key: 'setUpNewGame',
 	    value: function setUpNewGame(data) {
-	      var _this3 = this;
+	      var _this4 = this;
 	
 	      $('#game-status').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
 	      $('#game-status').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
@@ -294,7 +301,7 @@
 	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
 	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
 	      data.players.forEach(function (playerInfo) {
-	        if (parseInt(playerInfo.playerId) === _this3.selfId) {
+	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
 	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents();
 	
 	          if (player.playerColor === 'red') {
@@ -310,7 +317,7 @@
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
 	
-	          _this3.players[playerInfo.playerId] = player;
+	          _this4.players[playerInfo.playerId] = player;
 	        } else {
 	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(data.players.playerId, playerInfo.playerColor);
 	
@@ -327,7 +334,7 @@
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
 	
-	          _this3.players[playerInfo.playerId] = otherPlayer;
+	          _this4.players[playerInfo.playerId] = otherPlayer;
 	        }
 	      });
 	
@@ -340,10 +347,10 @@
 	  }, {
 	    key: 'setUpPlayersMove',
 	    value: function setUpPlayersMove() {
-	      var _this4 = this;
+	      var _this5 = this;
 	
 	      socket.on('updatePos', function (data) {
-	        var player = _this4.players[data.playerId];
+	        var player = _this5.players[data.playerId];
 	        if (player) {
 	          player.x = data.x;
 	          player.y = data.y;
@@ -353,7 +360,7 @@
 	  }, {
 	    key: 'setUpPlacingWeapons',
 	    value: function setUpPlacingWeapons() {
-	      var _this5 = this;
+	      var _this6 = this;
 	
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.type);
@@ -365,30 +372,30 @@
 	        }
 	        var col = weapon.getCol();
 	        var row = weapon.getRow();
-	        _this5.weapons[[col, row]] = weapon;
+	        _this6.weapons[[col, row]] = weapon;
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this5.weapons[[data.col, data.row]];
+	        var weapon = _this6.weapons[[data.col, data.row]];
 	        weapon.destroy();
 	      });
 	    }
 	  }, {
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
-	      var _this6 = this;
+	      var _this7 = this;
 	
 	      socket.on('createDamage', function (data) {
-	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this6.players[data.creatorId].playerColor, 0.5);
+	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this7.players[data.creatorId].playerColor, 0.5);
 	      });
 	    }
 	  }, {
 	    key: 'setUpHPChange',
 	    value: function setUpHPChange() {
-	      var _this7 = this;
+	      var _this8 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        var player = _this7.players[data.playerId];
+	        var player = _this8.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
 	          $('#hp .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
@@ -412,24 +419,24 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this8 = this;
+	      var _this9 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this8.ball = Crafty.e('Ball').at(data.col, data.row).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+	        _this9.ball = Crafty.e('Ball').at(data.col, data.row).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this9 = this;
+	      var _this10 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this9.ball.destroy();
-	        _this9.players[data.playerId].pickUpBall();
+	        _this10.ball.destroy();
+	        _this10.players[data.playerId].pickUpBall();
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this9.players[data.playerId].color('black');
+	        _this10.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
@@ -446,10 +453,10 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this10 = this;
+	      var _this11 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this10.players[_this10.selfId].weaponType = data.type;
+	        _this11.players[_this11.selfId].weaponType = data.type;
 	        $('#weapon-type').text(data.type);
 	        if (data.type === 'BFS') {
 	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
@@ -459,7 +466,7 @@
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this10.players[_this10.selfId].weaponType = null;
+	        _this11.players[_this11.selfId].weaponType = null;
 	        $('#weapon-type').empty();
 	        $('#weapon-img').empty();
 	      });

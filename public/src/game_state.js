@@ -19,7 +19,7 @@ const constants = {
 
 class GameState {
   constructor(io, socket, roomId) {
-    this.sockets = [socket];
+    this.sockets = {};
     this.roomId = roomId;
     this.players = {
       1: null,
@@ -38,61 +38,87 @@ class GameState {
     this.setScoreIntervalId = null;
     this.io = io;
 
-    // this.setUpLoadingPage(socket);
+    this.addSocket(socket);
   }
 
   addSocket(socket) {
-    if (this.sockets.length < 4) {
-      this.sockets.push(socket);
+    if (Object.keys(this.sockets).length < 4) {
+      this.sockets[socket.id] = socket;
       socket.join(this.roomId);  // join that socket to the game room
-      // this.setUpLoadingPage(socket);
+
+      socket.on('setUpLoadingScene', () => {
+        this.setUpLoadingScene(socket);
+      });
       return true;
     } else {
       return false; // room is full
     }
   }
 
-  // setUpLoadingPage(socket) {
-  //   // give a playerId to player
-  //   let playerId;
-  //   for (let i = 1; i <= Object.keys(this.players).length; i++) {
-  //     if (this.players[i] === null) {
-  //       playerId = i;
-  //       break;
-  //     }
-  //   }
-  //
-  //   if (playerId === undefined) {
-  //     return;
-  //   }
-  //
-  //   socket.emit('joinGame', { playerId: playerId,
-  //                              seedRandomStr: this.seedRandomStr,
-  //                              playerColor: constants.COLORS[playerId - 1]
-  //                            });
-  //
-  //   Object.keys(this.players).forEach((id) => {
-  //      if (this.players[id] !== null) {
-  //        socket.emit('addNewPlayer', {
-  //          playerId: id,
-  //          playerColor: constants.COLORS[id - 1]
-  //        });
-  //      }
-  //   });
-  //
-  //   socket.join(playerId);
-  //
-  //   setUpAddNewPlayer(socket, playerId, constants.COLORS[playerId - 1]);
-  //
-  //   this.players[playerId] = true;
-  //
-  //   setUpDisconnect(socket, playerId);
-  //   setUpStartGame(socket);
-  //   setUpUpdatePos(socket);
-  //   setUpPickUpWeapon(socket);
-  //   setUpShootWeapon(socket);
-  // }
+  setUpLoadingScene(socket) {
+    // give a playerId to player
+    let playerId;
+    for (let i = 1; i <= Object.keys(this.players).length; i++) {
+      if (this.players[i] === null) {
+        playerId = i;
+        break;
+      }
+    }
 
+    // if there are more than 4 players
+    if (playerId === undefined) {
+      return;
+    }
+
+    socket.emit('joinGame', {
+      selfId: playerId,
+      seedRandomStr: this.seedRandomStr,
+      playerColor: constants.COLORS[playerId - 1]
+    });
+
+    // adding existing players in the room
+    Object.keys(this.players).forEach((id) => {
+       if (this.players[id] !== null) {
+         socket.emit('addNewPlayer', {
+           playerId: id,
+           playerColor: constants.COLORS[id - 1]
+         });
+       }
+    });
+
+    this.players[playerId] = true;
+
+    this.setUpDisconnect(socket, playerId);
+    this.setUpAddNewPlayer(socket, playerId,
+                            constants.COLORS[playerId - 1]);
+    // setUpStartGame(socket);
+    // setUpUpdatePos(socket);
+    // setUpPickUpWeapon(socket);
+    // setUpShootWeapon(socket);
+  }
+
+  setUpDisconnect(socket, playerId) {
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+      delete this.sockets[socket.id];
+
+      // delete player if game has started already
+      if (this.players[playerId] !== true) {
+        this.players[playerId].destroy();
+      }
+      this.players[playerId] = null;
+      this.io.to(this.roomId).emit('othersDisconnected', {
+        playerId: playerId
+      });
+    });
+  }
+
+  setUpAddNewPlayer(socket, playerId, color) {
+    socket.broadcast.to(this.roomId).emit('addNewPlayer', {
+      playerId: playerId,
+      playerColor: color
+    });
+  }
 }
 
 module.exports = GameState;
