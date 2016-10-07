@@ -61,6 +61,8 @@ class Game {
       if (data.isNewRoom) {
         window.history.replaceState({}, '', param);
       }
+
+      this.start();
     });
   }
 
@@ -78,6 +80,8 @@ class Game {
     createCanvas(Crafty, ClientModel);
     //TODO: DELETE MODEL
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
+
+    socket.emit('setUpLoadingScene');
 
     let game = this;
     Crafty.scene('Loading', function() {
@@ -163,6 +167,7 @@ class Game {
 
     let playerTextY = 50;
     socket.on('joinGame', data => {
+      console.log(data.selfId);
       let playerText = Crafty.e('2D, DOM, Text')
             .attr({ x: 50, y: playerTextY, w: 200 })
             .text(`You are player ${data.selfId}`)
