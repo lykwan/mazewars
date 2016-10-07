@@ -29,6 +29,51 @@ class Game {
     return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
   }
 
+  run() {
+    // getting the room id from the url params, if any
+    let pageURL = decodeURIComponent(window.location.search.substring(1));
+    let param = pageURL.split('=');
+    let roomId;
+    if (param[0] === 'room_id') {
+      roomId = param[1];
+    }
+
+    this.setUpJoinRoom();
+
+    if (roomId !== undefined) {
+      socket.emit('joinRoom', { roomId: roomId });
+      socket.on('failedToJoin', data => {
+        $('#game').append(`<span class='error-msg'>${ data.msg }</span>`);
+      });
+    } else {
+      this.loadNewRoomButton();
+    }
+  }
+
+  setUpJoinRoom() {
+    socket.on('joinRoom', data => {
+      let param = `?room_id=${ data.roomId }`;
+      $('#game').append(`<span>
+                           Link: amazeball.lilykwan.me/${ param }
+                         </span>`);
+
+      // replace the url with room id query
+      if (data.isNewRoom) {
+        window.history.replaceState({}, '', param);
+      }
+    });
+  }
+
+  loadNewRoomButton() {
+    const makeNewRoomButton = "<button class='new-room'>Make New Room</button>";
+    $('#game').append(makeNewRoomButton);
+
+    $('#game .new-room').on('click', e => {
+      e.preventDefault();
+      socket.emit('makeNewRoom');
+    });
+  }
+
   start() {
     createCanvas(Crafty, ClientModel);
     //TODO: DELETE MODEL
@@ -117,7 +162,7 @@ class Game {
     Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
 
     let playerTextY = 50;
-    socket.on('connected', data => {
+    socket.on('joinGame', data => {
       let playerText = Crafty.e('2D, DOM, Text')
             .attr({ x: 50, y: playerTextY, w: 200 })
             .text(`You are player ${data.selfId}`)
