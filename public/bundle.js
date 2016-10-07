@@ -156,9 +156,10 @@
 	        var param = '?room_id=' + data.roomId;
 	        $('#game').append('<span>\n                           Link: amazeball.lilykwan.me/' + param + '\n                         </span>');
 	
-	        // replace the url with room id query
 	        if (data.isNewRoom) {
+	          // replace the url with room id query
 	          window.history.replaceState({}, '', param);
+	          $('#game .new-room').remove();
 	        }
 	
 	        _this.start();
@@ -167,7 +168,7 @@
 	  }, {
 	    key: 'loadNewRoomButton',
 	    value: function loadNewRoomButton() {
-	      var makeNewRoomButton = "<button class='new-room'>Make New Room</button>";
+	      var makeNewRoomButton = "<button class='new-room'>Create Room</button>";
 	      $('#game').append(makeNewRoomButton);
 	
 	      $('#game .new-room').on('click', function (e) {
@@ -617,10 +618,23 @@
 	  DFS: 'DFS'
 	};
 	
+	var gameSettings = {
+	  WEAPON_RANGE: 10,
+	  BUFFER_DAMAGE_TIME: 1000,
+	  BUFFER_SHOOTING_TIME: 1500,
+	  WEAPON_SPAWN_TIME: 5000,
+	  DAMAGE_ANIMATION_TIME: 100,
+	  DAMAGE_DISAPPEAR_TIME: 1000,
+	  HP_DAMAGE: 10,
+	  GAME_DURATION: 30, // 200
+	  COLORS: ['blue', 'red', 'yellow', 'green']
+	};
+	
 	module.exports = {
 	  mapGrid: mapGrid,
 	  wallDirection: wallDirection,
-	  weaponTypes: weaponTypes
+	  weaponTypes: weaponTypes,
+	  gameSettings: gameSettings
 	};
 
 /***/ },
