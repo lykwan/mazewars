@@ -7,18 +7,7 @@ const Board = require('./board.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
 const weaponTypes = Constants.weaponTypes;
-
-const constants = {
-  WEAPON_RANGE: 10,
-  BUFFER_DAMAGE_TIME: 1000,
-  BUFFER_SHOOTING_TIME: 1500,
-  WEAPON_SPAWN_TIME: 5000,
-  DAMAGE_ANIMATION_TIME: 100,
-  DAMAGE_DISAPPEAR_TIME: 1000,
-  HP_DAMAGE: 10,
-  GAME_DURATION: 30, // 200
-  COLORS: ['blue', 'red', 'yellow', 'green']
-};
+const gameSettings = Constants.gameSettings;
 
 class GameState {
   constructor(io, socket, roomId) {
@@ -36,7 +25,7 @@ class GameState {
     this.seedRandomStr = "randomStr" +
       Math.floor(Math.random() * 30).toString();
     this.board = null;
-    this.timer = constants.GAME_DURATION;
+    this.timer = gameSettings.GAME_DURATION;
     this.ballHolder = null;
     this.addWeaponIntervalId = null;
     this.setScoreIntervalId = null;
@@ -79,7 +68,7 @@ class GameState {
     socket.emit('joinGame', {
       selfId: playerId,
       seedRandomStr: this.seedRandomStr,
-      playerColor: constants.COLORS[playerId - 1]
+      playerColor: gameSettings.COLORS[playerId - 1]
     });
 
     // adding existing players in the room
@@ -87,7 +76,7 @@ class GameState {
        if (this.players[id] !== null) {
          socket.emit('addNewPlayer', {
            playerId: id,
-           playerColor: constants.COLORS[id - 1]
+           playerColor: gameSettings.COLORS[id - 1]
          });
        }
     });
@@ -96,7 +85,7 @@ class GameState {
 
     this.setUpDisconnect(socket, playerId);
     this.setUpAddNewPlayer(socket, playerId,
-                            constants.COLORS[playerId - 1]);
+                            gameSettings.COLORS[playerId - 1]);
     this.setUpStartGame(socket);
     this.setUpUpdatePos(socket);
     this.setUpPickUpWeapon(socket);
@@ -138,7 +127,7 @@ class GameState {
         }).map(playerId => {
           return {
             playerId: playerId,
-            playerColor: constants.COLORS[playerId - 1],
+            playerColor: gameSettings.COLORS[playerId - 1],
             playerPos: [playerPos[playerId - 1][0], playerPos[playerId - 1][1]]
           };
         });
@@ -150,7 +139,7 @@ class GameState {
           let player =
             this.Crafty.e('Player')
                   .at(playerPos[playerId - 1][0], playerPos[playerId - 1][1])
-                  .setUp(playerId, constants.COLORS[playerId - 1]);
+                  .setUp(playerId, gameSettings.COLORS[playerId - 1]);
           this.players[playerId] = player;
         });
 
@@ -301,7 +290,7 @@ class GameState {
     this.seedRandomStr =
       "randomStr" + Math.floor(Math.random() * 30).toString();
     this.board = null;
-    this.timer = constants.GAME_DURATION;
+    this.timer = gameSettings.GAME_DURATION;
     this.ballHolder = null;
     this.addWeaponIntervalId = null;
 
@@ -379,7 +368,7 @@ class GameState {
         type: type,
       });
 
-    }, constants.WEAPON_SPAWN_TIME);
+    }, gameSettings.WEAPON_SPAWN_TIME);
   }
 
   setUpPickUpWeapon(socket) {
@@ -422,14 +411,14 @@ class GameState {
           const damage = this.Crafty.e('Damage')
                 .at(damageCells[idx][0], damageCells[idx][1])
                 .setUpCreator(data.playerId)
-                .disappearAfter(constants.DAMAGE_DISAPPEAR_TIME);
+                .disappearAfter(gameSettings.DAMAGE_DISAPPEAR_TIME);
 
           damage.onHit('Player', this.lowerHP.bind(this, damage));
 
           this.io.to(this.roomId).emit('createDamage', {
             damageCell: damageCells[idx],
             creatorId: data.playerId,
-            disappearTime: constants.DAMAGE_DISAPPEAR_TIME
+            disappearTime: gameSettings.DAMAGE_DISAPPEAR_TIME
           });
 
           idx++;
@@ -438,7 +427,7 @@ class GameState {
             clearInterval(intervalId);
           }
 
-        }, constants.DAMAGE_ANIMATION_TIME);
+        }, gameSettings.DAMAGE_ANIMATION_TIME);
       }
     });
   }
@@ -447,7 +436,7 @@ class GameState {
     player.weaponCoolingDown = true;
     setTimeout(() => {
       player.weaponCoolingDown = false;
-    }, constants.BUFFER_SHOOTING_TIME);
+    }, gameSettings.BUFFER_SHOOTING_TIME);
   }
 
 
@@ -455,7 +444,7 @@ class GameState {
     let damageCells = [];
     let initCol = player.getCol();
     let initRow = player.getRow();
-    let remainingDistance = constants.WEAPON_RANGE;
+    let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileQueue = [[initCol, initRow]];
     while (remainingDistance > 0) {
       let [col, row] = tileQueue.shift();
@@ -495,7 +484,7 @@ class GameState {
     let damageCells = [];
     let col = player.getCol();
     let row = player.getRow();
-    let remainingDistance = constants.WEAPON_RANGE;
+    let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileStack = [];
     while (remainingDistance > 0) {
       if (!this.hasCell(damageCells, [col, row])) {
@@ -551,7 +540,7 @@ class GameState {
         const player = playerObj.obj;
         if (!player.hasTakenDamage &&
           parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
-          player.HP -= constants.HP_DAMAGE;
+          player.HP -= gameSettings.HP_DAMAGE;
           if (player.HP <= 0) {
             this.respawnPlayer(player);
           }
@@ -612,7 +601,7 @@ class GameState {
     player.hasTakenDamage = true;
     setTimeout(() => {
       player.hasTakenDamage = false;
-    }, constants.BUFFER_DAMAGE_TIME);
+    }, gameSettings.BUFFER_DAMAGE_TIME);
   }
 
 }

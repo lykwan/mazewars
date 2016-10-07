@@ -57,9 +57,10 @@ class Game {
                            Link: amazeball.lilykwan.me/${ param }
                          </span>`);
 
-      // replace the url with room id query
       if (data.isNewRoom) {
+        // replace the url with room id query
         window.history.replaceState({}, '', param);
+        $('#game .new-room').remove();
       }
 
       this.start();
@@ -67,7 +68,7 @@ class Game {
   }
 
   loadNewRoomButton() {
-    const makeNewRoomButton = "<button class='new-room'>Make New Room</button>";
+    const makeNewRoomButton = "<button class='new-room'>Create Room</button>";
     $('#game').append(makeNewRoomButton);
 
     $('#game .new-room').on('click', e => {

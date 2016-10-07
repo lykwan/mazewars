@@ -24,8 +24,21 @@ const weaponTypes = {
   DFS: 'DFS'
 };
 
+const gameSettings = {
+  WEAPON_RANGE: 10,
+  BUFFER_DAMAGE_TIME: 1000,
+  BUFFER_SHOOTING_TIME: 1500,
+  WEAPON_SPAWN_TIME: 5000,
+  DAMAGE_ANIMATION_TIME: 100,
+  DAMAGE_DISAPPEAR_TIME: 1000,
+  HP_DAMAGE: 10,
+  GAME_DURATION: 30, // 200
+  COLORS: ['blue', 'red', 'yellow', 'green']
+};
+
 module.exports = {
   mapGrid: mapGrid,
   wallDirection: wallDirection,
-  weaponTypes: weaponTypes
+  weaponTypes: weaponTypes,
+  gameSettings: gameSettings
 };
