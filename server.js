@@ -5,8 +5,9 @@ var io = require('socket.io')(server);
 var Crafty = require('craftyjs')();
 var ServerModel = require('./public/src/model/server_model.js');
 var createCanvas = require('./public/src/components/canvas.js');
-var seedrandom = require('seedrandom');
 var Board = require('./public/src/board.js');
+var GameState = require('./public/src/game_state.js');
+var crypto = require("crypto");
 const Constants = require('./public/src/constants.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
@@ -14,13 +15,7 @@ const weaponTypes = Constants.weaponTypes;
 
 app.use(express.static('public'));
 
-app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
-
 createCanvas(Crafty, ServerModel);
-
-var colors = ['blue', 'red', 'yellow', 'green'];
 
 const constants = {
   WEAPON_COLORS: {
@@ -35,10 +30,10 @@ const constants = {
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
   BALL_COLOR: '#008080',
-  GAME_DURATION: 200
+  GAME_DURATION: 30// 200
 };
 
-let gameState = {
+let gameStateObj = {
   players: {
     1: null,
     2: null,
@@ -55,49 +50,56 @@ let gameState = {
   setScoreIntervalId: null
 };
 
+// let gameState = new GameState();
+let allGameStates = {};
 
 io.on('connection', function(socket) {
   console.log(`a user connected`);
 
-  let selfId;
-  for (let i = 1; i <= Object.keys(gameState.players).length; i++) {
-    if (gameState.players[i] === null) {
-      selfId = i;
-      break;
-    }
-  }
-
-  if (selfId === undefined) {
-    return;
-  }
-
-  socket.emit('connected', { selfId: selfId,
-                             seedRandomStr: gameState.seedRandomStr,
-                             playerColor: colors[selfId - 1]
-                           });
-
-  Object.keys(gameState.players).forEach((id) => {
-     if (gameState.players[id] !== null) {
-       socket.emit('addNewPlayer', {
-         playerId: id,
-         playerColor: colors[id - 1]
-       });
-     }
-  });
-
-  socket.join(selfId);
-
-  setUpAddNewPlayer(socket, selfId, colors[selfId - 1]);
-
-  gameState.players[selfId] = true;
-
-  setUpDisconnect(socket, selfId);
-  setUpStartGame(socket);
-  setUpUpdatePos(socket);
-  setUpPickUpWeapon(socket);
-  setUpShootWeapon(socket);
-
+  setUpMakeNewRoom(socket);
+  setUpJoinRoom(socket);
 });
+
+function setUpMakeNewRoom(socket) {
+  socket.on('makeNewRoom', () => {
+    // create a new password
+    let roomId = crypto.randomBytes(5).toString('hex');
+    while (allGameStates[roomId] !== undefined) {
+      roomId = crypto.randomBytes(5).toString('hex');
+    }
+
+    allGameStates[roomId] = new GameState(io, socket, roomId);
+
+    // send the roomId back to the client
+    socket.emit('joinRoom', {
+      roomId: roomId,
+      isNewRoom: true
+    });
+  });
+}
+
+function setUpJoinRoom(socket) {
+  socket.on('joinRoom', data => {
+    let gameState = allGameStates[data.roomId];
+    if (gameState === undefined) {
+      socket.emit('failedToJoin', {
+        msg: "Cannot find room"
+      });
+    } else {
+      let successJoin = gameState.addSocket(socket);
+      if (successJoin) {
+        socket.emit('joinRoom', {
+          roomId: data.roomId,
+          isNewRoom: false
+        });
+      } else {
+        socket.emit('failedToJoin', {
+          msg: 'Room is currently full!'
+        });
+      }
+    }
+  });
+}
 
 function getPlayerInitPos() {
   let playerPos = [];
@@ -178,6 +180,7 @@ function addBall(col, row) {
 }
 
 function pickUpBall() {
+  console.log(gameState.ball);
   const player = gameState.ball.hit('Player')[0].obj;
   gameState.ball.destroy();
   gameState.ball = null;

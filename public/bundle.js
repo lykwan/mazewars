@@ -56,7 +56,7 @@
 	
 	document.addEventListener('DOMContentLoaded', function () {
 	  var game = new _game2.default();
-	  game.start();
+	  game.run();
 	});
 
 /***/ },
@@ -83,11 +83,11 @@
 	
 	var _player2 = _interopRequireDefault(_player);
 	
-	var _client_model = __webpack_require__(9);
+	var _client_model = __webpack_require__(8);
 	
 	var _client_model2 = _interopRequireDefault(_client_model);
 	
-	var _board = __webpack_require__(10);
+	var _board = __webpack_require__(9);
 	
 	var _board2 = _interopRequireDefault(_board);
 	
@@ -124,6 +124,52 @@
 	    key: 'height',
 	    value: function height() {
 	      return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+	    }
+	  }, {
+	    key: 'run',
+	    value: function run() {
+	      // getting the room id from the url params, if any
+	      var pageURL = decodeURIComponent(window.location.search.substring(1));
+	      var param = pageURL.split('=');
+	      var roomId = void 0;
+	      if (param[0] === 'room_id') {
+	        roomId = param[1];
+	      }
+	
+	      this.setUpJoinRoom();
+	
+	      if (roomId !== undefined) {
+	        socket.emit('joinRoom', { roomId: roomId });
+	        socket.on('failedToJoin', function (data) {
+	          $('#game').append('<span class=\'error-msg\'>' + data.msg + '</span>');
+	        });
+	      } else {
+	        this.loadNewRoomButton();
+	      }
+	    }
+	  }, {
+	    key: 'setUpJoinRoom',
+	    value: function setUpJoinRoom() {
+	      socket.on('joinRoom', function (data) {
+	        var param = '?room_id=' + data.roomId;
+	        $('#game').append('<span>\n                           Link: amazeball.lilykwan.me/' + param + '\n                         </span>');
+	
+	        // replace the url with room id query
+	        if (data.isNewRoom) {
+	          window.history.replaceState({}, '', param);
+	        }
+	      });
+	    }
+	  }, {
+	    key: 'loadNewRoomButton',
+	    value: function loadNewRoomButton() {
+	      var makeNewRoomButton = "<button class='new-room'>Make New Room</button>";
+	      $('#game').append(makeNewRoomButton);
+	
+	      $('#game .new-room').on('click', function (e) {
+	        e.preventDefault();
+	        socket.emit('makeNewRoom');
+	      });
 	    }
 	  }, {
 	    key: 'start',
@@ -203,7 +249,7 @@
 	      Crafty.sprite("../assets/dfs_weapon.png", { spr_dfs: [0, 0, 288, 88] });
 	
 	      var playerTextY = 50;
-	      socket.on('connected', function (data) {
+	      socket.on('joinGame', function (data) {
 	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('You are player ' + data.selfId).textColor(data.playerColor);
 	        playerTextY += 30;
 	        _this2.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
@@ -434,7 +480,7 @@
 	var createComponents = __webpack_require__(3);
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(6);
-	var createBallComponent = __webpack_require__(8);
+	var createBallComponent = __webpack_require__(7);
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	
@@ -544,7 +590,7 @@
 	var mapGrid = {
 	  NUM_ROWS: 13,
 	  NUM_COLS: 13,
-	  WALL_THICKNESS: 3,
+	  WALL_THICKNESS: 6,
 	  TILE_WIDTH: 45,
 	  TILE_HEIGHT: 45,
 	  PLAYER_WIDTH: 30,
@@ -752,8 +798,7 @@
 	};
 
 /***/ },
-/* 7 */,
-/* 8 */
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -771,7 +816,7 @@
 	};
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -787,7 +832,7 @@
 	module.exports = ClientModel;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -801,7 +846,7 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
-	var Tile = __webpack_require__(11);
+	var Tile = __webpack_require__(10);
 	
 	var DIRECTION = {
 	  left: 'left',
@@ -944,7 +989,7 @@
 	module.exports = Board;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
