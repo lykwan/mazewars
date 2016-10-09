@@ -1,4 +1,4 @@
-var createComponents = require('./entities.js');
+var createComponents = require('./components.js');
 var createPlayerComponent = require('./player.js');
 var createWeaponComponent = require('./weapon.js');
 var createBallComponent = require('./ball.js');

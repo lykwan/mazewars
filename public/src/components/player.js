@@ -7,8 +7,8 @@ module.exports = function(Crafty, model) {
   Crafty.c('Player', {
     init: function() {
       this.requires('2D, DOM, Tile, Collision, Color');
-      this.charSpeed = 2;
       this.HP = 100;
+      this.charStep = mapGrid.CHAR_STEP;
       this.hasTakenDamage = false;
       this.longestBallHoldingTime = 0;
       this.currentBallHoldingTime = 0;
@@ -58,6 +58,15 @@ module.exports = function(Crafty, model) {
       });
 
       return this;
+    },
+
+    moveDir(dirX, dirY) {
+      // the offset it needs to move to the neighbor blocks
+      const w = mapGrid.TILE_WIDTH / 2;
+      const h = mapGrid.TILE_WIDTH / 4;
+
+      this.x += (w / this.charStep) * dirX;
+      this.y += (h / this.charStep) * dirY;
     },
 
     setUp: function(playerId, playerColor) {

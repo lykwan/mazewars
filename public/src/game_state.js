@@ -24,7 +24,9 @@ class GameState {
     this.ball = null;
     this.seedRandomStr = "randomStr" +
       Math.floor(Math.random() * 30).toString();
-    this.board = null;
+    this.board =
+      new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
+                this.seedRandomStr, this.Crafty);
     this.timer = gameSettings.GAME_DURATION;
     this.ballHolder = null;
     this.addWeaponIntervalId = null;
@@ -58,11 +60,6 @@ class GameState {
         playerId = i;
         break;
       }
-    }
-
-    // if there are more than 4 players
-    if (playerId === undefined) {
-      return;
     }
 
     socket.emit('joinGame', {
@@ -102,12 +99,15 @@ class GameState {
         this.players[playerId].destroy();
       }
       this.players[playerId] = null;
+
+      // notify other people that this player disconnected
       this.io.to(this.roomId).emit('othersDisconnected', {
         playerId: playerId
       });
     });
   }
 
+  // when a new player enters
   setUpAddNewPlayer(socket, playerId, color) {
     socket.broadcast.to(this.roomId).emit('addNewPlayer', {
       playerId: playerId,
@@ -116,43 +116,56 @@ class GameState {
   }
 
   setUpStartGame(socket) {
-    this.drawBoard();
     const allPlayerPos = this.getPlayerInitPos();
     socket.on('startNewGame', data => {
       // start the game when there are two or more players
-      if (Object.keys(this.players).length >= 2) {
-        const players = Object.keys(this.players).filter((playerId) => {
-          return this.players[playerId] !== null;
-        }).map(playerId => {
-          const playerPos = allPlayerPos[playerId - 1];
-          return {
-            playerId: playerId,
-            playerColor: gameSettings.COLORS[playerId - 1],
-            playerPos: playerPos
-          };
-        });
-
-        // creating the player characters
-        Object.keys(this.players).filter((playerId) => {
-          return this.players[playerId] !== null;
-        }).forEach(playerId => {
-          const [playerRow, playerCol] = allPlayerPos[playerId - 1];
-          let player =
-            this.Crafty.e('Player')
-                  .at(playerRow, playerCol)
-                  .setUp(playerId, gameSettings.COLORS[playerId - 1]);
-          this.players[playerId] = player;
-        });
-
-        this.io.to(this.roomId).emit('startNewGame', {
-          players: players,
-          timer: this.timer
-        });
-
-        this.addBall();
-        this.addWeapon();
-        this.addTimer();
+      if (Object.keys(this.players).length < 2) {
+        return;
       }
+
+      // creating the player characters
+      this.createPlayerEntities(allPlayerPos);
+
+      // sending this info over to the client
+      const playerData = Object.keys(this.players).filter((playerId) => {
+        return this.players[playerId] !== null;
+      }).map(playerId => {
+        // const playerPos = allPlayerPos[playerId - 1];
+        const playerEntity = this.players[playerId];
+        const playerPos = [playerEntity.getRow(), playerEntity.getCol()];
+        return {
+          playerId: playerId,
+          playerColor: gameSettings.COLORS[playerId - 1],
+          playerPos: playerPos,
+          playerPx: [playerEntity.x, playerEntity.y]
+        };
+      });
+
+
+      this.io.to(this.roomId).emit('startNewGame', {
+        players: playerData,
+        timer: this.timer
+      });
+
+
+      this.addBall();
+      this.addWeapon();
+      this.addTimer();
+    });
+  }
+
+  createPlayerEntities(allPlayerPos) {
+    Object.keys(this.players).filter((playerId) => {
+      return this.players[playerId] !== null;
+    }).forEach(playerId => {
+      const [playerRow, playerCol] = allPlayerPos[playerId - 1];
+      // const [playerRow, playerCol] = [0, 0];
+      // const [playerX, playerY] = [0, 0];
+      let player =
+        this.Crafty.e('Player')
+                   .at(playerRow, playerCol)
+                   .setUp(playerId, gameSettings.COLORS[playerId - 1]);
+        this.players[playerId] = player;
     });
   }
 
@@ -169,26 +182,7 @@ class GameState {
   }
 
   drawBoard() {
-    this.board =
-      new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                this.seedRandomStr, this.Crafty);
-    // this.board.createMapEntities(this.createWallEntity.bind(this),
-    //                             this.createTileEntity.bind(this));
   }
-
-  // createWallEntity(row, col) {
-  //   const wallEntity =
-  //     this.Crafty.e('2D, DOM')
-  //           .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-  //   this.iso.place(wallEntity, row, col, mapGrid.WALL_Z);
-  // }
-  //
-  // createTileEntity(row, col) {
-  //   const tileEntity =
-  //     this.Crafty.e('2D, DOM')
-  //           .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-  //   this.iso.place(tileEntity, row, col, mapGrid.TILE_Z);
-  // }
 
   addBall() {
     const col = Math.floor(this.board.numGridCols / 2);
@@ -328,25 +322,17 @@ class GameState {
     socket.on('updatePos', data => {
       let movingPlayer = this.players[data.playerId];
       if (data.charMove.left) {
-        movingPlayer.x -= movingPlayer.charSpeed;
-        if (movingPlayer.hit("Wall")) {
-          movingPlayer.x += movingPlayer.charSpeed;
-        }
+        movingPlayer.moveDir(-1, -1);
       } else if (data.charMove.right) {
-        movingPlayer.x += movingPlayer.charSpeed;
-        if (movingPlayer.hit("Wall")) {
-          movingPlayer.x -= movingPlayer.charSpeed;
-        }
+        movingPlayer.moveDir(1, 1);
       } else if (data.charMove.up) {
-        movingPlayer.y -= movingPlayer.charSpeed;
-        if (movingPlayer.hit("Wall")) {
-          movingPlayer.y += movingPlayer.charSpeed;
-        }
+        movingPlayer.moveDir(1, -1);
       } else if (data.charMove.down) {
-        movingPlayer.y += movingPlayer.charSpeed;
-        if (movingPlayer.hit("Wall")) {
-          movingPlayer.y -= movingPlayer.charSpeed;
-        }
+        movingPlayer.moveDir(-1, 1);
+        // movingPlayer.y += movingPlayer.charSpeed;
+        // if (movingPlayer.hit("Wall")) {
+        //   movingPlayer.y -= movingPlayer.charSpeed;
+        // }
       }
 
       this.io.to(this.roomId).emit('updatePos', {
