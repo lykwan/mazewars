@@ -3,7 +3,8 @@ const mapGrid = Constants.mapGrid;
 const Cell = require('./cell.js');
 
 class Board {
-  constructor(m, n, seedRandomStr, Crafty, iso) {
+  constructor(m, n, seedRandomStr, Crafty) {
+    console.log(seedRandomStr);
     // how many cells rows and cols are there if walls were just borders
     this.numGridRows = m;
     this.numGridCols = n;
@@ -16,7 +17,6 @@ class Board {
     this.frontier = [];
     this.generateMaze();
     this.Crafty = Crafty;
-    this.iso = iso;
   }
 
   // create a starting maze map with all the walls
@@ -155,18 +155,18 @@ class Board {
     }
   }
 
-  createMapEntities(createWallEntityFunc, createTileEntityFunc) {
-    for (let i = 0; i < this.numMazeRows; i++) {
-      for (let j = 0; j < this.numMazeCols; j++) {
-        if (this.maze[i][j].isWall) {
-          // this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
-          createWallEntityFunc(i, j);
-        } else {
-          createTileEntityFunc(i, j);
-        }
-      }
-    }
-  }
+  // createMapEntities(createWallEntityFunc, createTileEntityFunc) {
+  //   for (let i = 0; i < this.numMazeRows; i++) {
+  //     for (let j = 0; j < this.numMazeCols; j++) {
+  //       if (this.maze[i][j].isWall) {
+  //         // this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
+  //         createWallEntityFunc(i, j);
+  //       } else {
+  //         createTileEntityFunc(i, j);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 module.exports = Board;

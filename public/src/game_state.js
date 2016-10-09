@@ -33,7 +33,7 @@ class GameState {
 
     this.addSocket(socket);
     this.Crafty = Craftyjs();
-    this.iso = initGame(this.Crafty, ServerModel);
+    initGame(this.Crafty, ServerModel);
   }
 
   addSocket(socket) {
@@ -171,7 +171,7 @@ class GameState {
   drawBoard() {
     this.board =
       new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                this.seedRandomStr, this.Crafty, this.iso);
+                this.seedRandomStr, this.Crafty);
     // this.board.createMapEntities(this.createWallEntity.bind(this),
     //                             this.createTileEntity.bind(this));
   }
