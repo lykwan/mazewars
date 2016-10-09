@@ -20,13 +20,13 @@ class Game {
     this.ball = null;
   }
 
-  width() {
-    return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-  }
-
-  height() {
-    return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
-  }
+  // width() {
+  //   return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
+  // }
+  //
+  // height() {
+  //   return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+  // }
 
   run() {
     // getting the room id from the url params, if any
@@ -174,7 +174,7 @@ class Game {
       playerTextY += 30;
       this.board =
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                  data.seedRandomStr, Crafty, true);
+                  data.seedRandomStr, Crafty);
       this.playersInfo[data.selfId] = playerText;
       this.selfId = data.selfId;
 
@@ -230,10 +230,11 @@ class Game {
                                 <div id='weapon-type'></div>
                              </div>`);
     data.players.forEach(playerInfo => {
+      let [playerRow, playerCol] = playerInfo.playerPos;
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
              Crafty.e('Player')
-                   .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
+                   .at(playerRow, playerCol)
                    .setUp(playerInfo.playerId, playerInfo.playerColor)
                    .setUpSocket(socket)
                    .setUpSetBallTime()
@@ -264,7 +265,7 @@ class Game {
       } else {
         let otherPlayer =
           Crafty.e('OtherPlayer')
-                .at(playerInfo.playerPos[0], playerInfo.playerPos[1])
+                .at(playerRow, playerCol)
                 .setUp(data.players.playerId, playerInfo.playerColor);
 
         if (otherPlayer.playerColor === 'red') {
@@ -308,7 +309,7 @@ class Game {
   setUpPlacingWeapons() {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
-                           .at(data.x, data.y)
+                           .at(data.row, data.col)
                            .setUp(data.type);
 
       if (data.type === 'BFS') {
@@ -366,7 +367,7 @@ class Game {
   setUpAddBall() {
     socket.on('addBall', data => {
       this.ball = Crafty.e('Ball')
-                    .at(data.col, data.row)
+                    .at(data.row, data.col)
                     .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
     });
   }
