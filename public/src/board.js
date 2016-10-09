@@ -3,7 +3,7 @@ const mapGrid = Constants.mapGrid;
 const Cell = require('./cell.js');
 
 class Board {
-  constructor(m, n, seedRandomStr, Crafty) {
+  constructor(m, n, seedRandomStr) {
     console.log(seedRandomStr);
     // how many cells rows and cols are there if walls were just borders
     this.numGridRows = m;
@@ -16,7 +16,6 @@ class Board {
     this.maze = this.createStartingMaze();
     this.frontier = [];
     this.generateMaze();
-    this.Crafty = Crafty;
   }
 
   // create a starting maze map with all the walls

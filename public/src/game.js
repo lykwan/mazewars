@@ -16,15 +16,9 @@ class Game {
     this.board = null;
     this.selfId = null;
     this.ball = null;
+    this.translateX = 0;
+    this.translateY = 0;
   }
-
-  // width() {
-  //   return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-  // }
-  //
-  // height() {
-  //   return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
-  // }
 
   run() {
     // getting the room id from the url params, if any
@@ -84,7 +78,7 @@ class Game {
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
     this.iso = Crafty.diamondIso.init(mapGrid.TILE_WIDTH,
-                                       mapGrid.TILE_WIDTH/2,
+                                       mapGrid.TILE_WIDTH / 2,
                                        mapGrid.NUM_MAZE_ROWS,
                                        mapGrid.NUM_MAZE_COLS);
 
@@ -240,29 +234,39 @@ class Game {
                                 <div id='weapon-type'></div>
                              </div>`);
     data.players.forEach(playerInfo => {
+      let [playerX, playerY] = playerInfo.playerPx;
       let [playerRow, playerCol] = playerInfo.playerPos;
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
-             Crafty.e('Player')
-                   .at(playerRow, playerCol)
+             Crafty.e('Player, tileSprite')
                    .setUp(playerInfo.playerId, playerInfo.playerColor)
                    .setUpSocket(socket)
                    .setUpSetBallTime()
-                   .bindingKeyEvents();
+                   .bindingKeyEvents()
+                   .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 
-        if (player.playerColor === 'red') {
-          player.addComponent('spr_red')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (player.playerColor === 'green') {
-          player.addComponent('spr_green')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (player.playerColor === 'blue') {
-          player.addComponent('spr_blue')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (player.playerColor === 'yellow') {
-          player.addComponent('spr_yellow')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        }
+        // place it on isometric map
+        this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
+
+        // after placing it on isometric map, figure out the translation of px
+        this.translateX = player.x - playerX;
+        this.translateY = player.y - playerY;
+        console.log('player', player.x, player.y);
+
+
+        // if (player.playerColor === 'red') {
+        //   player.addComponent('spr_red')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (player.playerColor === 'green') {
+        //   player.addComponent('spr_green')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (player.playerColor === 'blue') {
+        //   player.addComponent('spr_blue')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (player.playerColor === 'yellow') {
+        //   player.addComponent('spr_yellow')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // }
 
         $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                                   Player ${playerInfo.playerId}: ${ player.HP }
@@ -275,22 +279,22 @@ class Game {
       } else {
         let otherPlayer =
           Crafty.e('OtherPlayer')
-                .at(playerRow, playerCol)
+                // .at(playerRow, playerCol)
                 .setUp(data.players.playerId, playerInfo.playerColor);
 
-        if (otherPlayer.playerColor === 'red') {
-          otherPlayer.addComponent('spr_red')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (otherPlayer.playerColor === 'green') {
-          otherPlayer.addComponent('spr_green')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (otherPlayer.playerColor === 'blue') {
-          otherPlayer.addComponent('spr_blue')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        } else if (otherPlayer.playerColor === 'yellow') {
-          otherPlayer.addComponent('spr_yellow')
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        }
+        // if (otherPlayer.playerColor === 'red') {
+        //   otherPlayer.addComponent('spr_red')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (otherPlayer.playerColor === 'green') {
+        //   otherPlayer.addComponent('spr_green')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (otherPlayer.playerColor === 'blue') {
+        //   otherPlayer.addComponent('spr_blue')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // } else if (otherPlayer.playerColor === 'yellow') {
+        //   otherPlayer.addComponent('spr_yellow')
+        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+        // }
 
         $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                             Player ${playerInfo.playerId}: ${ otherPlayer.HP }
@@ -305,16 +309,7 @@ class Game {
 
 
     this.createMapEntities();
-    this.createPlayerEntities();
   }
-
-  createPlayerEntities() {
-    let player = Crafty.e('2D, DOM, wallSprite')
-                  .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-    this.iso.place(player, 0, 0, mapGrid.ACTOR_Z);
-    console.log('player', player.x, player.y);
-  }
-
 
   createMapEntities() {
     for (let i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
@@ -330,7 +325,6 @@ class Game {
             Crafty.e('2D, DOM, tileSprite')
                   .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
           this.iso.place(tileEntity, i, j, mapGrid.TILE_Z);
-          console.log('wall', i, j, tileEntity.x, tileEntity.y);
         }
       }
     }
@@ -343,9 +337,10 @@ class Game {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
-        player.x = data.x;
-        player.y = data.y;
+        player.x = data.x + this.translateX;
+        player.y = data.y + this.translateY;
       }
+      console.log('player', player.x, player.y);
     });
   }
 

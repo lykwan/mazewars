@@ -106,15 +106,9 @@
 	    this.board = null;
 	    this.selfId = null;
 	    this.ball = null;
+	    this.translateX = 0;
+	    this.translateY = 0;
 	  }
-	
-	  // width() {
-	  //   return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-	  // }
-	  //
-	  // height() {
-	  //   return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
-	  // }
 	
 	  _createClass(Game, [{
 	    key: 'run',
@@ -296,40 +290,63 @@
 	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
 	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
 	      data.players.forEach(function (playerInfo) {
+	        var _playerInfo$playerPx = _slicedToArray(playerInfo.playerPx, 2);
+	
+	        var playerX = _playerInfo$playerPx[0];
+	        var playerY = _playerInfo$playerPx[1];
+	
 	        var _playerInfo$playerPos = _slicedToArray(playerInfo.playerPos, 2);
 	
 	        var playerRow = _playerInfo$playerPos[0];
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player').at(playerRow, playerCol).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents();
+	          var player = Crafty.e('Player, tileSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 	
-	          if (player.playerColor === 'red') {
-	            player.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (player.playerColor === 'green') {
-	            player.addComponent('spr_green').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (player.playerColor === 'blue') {
-	            player.addComponent('spr_blue').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (player.playerColor === 'yellow') {
-	            player.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          }
+	          // place it on isometric map
+	          _this4.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
+	
+	          // after placing it on isometric map, figure out the translation of px
+	          _this4.translateX = player.x - playerX;
+	          _this4.translateY = player.y - playerY;
+	          console.log('player', player.x, player.y);
+	
+	          // if (player.playerColor === 'red') {
+	          //   player.addComponent('spr_red')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (player.playerColor === 'green') {
+	          //   player.addComponent('spr_green')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (player.playerColor === 'blue') {
+	          //   player.addComponent('spr_blue')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (player.playerColor === 'yellow') {
+	          //   player.addComponent('spr_yellow')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // }
 	
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer').at(playerRow, playerCol).setUp(data.players.playerId, playerInfo.playerColor);
+	          var otherPlayer = Crafty.e('OtherPlayer')
+	          // .at(playerRow, playerCol)
+	          .setUp(data.players.playerId, playerInfo.playerColor);
 	
-	          if (otherPlayer.playerColor === 'red') {
-	            otherPlayer.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (otherPlayer.playerColor === 'green') {
-	            otherPlayer.addComponent('spr_green').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (otherPlayer.playerColor === 'blue') {
-	            otherPlayer.addComponent('spr_blue').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          } else if (otherPlayer.playerColor === 'yellow') {
-	            otherPlayer.addComponent('spr_yellow').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          }
+	          // if (otherPlayer.playerColor === 'red') {
+	          //   otherPlayer.addComponent('spr_red')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (otherPlayer.playerColor === 'green') {
+	          //   otherPlayer.addComponent('spr_green')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (otherPlayer.playerColor === 'blue') {
+	          //   otherPlayer.addComponent('spr_blue')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // } else if (otherPlayer.playerColor === 'yellow') {
+	          //   otherPlayer.addComponent('spr_yellow')
+	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          // }
 	
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
@@ -339,14 +356,6 @@
 	      });
 	
 	      this.createMapEntities();
-	      this.createPlayerEntities();
-	    }
-	  }, {
-	    key: 'createPlayerEntities',
-	    value: function createPlayerEntities() {
-	      var player = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-	      this.iso.place(player, 0, 0, mapGrid.ACTOR_Z);
-	      console.log('player', player.x, player.y);
 	    }
 	  }, {
 	    key: 'createMapEntities',
@@ -360,7 +369,6 @@
 	          } else {
 	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 	            this.iso.place(tileEntity, i, j, mapGrid.TILE_Z);
-	            console.log('wall', i, j, tileEntity.x, tileEntity.y);
 	          }
 	        }
 	      }
@@ -376,9 +384,10 @@
 	      socket.on('updatePos', function (data) {
 	        var player = _this5.players[data.playerId];
 	        if (player) {
-	          player.x = data.x;
-	          player.y = data.y;
+	          player.x = data.x + _this5.translateX;
+	          player.y = data.y + _this5.translateY;
 	        }
+	        console.log('player', player.x, player.y);
 	      });
 	    }
 	  }, {
@@ -504,93 +513,7 @@
 
 /***/ },
 /* 2 */,
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var Constants = __webpack_require__(4);
-	var mapGrid = Constants.mapGrid;
-	var wallDirection = Constants.wallDirection;
-	/* globals Crafty */
-	
-	module.exports = function (Crafty, model) {
-	  Crafty.c('Tile', {
-	    init: function init() {
-	      this.attr({
-	        w: mapGrid.PLAYER_WIDTH,
-	        h: mapGrid.PLAYER_HEIGHT
-	      });
-	    },
-	
-	    at: function at(row, col) {
-	      var x = col * mapGrid.TILE_WIDTH;
-	      var y = row * mapGrid.TILE_HEIGHT;
-	      this.attr({ x: x, y: y });
-	      return this;
-	    },
-	
-	    getCol: function getCol() {
-	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
-	    },
-	
-	    getRow: function getRow() {
-	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
-	    }
-	  });
-	
-	  Crafty.c('Actor', {
-	    init: function init() {
-	      this.requires('2D, Canvas, Tile');
-	    }
-	  });
-	
-	  Crafty.c('Wall', {
-	    init: function init() {
-	      this.requires('2D, Tile, Canvas, Solid, Color, Collision');
-	    }
-	  });
-	
-	  // Crafty.c('Wall', {
-	  //   init: function() {
-	  //     this.requires('2D, Canvas, Solid, Color, Collision');
-	  //     this.z = 10;
-	  //   },
-	  //
-	  //   wallDir: function(wallDir) {
-	  //     let wall = this;
-	  //     if (wallDir === wallDirection.HORIZONTAL) {
-	  //       wall.attr({
-	  //            w: mapGrid.TILE_WIDTH,
-	  //            h: mapGrid.WALL_THICKNESS
-	  //          });
-	  //     } else if (wallDir === wallDirection.VERTICAL) {
-	  //       wall.attr({
-	  //            w: mapGrid.WALL_THICKNESS,
-	  //            h: mapGrid.TILE_HEIGHT
-	  //          });
-	  //     }
-	  //
-	  //     if (model.receiver === 'CLIENT') {
-	  //       wall.color('#FFFFFF');
-	  //     }
-	  //
-	  //     return wall;
-	  //   },
-	  //
-	  //   atWall: function(row, col, offset) {
-	  //     const [offSetX, offsetY] = offset;
-	  //     const x = (row * mapGrid.TILE_WIDTH) +
-	  //               (offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS));
-	  //     const y = (col * mapGrid.TILE_HEIGHT) +
-	  //               (offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS));
-	  //     this.attr({ x: x, y: y });
-	  //     return this;
-	  //   }
-	  // });
-	};
-
-/***/ },
+/* 3 */,
 /* 4 */
 /***/ function(module, exports) {
 
@@ -604,8 +527,8 @@
 	  NUM_COLS: NUM_COLS,
 	  NUM_MAZE_ROWS: NUM_ROWS * 2 - 1,
 	  NUM_MAZE_COLS: NUM_COLS * 2 - 1,
-	  // TILE_WIDTH: 25,
-	  // TILE_HEIGHT: 25,
+	  TILE_WIDTH: 75,
+	  TILE_HEIGHT: 92,
 	  PLAYER_WIDTH: 20,
 	  PLAYER_HEIGHT: 15,
 	  BALL_WIDTH: 25,
@@ -614,11 +537,10 @@
 	  DFS_HEIGHT: 0.30 * 25,
 	  BFS_WIDTH: 20,
 	  BFS_HEIGHT: 0.70 * 20,
-	  TILE_WIDTH: 75,
-	  TILE_HEIGHT: 92,
-	  TILE_Z: 1,
-	  WALL_Z: 1,
-	  ACTOR_Z: 2
+	  TILE_Z: 0,
+	  WALL_Z: 0,
+	  ACTOR_Z: 1.5,
+	  CHAR_STEP: 10
 	};
 	
 	var weaponTypes = {
@@ -659,8 +581,8 @@
 	  Crafty.c('Player', {
 	    init: function init() {
 	      this.requires('2D, DOM, Tile, Collision, Color');
-	      this.charSpeed = 2;
 	      this.HP = 100;
+	      this.charStep = mapGrid.CHAR_STEP;
 	      this.hasTakenDamage = false;
 	      this.longestBallHoldingTime = 0;
 	      this.currentBallHoldingTime = 0;
@@ -709,6 +631,14 @@
 	      });
 	
 	      return this;
+	    },
+	    moveDir: function moveDir(dirX, dirY) {
+	      // the offset it needs to move to the neighbor blocks
+	      var w = mapGrid.TILE_WIDTH / 2;
+	      var h = mapGrid.TILE_WIDTH / 4;
+	
+	      this.x += w / this.charStep * dirX;
+	      this.y += h / this.charStep * dirY;
 	    },
 	
 	
@@ -879,7 +809,7 @@
 	var Cell = __webpack_require__(10);
 	
 	var Board = function () {
-	  function Board(m, n, seedRandomStr, Crafty) {
+	  function Board(m, n, seedRandomStr) {
 	    _classCallCheck(this, Board);
 	
 	    console.log(seedRandomStr);
@@ -894,7 +824,6 @@
 	    this.maze = this.createStartingMaze();
 	    this.frontier = [];
 	    this.generateMaze();
-	    this.Crafty = Crafty;
 	  }
 	
 	  // create a starting maze map with all the walls
@@ -1148,7 +1077,7 @@
 
 	'use strict';
 	
-	var createComponents = __webpack_require__(3);
+	var createComponents = __webpack_require__(12);
 	var createPlayerComponent = __webpack_require__(5);
 	var createWeaponComponent = __webpack_require__(6);
 	var createBallComponent = __webpack_require__(7);
@@ -1168,6 +1097,93 @@
 	  createPlayerComponent(Crafty, model);
 	  createWeaponComponent(Crafty);
 	  createBallComponent(Crafty);
+	};
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var Constants = __webpack_require__(4);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
+	/* globals Crafty */
+	
+	module.exports = function (Crafty, model) {
+	  Crafty.c('Tile', {
+	    init: function init() {
+	      this.attr({
+	        w: mapGrid.PLAYER_WIDTH,
+	        h: mapGrid.PLAYER_HEIGHT
+	      });
+	    },
+	
+	    at: function at(row, col) {
+	      var x = col * mapGrid.TILE_WIDTH;
+	      var y = row * mapGrid.TILE_HEIGHT;
+	      this.attr({ x: x, y: y });
+	      return this;
+	    },
+	
+	    getCol: function getCol() {
+	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+	    },
+	
+	    getRow: function getRow() {
+	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
+	    }
+	  });
+	
+	  Crafty.c('Actor', {
+	    init: function init() {
+	      this.requires('2D, Canvas, Tile');
+	    }
+	  });
+	
+	  Crafty.c('Wall', {
+	    init: function init() {
+	      this.requires('2D, Tile, Canvas, Solid, Color, Collision');
+	    }
+	  });
+	
+	  // Crafty.c('Wall', {
+	  //   init: function() {
+	  //     this.requires('2D, Canvas, Solid, Color, Collision');
+	  //     this.z = 10;
+	  //   },
+	  //
+	  //   wallDir: function(wallDir) {
+	  //     let wall = this;
+	  //     if (wallDir === wallDirection.HORIZONTAL) {
+	  //       wall.attr({
+	  //            w: mapGrid.TILE_WIDTH,
+	  //            h: mapGrid.WALL_THICKNESS
+	  //          });
+	  //     } else if (wallDir === wallDirection.VERTICAL) {
+	  //       wall.attr({
+	  //            w: mapGrid.WALL_THICKNESS,
+	  //            h: mapGrid.TILE_HEIGHT
+	  //          });
+	  //     }
+	  //
+	  //     if (model.receiver === 'CLIENT') {
+	  //       wall.color('#FFFFFF');
+	  //     }
+	  //
+	  //     return wall;
+	  //   },
+	  //
+	  //   atWall: function(row, col, offset) {
+	  //     const [offSetX, offsetY] = offset;
+	  //     const x = (row * mapGrid.TILE_WIDTH) +
+	  //               (offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS));
+	  //     const y = (col * mapGrid.TILE_HEIGHT) +
+	  //               (offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS));
+	  //     this.attr({ x: x, y: y });
+	  //     return this;
+	  //   }
+	  // });
 	};
 
 /***/ }
