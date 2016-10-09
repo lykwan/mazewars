@@ -1,114 +1,158 @@
 const Constants = require('./constants.js');
 const mapGrid = Constants.mapGrid;
-const wallDirection = Constants.wallDirection;
-const Tile = require('./tile.js');
-
-
-const DIRECTION = {
-  left: 'left',
-  right: 'right',
-  top: 'top',
-  bottom: 'bottom'
-};
-
-const OPPOSITE = {
-  left: DIRECTION.right,
-  right: DIRECTION.left,
-  top: DIRECTION.bottom,
-  bottom: DIRECTION.top
-};
-
+const Cell = require('./cell.js');
 
 class Board {
-  constructor(n, m, seedRandomStr) {
-    this.numCols = n;
-    this.numRows = m;
+  constructor(m, n, seedRandomStr, Crafty, print) {
+    // how many cells rows and cols are there if walls were just borders
+    this.numGridRows = m;
+    this.numGridCols = n;
+    // for the 2d array with the walls as part of the cells
+    this.numMazeCols = (2 * n) - 1;
+    this.numMazeRows = (2 * m) - 1;
+
     Math.seedrandom(seedRandomStr);
-    this.grid = this.createGrid();
+    this.maze = this.createStartingMaze();
     this.frontier = [];
-    this.createMaze();
+    this.generateMaze();
+    if (print) this.log(this.maze);
+    this.Crafty = Crafty;
   }
 
-  createGrid() {
-    let grid = new Array(this.numRows);
-    for (let i = 0; i < grid.length; i++) {
-      grid[i] = new Array(this.numCols);
-      for (let j = 0; j < this.numCols; j++) {
-        grid[i][j] = new Tile(i, j);
+  // create a starting maze map with all the walls
+  createStartingMaze() {
+    let maze = new Array(this.numMazeRows);
+    for (let i = 0; i < maze.length; i++) {
+      maze[i] = new Array(this.numMazeCols);
+      for (let j = 0; j < this.numMazeCols; j++) {
+        if (i % 2 === 1) {
+          // the odd number rows are all filled with wall
+          maze[i][j] = new Cell(true);
+        } else {
+          // the odd number cols are walls and the even number cols are spaces
+          maze[i][j] = (j % 2 === 1) ? new Cell(true) : new Cell(false);
+        }
       }
     }
-    return grid;
+    return maze;
   }
 
-  addFrontiers(x, y) {
-    let dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    dirs.forEach(dir => {
-      const [newX, newY] = [x + dir[0], y + dir[1]];
+  gridToMazeCoords(row, col) {
+    return [row * 2, col * 2];
+  }
 
-      if (this.isInGrid(newX, newY) && !this.grid[newX][newY].isInMaze &&
-          this.grid[newX][newY].hasBeenFrontier === false) {
-        this.frontier.push([newX, newY]);
-        this.grid[newX][newY].hasBeenFrontier = true;
+  log(maze) {
+    let maz = maze.map(row => {
+      return row.map(tile => {
+        if (tile.isWall) return 1;
+        if (!tile.isWall) return 0;
+      });
+    });
+    console.table(maz);
+  }
+
+  // getting the neighbor cells separated by a wall
+  getNeighborSpace(row, col) {
+    let dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    let neighbors = [];
+    dirs.forEach(dir => {
+      // multiplying by 2 to account for the wall in between
+      let [newRow, newCol] = [row + dir[0] * 2, col + dir[1] * 2];
+      if (this.isInGrid(newRow, newCol)) {
+        // ensure that we are not adding walls
+        if (this.maze[newRow][newCol].isWall === true) {
+          throw "Error: adding walls to the neighbor space array";
+        }
+
+        neighbors.push([newRow, newCol]);
       }
     });
-  }
-
-  isInGrid(x, y) {
-    return 0 <= x && x < this.numCols && 0 <= y && y < this.numRows;
-  }
-
-  inMazeNeighbors(x, y) {
-    let neighbors = [];
-    if (x > 0 && this.grid[x - 1][y].isInMaze) {
-      neighbors.push([x - 1, y]);
-    }
-    if (x < (this.numCols - 1) && this.grid[x + 1][y].isInMaze) {
-      neighbors.push([x + 1, y]);
-    }
-    if (y > 0 && this.grid[x][y - 1].isInMaze) {
-      neighbors.push([x, y - 1]);
-    }
-    if (y < (this.numRows - 1) && this.grid[x][y + 1].isInMaze) {
-      neighbors.push([x, y + 1]);
-    }
 
     return neighbors;
   }
 
-  direction(x, y, otherX, otherY) {
-    if ((otherX < x) && y === otherY) {
-      return DIRECTION.left;
-    } else if ((otherY < y) && x === otherX) {
-      return DIRECTION.top;
-    } else if ((otherX > x) && y === otherY) {
-      return DIRECTION.right;
-    } else if ((otherY > y) && x === otherX) {
-      return DIRECTION.bottom;
+  // the forefront surrounding the cells that are in the maze
+  addFrontiers(row, col) {
+    this.getNeighborSpace(row, col).forEach(cell => {
+      let [newRow, newCol] = cell;
+      if (!this.maze[newRow][newCol].isInMaze &&
+          !this.maze[newRow][newCol].hasBeenFrontier) {
+        this.frontier.push([newRow, newCol]);
+        this.maze[newRow][newCol].hasBeenFrontier = true;
+      }
+    });
+  }
+
+  isInGrid(row, col) {
+    return 0 <= row && row < this.numMazeRows &&
+           0 <= col && col < this.numMazeCols;
+  }
+
+  inMazeNeighbors(row, col) {
+    return this.getNeighborSpace(row, col).filter(cell => {
+      let [newRow, newCol] = cell;
+      return this.maze[newRow][newCol].isInMaze;
+    });
+  }
+
+  expandMaze(row, col) {
+    this.maze[row][col].isInMaze = true;
+    this.addFrontiers(row, col);
+  }
+
+  getRandomCell() {
+    const randomRow = Math.floor(Math.random() * (this.numGridRows - 1));
+    const randomCol = Math.floor(Math.random() * (this.numGridCols - 1));
+
+    // multiply by two to get the maze cells
+    return [randomRow * 2, randomCol * 2];
+  }
+
+  // breaking the wall between [row, col] and [otherRow, otherCol]
+  breakWall(row, col, otherRow, otherCol) {
+    if ((otherRow < row) && col === otherCol) { // other cell is on top of cell
+      this.maze[row - 1][col].isWall = false;
+    } else if ((otherRow > row) && col === otherCol) { // other cell is bottom
+      this.maze[row + 1][col].isWall = false;
+    } else if ((otherCol < col) && row === otherRow) { // other cell is left
+      this.maze[row][col - 1].isWall = false;
+    } else if ((otherCol > col) && row === otherRow) { // other cell is right
+      this.maze[row][col + 1].isWall = false;
     }
   }
 
-  expandMaze(x, y) {
-    this.grid[x][y].isInMaze = true;
-    this.addFrontiers(x, y);
-  }
+  generateMaze() {
+    let [randomRow, randomCol] = this.getRandomCell();
+    this.expandMaze(randomRow, randomCol);
 
-  createMaze() {
-    const randomX = Math.floor(Math.random() * this.numCols);
-    const randomY = Math.floor(Math.random() * this.numRows);
-    this.expandMaze(randomX, randomY);
+    // find a random frontier, find a random neighbor of that frontier,
+    // and break the walls between them
     while (this.frontier.length !== 0) {
       const randomIndex = Math.floor(Math.random() * this.frontier.length);
       const [randomPos] = this.frontier.splice(randomIndex, 1);
-      const [x, y] = randomPos;
-      const neighbors = this.inMazeNeighbors(x, y);
-      const [neighX, neighY] =
+      const [row, col] = randomPos;
+      const neighbors = this.inMazeNeighbors(row, col);
+      const [neighRow, neighCol] =
         neighbors[Math.floor(Math.random() * neighbors.length)];
 
-      const dir = this.direction(x, y, neighX, neighY);
-      this.grid[x][y].walls[dir] = false;
-      this.grid[neighX][neighY].walls[OPPOSITE[dir]] = false;
+      this.breakWall(row, col, neighRow, neighCol);
+      this.expandMaze(row, col);
+    }
+  }
 
-      this.expandMaze(x, y);
+  drawWalls(withColor) {
+    console.log('rows', this.numMazeRows);
+    console.log('cols', this.numMazeCols);
+    for (let i = 0; i < this.numMazeRows; i++) {
+      for (let j = 0; j < this.numMazeCols; j++) {
+        if (this.maze[i][j].isWall) {
+          if (withColor) {
+            this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
+          } else {
+            this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT});
+          }
+        }
+      }
     }
   }
 }

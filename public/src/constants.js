@@ -1,9 +1,8 @@
 const mapGrid = {
-  NUM_ROWS: 13,
-  NUM_COLS: 13,
-  WALL_THICKNESS: 6,
-  TILE_WIDTH: 45,
-  TILE_HEIGHT: 45,
+  NUM_ROWS: 10,
+  NUM_COLS: 10,
+  TILE_WIDTH: 25,
+  TILE_HEIGHT: 25,
   PLAYER_WIDTH: 30,
   PLAYER_HEIGHT: 24,
   BALL_WIDTH: 40,
@@ -14,11 +13,11 @@ const mapGrid = {
   BFS_HEIGHT: 0.70 * 40
 };
 
-const wallDirection = {
-  HORIZONTAL: 'HORIZONTAL',
-  VERTICAL: 'VERTICAL'
-};
-
+// const wallDirection = {
+//   HORIZONTAL: 'HORIZONTAL',
+//   VERTICAL: 'VERTICAL'
+// };
+//
 const weaponTypes = {
   BFS: 'BFS',
   DFS: 'DFS'
@@ -38,7 +37,7 @@ const gameSettings = {
 
 module.exports = {
   mapGrid: mapGrid,
-  wallDirection: wallDirection,
+  // wallDirection: wallDirection,
   weaponTypes: weaponTypes,
   gameSettings: gameSettings
 };

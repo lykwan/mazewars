@@ -120,7 +120,6 @@ class GameState {
     const playerPos = this.getPlayerInitPos();
     socket.on('startNewGame', data => {
       // start the game when there are two or more players
-      console.log('got here!!!!!!!!!!!!!!');
       if (Object.keys(this.players).length >= 2) {
         const players = Object.keys(this.players).filter((playerId) => {
           return this.players[playerId] !== null;
@@ -169,12 +168,9 @@ class GameState {
 
   drawBoard() {
     this.board =
-      new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, this.seedRandomStr);
-    for (let i = 0; i < mapGrid.NUM_COLS; i++) {
-      for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
-        this.board.grid[i][j].drawWalls(this.Crafty);
-      }
-    }
+      new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
+                this.seedRandomStr, this.Crafty, false);
+    this.board.drawWalls(false);
   }
 
   addBall() {
@@ -191,7 +187,6 @@ class GameState {
   }
 
    pickUpBall() {
-    console.log(this.ball);
     const player = this.ball.hit('Player')[0].obj;
     this.ball.destroy();
     this.ball = null;
@@ -449,7 +444,7 @@ class GameState {
     while (remainingDistance > 0) {
       let [col, row] = tileQueue.shift();
       damageCells.push([col, row]);
-      let tile = this.board.grid[col][row];
+      let tile = this.board.maze[col][row];
       if (!tile.walls.left) {
         const damageCell = [col - 1, row];
         if (!this.hasCell(damageCells, damageCell)) {
@@ -490,7 +485,7 @@ class GameState {
       if (!this.hasCell(damageCells, [col, row])) {
         damageCells.push([col, row]);
       }
-      let tile = this.board.grid[col][row];
+      let tile = this.board.maze[col][row];
       let untouchedPaths =
         this.getUntouchedPaths(col, row, damageCells, tile.remainingPaths());
       if (untouchedPaths.length !== 0) {
@@ -579,7 +574,7 @@ class GameState {
   }
 
   loseBall(player) {
-    this.addBall(player.getCol(), player.getRow());
+    this.addBall(player.getMazeCol(), player.getMazeRow());
     this.ballHolder = null;
 
     this.io.to(this.roomId).emit('loseBall', {
