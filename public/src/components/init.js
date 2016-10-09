@@ -12,16 +12,11 @@ module.exports = function(Crafty, model) {
   const height = mazeCols * mapGrid.TILE_HEIGHT;
 
   // change name of the html element to stage
-  Crafty.init(800, 800, 'stage');
-  const iso = Crafty.diamondIso.init(mapGrid.TILE_WIDTH,
-                                     mapGrid.TILE_WIDTH/2,
-                                     mazeRows,
-                                     mazeCols);
+  Crafty.init(1000, 1000, 'stage');
 
   createComponents(Crafty, model);
   createPlayerComponent(Crafty, model);
   createWeaponComponent(Crafty);
   createBallComponent(Crafty);
 
-  return iso;
 };

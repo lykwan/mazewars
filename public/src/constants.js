@@ -1,6 +1,11 @@
+const NUM_ROWS = 8;
+const NUM_COLS = 8;
+
 const mapGrid = {
-  NUM_ROWS: 5,
-  NUM_COLS: 5,
+  NUM_ROWS: NUM_ROWS,
+  NUM_COLS: NUM_COLS,
+  NUM_MAZE_ROWS: NUM_ROWS * 2 - 1,
+  NUM_MAZE_COLS: NUM_COLS * 2 - 1,
   // TILE_WIDTH: 25,
   // TILE_HEIGHT: 25,
   PLAYER_WIDTH: 20,
@@ -11,10 +16,11 @@ const mapGrid = {
   DFS_HEIGHT: 0.30 * 25,
   BFS_WIDTH: 20,
   BFS_HEIGHT: 0.70 * 20,
-  TILE_WIDTH: 51,
-  TILE_HEIGHT: 61,
-  TILE_Z: 2,
-  WALL_Z: 1
+  TILE_WIDTH: 75,
+  TILE_HEIGHT: 92,
+  TILE_Z: 1,
+  WALL_Z: 1,
+  ACTOR_Z: 2
 };
 
 const weaponTypes = {
@@ -30,7 +36,7 @@ const gameSettings = {
   DAMAGE_ANIMATION_TIME: 100,
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
-  GAME_DURATION: 30, // 200
+  GAME_DURATION: 2000000, // 200
   COLORS: ['blue', 'red', 'yellow', 'green']
 };
 
