@@ -6,8 +6,10 @@ const Constants = require('../constants.js');
 const mapGrid = Constants.mapGrid;
 
 module.exports = function(Crafty, model) {
-  const width = mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-  const height = mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+  const mazeRows = (mapGrid.NUM_ROWS * 2 - 1);
+  const mazeCols = (mapGrid.NUM_COLS * 2 - 1);
+  const width = mazeRows * mapGrid.TILE_WIDTH;
+  const height = mazeCols * mapGrid.TILE_HEIGHT;
 
   Crafty.init(width, height, 'stage');
 

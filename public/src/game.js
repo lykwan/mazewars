@@ -5,7 +5,6 @@ import ClientModel from './model/client_model.js';
 import Board from './board.js';
 const Constants = require('./constants.js');
 const mapGrid = Constants.mapGrid;
-const wallDirection = Constants.wallDirection;
 
 const socket = io();
 /* globals Crafty */
@@ -89,7 +88,6 @@ class Game {
       game.setUpLoadingScene.bind(game)();
       this.startGame = this.bind('KeyDown', function(e) {
         if (e.keyCode === Crafty.keys.S) {
-          console.log('got here!!!!!');
           socket.emit('startNewGame');
         }
       });
@@ -169,14 +167,14 @@ class Game {
 
     let playerTextY = 50;
     socket.on('joinGame', data => {
-      console.log(data.selfId);
       let playerText = Crafty.e('2D, DOM, Text')
             .attr({ x: 50, y: playerTextY, w: 200 })
             .text(`You are player ${data.selfId}`)
             .textColor(data.playerColor);
       playerTextY += 30;
       this.board =
-        new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
+        new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
+                  data.seedRandomStr, Crafty, true);
       this.playersInfo[data.selfId] = playerText;
       this.selfId = data.selfId;
 
@@ -294,11 +292,7 @@ class Game {
       }
     });
 
-    for (let i = 0; i < mapGrid.NUM_COLS; i++) {
-      for (let j = 0; j < mapGrid.NUM_ROWS; j++) {
-        this.board.grid[i][j].drawWalls(Crafty);
-      }
-    }
+    this.board.drawWalls(true);
   }
 
   setUpPlayersMove() {
