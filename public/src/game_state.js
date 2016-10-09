@@ -117,17 +117,18 @@ class GameState {
 
   setUpStartGame(socket) {
     this.drawBoard();
-    const playerPos = this.getPlayerInitPos();
+    const allPlayerPos = this.getPlayerInitPos();
     socket.on('startNewGame', data => {
       // start the game when there are two or more players
       if (Object.keys(this.players).length >= 2) {
         const players = Object.keys(this.players).filter((playerId) => {
           return this.players[playerId] !== null;
         }).map(playerId => {
+          const playerPos = allPlayerPos[playerId - 1];
           return {
             playerId: playerId,
             playerColor: gameSettings.COLORS[playerId - 1],
-            playerPos: [playerPos[playerId - 1][0], playerPos[playerId - 1][1]]
+            playerPos: playerPos
           };
         });
 
@@ -135,9 +136,10 @@ class GameState {
         Object.keys(this.players).filter((playerId) => {
           return this.players[playerId] !== null;
         }).forEach(playerId => {
+          const [playerRow, playerCol] = allPlayerPos[playerId - 1];
           let player =
             this.Crafty.e('Player')
-                  .at(playerPos[playerId - 1][0], playerPos[playerId - 1][1])
+                  .at(playerRow, playerCol)
                   .setUp(playerId, gameSettings.COLORS[playerId - 1]);
           this.players[playerId] = player;
         });
@@ -156,33 +158,34 @@ class GameState {
 
   getPlayerInitPos() {
     let playerPos = [];
-    for (let i = 0; i <= 1 ; i++) {
-      for (let j = 0; j <= 1; j++) {
-        const col = j * (mapGrid.NUM_COLS - 1);
-        const row = i * (mapGrid.NUM_ROWS - 1);
-        playerPos.push([col, row]);
-      }
-    }
+    [0, this.board.numGridRows - 1].forEach(row => {
+      [0, this.board.numGridCols - 1].forEach(col => {
+        const mazePos = this.board.gridToMazePos(row, col);
+        playerPos.push(mazePos);
+      });
+    });
+
     return playerPos;
   }
 
   drawBoard() {
     this.board =
       new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                this.seedRandomStr, this.Crafty, false);
+                this.seedRandomStr, this.Crafty);
     this.board.drawWalls(false);
   }
 
   addBall() {
-    const col = Math.floor(mapGrid.NUM_COLS / 2);
-    const row = Math.floor(mapGrid.NUM_ROWS / 2);
+    const col = Math.floor(this.board.numGridCols / 2);
+    const row = Math.floor(this.board.numGridRows / 2);
+    const [mazeRow, mazeCol] = this.board.gridToMazePos(row, col);
     this.ball =
       this.Crafty.e('Ball')
-            .at(col, row)
+            .at(mazeRow, mazeCol)
             .onHit('Player', this.pickUpBall.bind(this));
     this.io.to(this.roomId).emit('addBall', {
-      col: col,
-      row: row
+      col: mazeCol,
+      row: mazeRow
     });
   }
 
@@ -342,24 +345,22 @@ class GameState {
   addWeapon() {
     this.addWeaponIntervalId = setInterval(() => {
       // Pick a random col, row
-      let col = Math.floor(Math.random() * mapGrid.NUM_COLS);
-      let row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
-      while (this.weapons[[col, row]]) {
-        col = Math.floor(Math.random() * mapGrid.NUM_COLS);
-        row = Math.floor(Math.random() * mapGrid.NUM_ROWS);
+      let [row, col] = this.board.getRandomCell();
+      while (this.weapons[[row, col]]) {
+        [row, col] = this.board.getRandomCell();
       }
 
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
       const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
       const weapon = this.Crafty.e('Weapon')
-                           .at(col, row)
+                           .at(row, col)
                            .setUp(type);
-      this.weapons[[col, row]] = weapon;
+      this.weapons[[row, col]] = weapon;
 
       this.io.to(this.roomId).emit('addWeapon', {
-        x: col,
-        y: row,
+        col: col,
+        row: row,
         type: type,
       });
 
@@ -434,41 +435,26 @@ class GameState {
     }, gameSettings.BUFFER_SHOOTING_TIME);
   }
 
-
+  // find out the cells that bfs weapon reaches to
   shootBFSWeapon(player) {
     let damageCells = [];
-    let initCol = player.getCol();
+    let exploredCells = {};
     let initRow = player.getRow();
+    let initCol = player.getCol();
     let remainingDistance = gameSettings.WEAPON_RANGE;
-    let tileQueue = [[initCol, initRow]];
+    let tileQueue = [[initRow, initCol]];
     while (remainingDistance > 0) {
-      let [col, row] = tileQueue.shift();
-      damageCells.push([col, row]);
-      let tile = this.board.maze[col][row];
-      if (!tile.walls.left) {
-        const damageCell = [col - 1, row];
-        if (!this.hasCell(damageCells, damageCell)) {
-          tileQueue.push([col - 1, row]);
+      let [row, col] = tileQueue.shift();
+      damageCells.push([row, col]);
+      exploredCells[[row, col]] = true; // so we won't duplicate damage cells
+      // push its neighbor tiles to the queue
+      let neighborTiles = this.board.getNeighborTiles(row, col);
+      neighborTiles.forEach(([tileRow, tileCol]) => {
+        if (exploredCells[[tileRow, tileCol]] === undefined) {
+          // hasn't been explored yet
+          tileQueue.push([tileRow, tileCol]);
         }
-      }
-      if (!tile.walls.top) {
-        const damageCell = [col, row - 1];
-        if (!this.hasCell(damageCells, damageCell)) {
-          tileQueue.push([col, row - 1]);
-        }
-      }
-      if (!tile.walls.right) {
-        const damageCell = [col + 1, row];
-        if (!this.hasCell(damageCells, damageCell)) {
-          tileQueue.push([col + 1, row]);
-        }
-      }
-      if (!tile.walls.bottom) {
-        const damageCell = [col, row + 1];
-        if (!this.hasCell(damageCells, damageCell)) {
-          tileQueue.push([col, row + 1]);
-        }
-      }
+      });
       remainingDistance--;
     }
 
@@ -562,9 +548,9 @@ class GameState {
     });
 
     const initPlayerPos = this.getPlayerInitPos();
-    const randomPos =
+    const [randomRow, randomCol] =
       initPlayerPos[Math.floor(Math.random() * initPlayerPos.length)];
-    player.at(randomPos[0], randomPos[1]);
+    player.at(randomCol, randomRow);
 
     this.io.to(this.roomId).emit('updatePos', {
       playerId: player.playerId,

@@ -3,7 +3,7 @@ const mapGrid = Constants.mapGrid;
 const Cell = require('./cell.js');
 
 class Board {
-  constructor(m, n, seedRandomStr, Crafty, print) {
+  constructor(m, n, seedRandomStr, Crafty) {
     // how many cells rows and cols are there if walls were just borders
     this.numGridRows = m;
     this.numGridCols = n;
@@ -15,7 +15,6 @@ class Board {
     this.maze = this.createStartingMaze();
     this.frontier = [];
     this.generateMaze();
-    if (print) this.log(this.maze);
     this.Crafty = Crafty;
   }
 
@@ -37,7 +36,7 @@ class Board {
     return maze;
   }
 
-  gridToMazeCoords(row, col) {
+  gridToMazePos(row, col) {
     return [row * 2, col * 2];
   }
 
@@ -49,6 +48,22 @@ class Board {
       });
     });
     console.table(maz);
+  }
+
+  // getting direct neighbor tiles that are not walls
+  getNeighborTiles(row, col) {
+    let dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    let neighborTiles = dirs.map(dir => {
+      let [dRow, dCol] = dir;
+      return [row + dRow, col + dCol];
+    });
+
+    // return the tiles that are in the grid and
+    // tiles that are not walls
+    return neighborTiles.filter(([tileRow, tileCol]) => {
+      return this.isInGrid(tileRow, tileCol) &&
+        !this.maze[tileRow][tileCol].isWall;
+    });
   }
 
   // getting the neighbor cells separated by a wall
@@ -104,8 +119,7 @@ class Board {
     const randomRow = Math.floor(Math.random() * (this.numGridRows - 1));
     const randomCol = Math.floor(Math.random() * (this.numGridCols - 1));
 
-    // multiply by two to get the maze cells
-    return [randomRow * 2, randomCol * 2];
+    return this.gridToMazePos(randomRow, randomCol);
   }
 
   // breaking the wall between [row, col] and [otherRow, otherCol]
@@ -122,7 +136,7 @@ class Board {
   }
 
   generateMaze() {
-    let [randomRow, randomCol] = this.getRandomCell();
+    let [randomCol, randomRow] = this.getRandomCell();
     this.expandMaze(randomRow, randomCol);
 
     // find a random frontier, find a random neighbor of that frontier,
@@ -141,8 +155,6 @@ class Board {
   }
 
   drawWalls(withColor) {
-    console.log('rows', this.numMazeRows);
-    console.log('cols', this.numMazeCols);
     for (let i = 0; i < this.numMazeRows; i++) {
       for (let j = 0; j < this.numMazeCols; j++) {
         if (this.maze[i][j].isWall) {

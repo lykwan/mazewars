@@ -69,6 +69,8 @@
 	  value: true
 	});
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _canvas = __webpack_require__(2);
@@ -97,7 +99,6 @@
 	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
-	var wallDirection = Constants.wallDirection;
 	
 	var socket = io();
 	/* globals Crafty */
@@ -115,17 +116,15 @@
 	    this.ball = null;
 	  }
 	
+	  // width() {
+	  //   return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
+	  // }
+	  //
+	  // height() {
+	  //   return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+	  // }
+	
 	  _createClass(Game, [{
-	    key: 'width',
-	    value: function width() {
-	      return mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-	    }
-	  }, {
-	    key: 'height',
-	    value: function height() {
-	      return mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
-	    }
-	  }, {
 	    key: 'run',
 	    value: function run() {
 	      // getting the room id from the url params, if any
@@ -192,7 +191,6 @@
 	        game.setUpLoadingScene.bind(game)();
 	        this.startGame = this.bind('KeyDown', function (e) {
 	          if (e.keyCode === Crafty.keys.S) {
-	            console.log('got here!!!!!');
 	            socket.emit('startNewGame');
 	          }
 	        });
@@ -258,10 +256,9 @@
 	
 	      var playerTextY = 50;
 	      socket.on('joinGame', function (data) {
-	        console.log(data.selfId);
 	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('You are player ' + data.selfId).textColor(data.playerColor);
 	        playerTextY += 30;
-	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr);
+	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
 	        _this3.playersInfo[data.selfId] = playerText;
 	        _this3.selfId = data.selfId;
 	      });
@@ -299,8 +296,13 @@
 	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
 	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
 	      data.players.forEach(function (playerInfo) {
+	        var _playerInfo$playerPos = _slicedToArray(playerInfo.playerPos, 2);
+	
+	        var playerRow = _playerInfo$playerPos[0];
+	        var playerCol = _playerInfo$playerPos[1];
+	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents();
+	          var player = Crafty.e('Player').at(playerRow, playerCol).setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents();
 	
 	          if (player.playerColor === 'red') {
 	            player.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
@@ -317,7 +319,7 @@
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer').at(playerInfo.playerPos[0], playerInfo.playerPos[1]).setUp(data.players.playerId, playerInfo.playerColor);
+	          var otherPlayer = Crafty.e('OtherPlayer').at(playerRow, playerCol).setUp(data.players.playerId, playerInfo.playerColor);
 	
 	          if (otherPlayer.playerColor === 'red') {
 	            otherPlayer.addComponent('spr_red').attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
@@ -336,11 +338,7 @@
 	        }
 	      });
 	
-	      for (var i = 0; i < mapGrid.NUM_COLS; i++) {
-	        for (var j = 0; j < mapGrid.NUM_ROWS; j++) {
-	          this.board.grid[i][j].drawWalls(Crafty);
-	        }
-	      }
+	      this.board.drawWalls(true);
 	    }
 	  }, {
 	    key: 'setUpPlayersMove',
@@ -361,7 +359,7 @@
 	      var _this6 = this;
 	
 	      socket.on('addWeapon', function (data) {
-	        var weapon = Crafty.e('Weapon').at(data.x, data.y).setUp(data.type);
+	        var weapon = Crafty.e('Weapon').at(data.row, data.col).setUp(data.type);
 	
 	        if (data.type === 'BFS') {
 	          weapon.addComponent('spr_bfs').attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
@@ -420,7 +418,7 @@
 	      var _this9 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this9.ball = Crafty.e('Ball').at(data.col, data.row).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+	        _this9.ball = Crafty.e('Ball').at(data.row, data.col).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
 	      });
 	    }
 	  }, {
@@ -490,8 +488,10 @@
 	var mapGrid = Constants.mapGrid;
 	
 	module.exports = function (Crafty, model) {
-	  var width = mapGrid.NUM_ROWS * mapGrid.TILE_WIDTH;
-	  var height = mapGrid.NUM_COLS * mapGrid.TILE_HEIGHT;
+	  var mazeRows = mapGrid.NUM_ROWS * 2 - 1;
+	  var mazeCols = mapGrid.NUM_COLS * 2 - 1;
+	  var width = mazeRows * mapGrid.TILE_WIDTH;
+	  var height = mazeCols * mapGrid.TILE_HEIGHT;
 	
 	  Crafty.init(width, height, 'stage');
 	
@@ -507,8 +507,6 @@
 
 	'use strict';
 	
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
@@ -523,9 +521,9 @@
 	      });
 	    },
 	
-	    at: function at(col, row) {
-	      var x = col * mapGrid.TILE_WIDTH + mapGrid.WALL_THICKNESS;
-	      var y = row * mapGrid.TILE_HEIGHT + mapGrid.WALL_THICKNESS;
+	    at: function at(row, col) {
+	      var x = col * mapGrid.TILE_WIDTH;
+	      var y = row * mapGrid.TILE_HEIGHT;
 	      this.attr({ x: x, y: y });
 	      return this;
 	    },
@@ -547,43 +545,47 @@
 	
 	  Crafty.c('Wall', {
 	    init: function init() {
-	      this.requires('2D, Canvas, Solid, Color, Collision');
-	      this.z = 10;
-	    },
-	
-	    wallDir: function wallDir(_wallDir) {
-	      var wall = this;
-	      if (_wallDir === wallDirection.HORIZONTAL) {
-	        wall.attr({
-	          w: mapGrid.TILE_WIDTH,
-	          h: mapGrid.WALL_THICKNESS
-	        });
-	      } else if (_wallDir === wallDirection.VERTICAL) {
-	        wall.attr({
-	          w: mapGrid.WALL_THICKNESS,
-	          h: mapGrid.TILE_HEIGHT
-	        });
-	      }
-	
-	      if (model.receiver === 'CLIENT') {
-	        wall.color('#FFFFFF');
-	      }
-	
-	      return wall;
-	    },
-	
-	    atWall: function atWall(row, col, offset) {
-	      var _offset = _slicedToArray(offset, 2);
-	
-	      var offSetX = _offset[0];
-	      var offsetY = _offset[1];
-	
-	      var x = row * mapGrid.TILE_WIDTH + offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS);
-	      var y = col * mapGrid.TILE_HEIGHT + offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS);
-	      this.attr({ x: x, y: y });
-	      return this;
+	      this.requires('2D, Tile, Canvas, Solid, Color, Collision');
 	    }
 	  });
+	
+	  // Crafty.c('Wall', {
+	  //   init: function() {
+	  //     this.requires('2D, Canvas, Solid, Color, Collision');
+	  //     this.z = 10;
+	  //   },
+	  //
+	  //   wallDir: function(wallDir) {
+	  //     let wall = this;
+	  //     if (wallDir === wallDirection.HORIZONTAL) {
+	  //       wall.attr({
+	  //            w: mapGrid.TILE_WIDTH,
+	  //            h: mapGrid.WALL_THICKNESS
+	  //          });
+	  //     } else if (wallDir === wallDirection.VERTICAL) {
+	  //       wall.attr({
+	  //            w: mapGrid.WALL_THICKNESS,
+	  //            h: mapGrid.TILE_HEIGHT
+	  //          });
+	  //     }
+	  //
+	  //     if (model.receiver === 'CLIENT') {
+	  //       wall.color('#FFFFFF');
+	  //     }
+	  //
+	  //     return wall;
+	  //   },
+	  //
+	  //   atWall: function(row, col, offset) {
+	  //     const [offSetX, offsetY] = offset;
+	  //     const x = (row * mapGrid.TILE_WIDTH) +
+	  //               (offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS));
+	  //     const y = (col * mapGrid.TILE_HEIGHT) +
+	  //               (offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS));
+	  //     this.attr({ x: x, y: y });
+	  //     return this;
+	  //   }
+	  // });
 	};
 
 /***/ },
@@ -593,24 +595,18 @@
 	'use strict';
 	
 	var mapGrid = {
-	  NUM_ROWS: 13,
-	  NUM_COLS: 13,
-	  WALL_THICKNESS: 6,
-	  TILE_WIDTH: 45,
-	  TILE_HEIGHT: 45,
-	  PLAYER_WIDTH: 30,
-	  PLAYER_HEIGHT: 24,
-	  BALL_WIDTH: 40,
-	  BALL_HEIGHT: 40,
-	  DFS_WIDTH: 50,
-	  DFS_HEIGHT: 0.30 * 50,
-	  BFS_WIDTH: 40,
-	  BFS_HEIGHT: 0.70 * 40
-	};
-	
-	var wallDirection = {
-	  HORIZONTAL: 'HORIZONTAL',
-	  VERTICAL: 'VERTICAL'
+	  NUM_ROWS: 10,
+	  NUM_COLS: 10,
+	  TILE_WIDTH: 25,
+	  TILE_HEIGHT: 25,
+	  PLAYER_WIDTH: 20,
+	  PLAYER_HEIGHT: 15,
+	  BALL_WIDTH: 25,
+	  BALL_HEIGHT: 25,
+	  DFS_WIDTH: 25,
+	  DFS_HEIGHT: 0.30 * 25,
+	  BFS_WIDTH: 20,
+	  BFS_HEIGHT: 0.70 * 20
 	};
 	
 	var weaponTypes = {
@@ -622,7 +618,7 @@
 	  WEAPON_RANGE: 10,
 	  BUFFER_DAMAGE_TIME: 1000,
 	  BUFFER_SHOOTING_TIME: 1500,
-	  WEAPON_SPAWN_TIME: 5000,
+	  WEAPON_SPAWN_TIME: 1000,
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
@@ -632,7 +628,6 @@
 	
 	module.exports = {
 	  mapGrid: mapGrid,
-	  wallDirection: wallDirection,
 	  weaponTypes: weaponTypes,
 	  gameSettings: gameSettings
 	};
@@ -869,113 +864,206 @@
 	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
-	var wallDirection = Constants.wallDirection;
-	var Tile = __webpack_require__(10);
-	
-	var DIRECTION = {
-	  left: 'left',
-	  right: 'right',
-	  top: 'top',
-	  bottom: 'bottom'
-	};
-	
-	var OPPOSITE = {
-	  left: DIRECTION.right,
-	  right: DIRECTION.left,
-	  top: DIRECTION.bottom,
-	  bottom: DIRECTION.top
-	};
+	var Cell = __webpack_require__(10);
 	
 	var Board = function () {
-	  function Board(n, m, seedRandomStr) {
+	  function Board(m, n, seedRandomStr, Crafty) {
 	    _classCallCheck(this, Board);
 	
-	    this.numCols = n;
-	    this.numRows = m;
+	    // how many cells rows and cols are there if walls were just borders
+	    this.numGridRows = m;
+	    this.numGridCols = n;
+	    // for the 2d array with the walls as part of the cells
+	    this.numMazeCols = 2 * n - 1;
+	    this.numMazeRows = 2 * m - 1;
+	
 	    Math.seedrandom(seedRandomStr);
-	    this.grid = this.createGrid();
+	    this.maze = this.createStartingMaze();
 	    this.frontier = [];
-	    this.createMaze();
+	    this.generateMaze();
+	    this.Crafty = Crafty;
 	  }
 	
+	  // create a starting maze map with all the walls
+	
+	
 	  _createClass(Board, [{
-	    key: 'createGrid',
-	    value: function createGrid() {
-	      var grid = new Array(this.numRows);
-	      for (var i = 0; i < grid.length; i++) {
-	        grid[i] = new Array(this.numCols);
-	        for (var j = 0; j < this.numCols; j++) {
-	          grid[i][j] = new Tile(i, j);
+	    key: 'createStartingMaze',
+	    value: function createStartingMaze() {
+	      var maze = new Array(this.numMazeRows);
+	      for (var i = 0; i < maze.length; i++) {
+	        maze[i] = new Array(this.numMazeCols);
+	        for (var j = 0; j < this.numMazeCols; j++) {
+	          if (i % 2 === 1) {
+	            // the odd number rows are all filled with wall
+	            maze[i][j] = new Cell(true);
+	          } else {
+	            // the odd number cols are walls and the even number cols are spaces
+	            maze[i][j] = j % 2 === 1 ? new Cell(true) : new Cell(false);
+	          }
 	        }
 	      }
-	      return grid;
+	      return maze;
 	    }
 	  }, {
-	    key: 'addFrontiers',
-	    value: function addFrontiers(x, y) {
+	    key: 'gridToMazePos',
+	    value: function gridToMazePos(row, col) {
+	      return [row * 2, col * 2];
+	    }
+	  }, {
+	    key: 'log',
+	    value: function log(maze) {
+	      var maz = maze.map(function (row) {
+	        return row.map(function (tile) {
+	          if (tile.isWall) return 1;
+	          if (!tile.isWall) return 0;
+	        });
+	      });
+	      console.table(maz);
+	    }
+	
+	    // getting direct neighbor tiles that are not walls
+	
+	  }, {
+	    key: 'getNeighborTiles',
+	    value: function getNeighborTiles(row, col) {
 	      var _this = this;
 	
 	      var dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+	      var neighborTiles = dirs.map(function (dir) {
+	        var _dir = _slicedToArray(dir, 2);
+	
+	        var dRow = _dir[0];
+	        var dCol = _dir[1];
+	
+	        return [row + dRow, col + dCol];
+	      });
+	
+	      // return the tiles that are in the grid and
+	      // tiles that are not walls
+	      return neighborTiles.filter(function (_ref) {
+	        var _ref2 = _slicedToArray(_ref, 2);
+	
+	        var tileRow = _ref2[0];
+	        var tileCol = _ref2[1];
+	
+	        return _this.isInGrid(tileRow, tileCol) && !_this.maze[tileRow][tileCol].isWall;
+	      });
+	    }
+	
+	    // getting the neighbor cells separated by a wall
+	
+	  }, {
+	    key: 'getNeighborSpace',
+	    value: function getNeighborSpace(row, col) {
+	      var _this2 = this;
+	
+	      var dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+	      var neighbors = [];
 	      dirs.forEach(function (dir) {
-	        var newX = x + dir[0];
-	        var newY = y + dir[1];
+	        // multiplying by 2 to account for the wall in between
+	        var newRow = row + dir[0] * 2;
+	        var newCol = col + dir[1] * 2;
 	
+	        if (_this2.isInGrid(newRow, newCol)) {
+	          // ensure that we are not adding walls
+	          if (_this2.maze[newRow][newCol].isWall === true) {
+	            throw "Error: adding walls to the neighbor space array";
+	          }
 	
-	        if (_this.isInGrid(newX, newY) && !_this.grid[newX][newY].isInMaze && _this.grid[newX][newY].hasBeenFrontier === false) {
-	          _this.frontier.push([newX, newY]);
-	          _this.grid[newX][newY].hasBeenFrontier = true;
+	          neighbors.push([newRow, newCol]);
+	        }
+	      });
+	
+	      return neighbors;
+	    }
+	
+	    // the forefront surrounding the cells that are in the maze
+	
+	  }, {
+	    key: 'addFrontiers',
+	    value: function addFrontiers(row, col) {
+	      var _this3 = this;
+	
+	      this.getNeighborSpace(row, col).forEach(function (cell) {
+	        var _cell = _slicedToArray(cell, 2);
+	
+	        var newRow = _cell[0];
+	        var newCol = _cell[1];
+	
+	        if (!_this3.maze[newRow][newCol].isInMaze && !_this3.maze[newRow][newCol].hasBeenFrontier) {
+	          _this3.frontier.push([newRow, newCol]);
+	          _this3.maze[newRow][newCol].hasBeenFrontier = true;
 	        }
 	      });
 	    }
 	  }, {
 	    key: 'isInGrid',
-	    value: function isInGrid(x, y) {
-	      return 0 <= x && x < this.numCols && 0 <= y && y < this.numRows;
+	    value: function isInGrid(row, col) {
+	      return 0 <= row && row < this.numMazeRows && 0 <= col && col < this.numMazeCols;
 	    }
 	  }, {
 	    key: 'inMazeNeighbors',
-	    value: function inMazeNeighbors(x, y) {
-	      var neighbors = [];
-	      if (x > 0 && this.grid[x - 1][y].isInMaze) {
-	        neighbors.push([x - 1, y]);
-	      }
-	      if (x < this.numCols - 1 && this.grid[x + 1][y].isInMaze) {
-	        neighbors.push([x + 1, y]);
-	      }
-	      if (y > 0 && this.grid[x][y - 1].isInMaze) {
-	        neighbors.push([x, y - 1]);
-	      }
-	      if (y < this.numRows - 1 && this.grid[x][y + 1].isInMaze) {
-	        neighbors.push([x, y + 1]);
-	      }
+	    value: function inMazeNeighbors(row, col) {
+	      var _this4 = this;
 	
-	      return neighbors;
-	    }
-	  }, {
-	    key: 'direction',
-	    value: function direction(x, y, otherX, otherY) {
-	      if (otherX < x && y === otherY) {
-	        return DIRECTION.left;
-	      } else if (otherY < y && x === otherX) {
-	        return DIRECTION.top;
-	      } else if (otherX > x && y === otherY) {
-	        return DIRECTION.right;
-	      } else if (otherY > y && x === otherX) {
-	        return DIRECTION.bottom;
-	      }
+	      return this.getNeighborSpace(row, col).filter(function (cell) {
+	        var _cell2 = _slicedToArray(cell, 2);
+	
+	        var newRow = _cell2[0];
+	        var newCol = _cell2[1];
+	
+	        return _this4.maze[newRow][newCol].isInMaze;
+	      });
 	    }
 	  }, {
 	    key: 'expandMaze',
-	    value: function expandMaze(x, y) {
-	      this.grid[x][y].isInMaze = true;
-	      this.addFrontiers(x, y);
+	    value: function expandMaze(row, col) {
+	      this.maze[row][col].isInMaze = true;
+	      this.addFrontiers(row, col);
 	    }
 	  }, {
-	    key: 'createMaze',
-	    value: function createMaze() {
-	      var randomX = Math.floor(Math.random() * this.numCols);
-	      var randomY = Math.floor(Math.random() * this.numRows);
-	      this.expandMaze(randomX, randomY);
+	    key: 'getRandomCell',
+	    value: function getRandomCell() {
+	      var randomRow = Math.floor(Math.random() * (this.numGridRows - 1));
+	      var randomCol = Math.floor(Math.random() * (this.numGridCols - 1));
+	
+	      return this.gridToMazePos(randomRow, randomCol);
+	    }
+	
+	    // breaking the wall between [row, col] and [otherRow, otherCol]
+	
+	  }, {
+	    key: 'breakWall',
+	    value: function breakWall(row, col, otherRow, otherCol) {
+	      if (otherRow < row && col === otherCol) {
+	        // other cell is on top of cell
+	        this.maze[row - 1][col].isWall = false;
+	      } else if (otherRow > row && col === otherCol) {
+	        // other cell is bottom
+	        this.maze[row + 1][col].isWall = false;
+	      } else if (otherCol < col && row === otherRow) {
+	        // other cell is left
+	        this.maze[row][col - 1].isWall = false;
+	      } else if (otherCol > col && row === otherRow) {
+	        // other cell is right
+	        this.maze[row][col + 1].isWall = false;
+	      }
+	    }
+	  }, {
+	    key: 'generateMaze',
+	    value: function generateMaze() {
+	      var _getRandomCell = this.getRandomCell();
+	
+	      var _getRandomCell2 = _slicedToArray(_getRandomCell, 2);
+	
+	      var randomCol = _getRandomCell2[0];
+	      var randomRow = _getRandomCell2[1];
+	
+	      this.expandMaze(randomRow, randomCol);
+	
+	      // find a random frontier, find a random neighbor of that frontier,
+	      // and break the walls between them
 	      while (this.frontier.length !== 0) {
 	        var randomIndex = Math.floor(Math.random() * this.frontier.length);
 	
@@ -987,22 +1075,34 @@
 	
 	        var _randomPos = _slicedToArray(randomPos, 2);
 	
-	        var x = _randomPos[0];
-	        var y = _randomPos[1];
+	        var row = _randomPos[0];
+	        var col = _randomPos[1];
 	
-	        var neighbors = this.inMazeNeighbors(x, y);
+	        var neighbors = this.inMazeNeighbors(row, col);
 	
 	        var _neighbors$Math$floor = _slicedToArray(neighbors[Math.floor(Math.random() * neighbors.length)], 2);
 	
-	        var neighX = _neighbors$Math$floor[0];
-	        var neighY = _neighbors$Math$floor[1];
+	        var neighRow = _neighbors$Math$floor[0];
+	        var neighCol = _neighbors$Math$floor[1];
 	
 	
-	        var dir = this.direction(x, y, neighX, neighY);
-	        this.grid[x][y].walls[dir] = false;
-	        this.grid[neighX][neighY].walls[OPPOSITE[dir]] = false;
-	
-	        this.expandMaze(x, y);
+	        this.breakWall(row, col, neighRow, neighCol);
+	        this.expandMaze(row, col);
+	      }
+	    }
+	  }, {
+	    key: 'drawWalls',
+	    value: function drawWalls(withColor) {
+	      for (var i = 0; i < this.numMazeRows; i++) {
+	        for (var j = 0; j < this.numMazeCols; j++) {
+	          if (this.maze[i][j].isWall) {
+	            if (withColor) {
+	              this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).color('#FFFFFF');
+	            } else {
+	              this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+	            }
+	          }
+	        }
 	      }
 	    }
 	  }]);
@@ -1014,66 +1114,21 @@
 
 /***/ },
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	'use strict';
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	"use strict";
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var Constants = __webpack_require__(4);
-	var mapGrid = Constants.mapGrid;
-	var wallDirection = Constants.wallDirection;
-	/* globals Crafty */
+	var Cell = function Cell(isWall) {
+	  _classCallCheck(this, Cell);
 	
-	var Tile = function () {
-	  function Tile(x, y) {
-	    _classCallCheck(this, Tile);
+	  this.isWall = isWall;
+	  this.isInMaze = false;
+	  this.hasBeenFrontier = false;
+	};
 	
-	    this.walls = {
-	      left: true,
-	      right: true,
-	      top: true,
-	      bottom: true
-	    };
-	    this.isInMaze = false;
-	    this.hasBeenFrontier = false;
-	    this.x = x;
-	    this.y = y;
-	  }
-	
-	  _createClass(Tile, [{
-	    key: 'drawWalls',
-	    value: function drawWalls(Crafty) {
-	      if (this.walls.left) {
-	        Crafty.e('Wall').wallDir(wallDirection.VERTICAL).atWall(this.x, this.y, [0, 0]);
-	      }
-	      if (this.walls.right) {
-	        Crafty.e('Wall').wallDir(wallDirection.VERTICAL).atWall(this.x, this.y, [1, 0]);
-	      }
-	      if (this.walls.top) {
-	        Crafty.e('Wall').wallDir(wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 0]);
-	      }
-	      if (this.walls.bottom) {
-	        Crafty.e('Wall').wallDir(wallDirection.HORIZONTAL).atWall(this.x, this.y, [0, 1]);
-	      }
-	    }
-	  }, {
-	    key: 'remainingPaths',
-	    value: function remainingPaths() {
-	      var _this = this;
-	
-	      return Object.keys(this.walls).filter(function (dir) {
-	        return !_this.walls[dir];
-	      });
-	    }
-	  }]);
-	
-	  return Tile;
-	}();
-	
-	module.exports = Tile;
+	module.exports = Cell;
 
 /***/ }
 /******/ ]);
