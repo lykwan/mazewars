@@ -2,7 +2,7 @@ const seedrandom = require('seedrandom');
 const Constants = require('./constants.js');
 const Craftyjs = require('craftyjs');
 const ServerModel = require('./model/server_model.js');
-const createCanvas = require('./components/canvas.js');
+const initGame = require('./components/init.js');
 const Board = require('./board.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
@@ -33,7 +33,7 @@ class GameState {
 
     this.addSocket(socket);
     this.Crafty = Craftyjs();
-    createCanvas(this.Crafty, ServerModel);
+    this.iso = initGame(this.Crafty, ServerModel);
   }
 
   addSocket(socket) {
@@ -171,9 +171,24 @@ class GameState {
   drawBoard() {
     this.board =
       new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                this.seedRandomStr, this.Crafty);
-    this.board.drawWalls(false);
+                this.seedRandomStr, this.Crafty, this.iso);
+    // this.board.createMapEntities(this.createWallEntity.bind(this),
+    //                             this.createTileEntity.bind(this));
   }
+
+  // createWallEntity(row, col) {
+  //   const wallEntity =
+  //     this.Crafty.e('2D, DOM')
+  //           .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+  //   this.iso.place(wallEntity, row, col, mapGrid.WALL_Z);
+  // }
+  //
+  // createTileEntity(row, col) {
+  //   const tileEntity =
+  //     this.Crafty.e('2D, DOM')
+  //           .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+  //   this.iso.place(tileEntity, row, col, mapGrid.TILE_Z);
+  // }
 
   addBall() {
     const col = Math.floor(this.board.numGridCols / 2);

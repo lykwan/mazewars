@@ -1,8 +1,8 @@
 const mapGrid = {
-  NUM_ROWS: 10,
-  NUM_COLS: 10,
-  TILE_WIDTH: 25,
-  TILE_HEIGHT: 25,
+  NUM_ROWS: 5,
+  NUM_COLS: 5,
+  // TILE_WIDTH: 25,
+  // TILE_HEIGHT: 25,
   PLAYER_WIDTH: 20,
   PLAYER_HEIGHT: 15,
   BALL_WIDTH: 25,
@@ -10,7 +10,11 @@ const mapGrid = {
   DFS_WIDTH: 25,
   DFS_HEIGHT: 0.30 * 25,
   BFS_WIDTH: 20,
-  BFS_HEIGHT: 0.70 * 20
+  BFS_HEIGHT: 0.70 * 20,
+  TILE_WIDTH: 51,
+  TILE_HEIGHT: 61,
+  TILE_Z: 2,
+  WALL_Z: 1
 };
 
 const weaponTypes = {

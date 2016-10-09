@@ -1,6 +1,4 @@
-import createCanvas from './components/canvas.js';
-import createComponents from './components/entities.js';
-import createPlayerComponent from './components/player.js';
+import initGame from './components/init.js';
 import ClientModel from './model/client_model.js';
 import Board from './board.js';
 const Constants = require('./constants.js');
@@ -77,7 +75,7 @@ class Game {
   }
 
   start() {
-    createCanvas(Crafty, ClientModel);
+    this.iso = initGame(Crafty, ClientModel);
     //TODO: DELETE MODEL
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
@@ -165,6 +163,8 @@ class Game {
     Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
     Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
 
+    Crafty.sprite("../assets/tile.png", { tileSprite:[0, 0, 102, 122] });
+
     let playerTextY = 50;
     socket.on('joinGame', data => {
       let playerText = Crafty.e('2D, DOM, Text')
@@ -174,7 +174,7 @@ class Game {
       playerTextY += 30;
       this.board =
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                  data.seedRandomStr, Crafty);
+                  data.seedRandomStr, Crafty, this.iso);
       this.playersInfo[data.selfId] = playerText;
       this.selfId = data.selfId;
 
@@ -293,7 +293,24 @@ class Game {
       }
     });
 
-    this.board.drawWalls(true);
+
+
+    this.board.createMapEntities(this.createWallEntity.bind(this),
+                                this.createTileEntity.bind(this));
+  }
+
+  createWallEntity(row, col) {
+    const wallEntity =
+      Crafty.e('2D, DOM, tileSprite')
+            .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+    this.iso.place(wallEntity, row, col, mapGrid.WALL_Z);
+  }
+
+  createTileEntity(row, col) {
+    const tileEntity =
+      Crafty.e('2D, DOM, tileSprite')
+            .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+    this.iso.place(tileEntity, row, col, mapGrid.TILE_Z);
   }
 
   setUpPlayersMove() {
