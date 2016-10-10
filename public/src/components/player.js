@@ -31,6 +31,7 @@ module.exports = function(Crafty, model) {
       });
 
       this.bind('KeyDown', function(e) {
+        e.originalEvent.preventDefault();
         this.charMove.left = false;
         this.charMove.right = false;
         this.charMove.down = false;

@@ -39,10 +39,6 @@ class Game {
     } else {
       this.loadNewRoomButton();
     }
-
-
-    //TODO: DELETE THIS
-    socket.emit('makeNewRoom');
   }
 
   setUpJoinRoom() {
@@ -178,7 +174,7 @@ class Game {
       playerTextY += 30;
         this.board =
         new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                  data.seedRandomStr, Crafty);
+                  data.seedRandomStr, Crafty, true);
       this.playersInfo[data.selfId] = playerText;
       this.selfId = data.selfId;
 
@@ -246,13 +242,12 @@ class Game {
                    .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 
         // place it on isometric map
+        console.log(playerInfo.playerPos);
         this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 
         // after placing it on isometric map, figure out the translation of px
         this.translateX = player.x - playerX;
         this.translateY = player.y - playerY;
-        console.log('player', player.x, player.y);
-
 
         // if (player.playerColor === 'red') {
         //   player.addComponent('spr_red')
@@ -278,9 +273,14 @@ class Game {
         this.players[playerInfo.playerId] = player;
       } else {
         let otherPlayer =
-          Crafty.e('OtherPlayer')
-                // .at(playerRow, playerCol)
-                .setUp(data.players.playerId, playerInfo.playerColor);
+          Crafty.e('OtherPlayer, tileSprite')
+                .setUp(data.players.playerId, playerInfo.playerColor)
+                .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+
+
+          // place it on isometric map
+          this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.ACTOR_Z);
+
 
         // if (otherPlayer.playerColor === 'red') {
         //   otherPlayer.addComponent('spr_red')
@@ -315,7 +315,6 @@ class Game {
     for (let i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
       for (let j = 0; j < mapGrid.NUM_MAZE_COLS; j++) {
         if (this.board.maze[i][j].isWall) {
-          // this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
           const wallEntity =
             Crafty.e('2D, DOM, wallSprite')
                   .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
@@ -329,8 +328,8 @@ class Game {
       }
     }
 
-    Crafty.viewport.x = 500;
-    Crafty.viewport.y = 500;
+    Crafty.viewport.x = mapGrid.GAME_WIDTH / 2;
+    Crafty.viewport.y = 100;
   }
 
   setUpPlayersMove() {
@@ -339,8 +338,10 @@ class Game {
       if (player) {
         player.x = data.x + this.translateX;
         player.y = data.y + this.translateY;
+        console.log(data.x / mapGrid.TILE_WIDTH, data.y / (mapGrid.TILE_WIDTH / 2));
+        console.log(data.x, data.y);
+        console.log(this.iso.px2pos(data.x, data.y));
       }
-      console.log('player', player.x, player.y);
     });
   }
 

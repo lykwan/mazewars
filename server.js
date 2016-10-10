@@ -19,11 +19,11 @@ io.on('connection', function(socket) {
 function setUpMakeNewRoom(socket) {
   socket.on('makeNewRoom', () => {
     // create a new password
-    // let roomId = crypto.randomBytes(5).toString('hex');
-    let roomId = 'testing';
-    // while (allGameStates[roomId] !== undefined) {
-    //   roomId = crypto.randomBytes(5).toString('hex');
-    // }
+    let roomId = crypto.randomBytes(5).toString('hex');
+    // let roomId = 'testing';
+    while (allGameStates[roomId] !== undefined) {
+      roomId = crypto.randomBytes(5).toString('hex');
+    }
 
     allGameStates[roomId] = new GameState(io, socket, roomId);
 

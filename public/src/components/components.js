@@ -13,18 +13,46 @@ module.exports = function(Crafty, model) {
     },
 
     at: function(row, col) {
-      const x = col * mapGrid.TILE_WIDTH;
-      const y = row * mapGrid.TILE_HEIGHT;
+      // the amount to move from one neighbor to the other
+      const w = (mapGrid.TILE_WIDTH / 2);
+      const h = (mapGrid.TILE_WIDTH / 4);
+
+      const x = (row - col) * w;
+      const y = (row + col) * h;
       this.attr({ x: x, y: y });
       return this;
     },
 
-    getCol: function() {
-      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+    getRowsCols: function() {
+      const w = (mapGrid.TILE_WIDTH / 2);
+      const h = (mapGrid.TILE_WIDTH / 4);
+
+      const xOverW = this.x / w;
+      const yOverH = this.y / h;
+
+      // (x/w) + (y/h) = 2*r
+      const row = this.fixRoundingErrors((xOverW + yOverH) / 2);
+      const col = this.fixRoundingErrors(row - xOverW);
+
+      // finding all the rows it is at
+      let rows = [Math.floor(row)];
+      if (Math.floor(row) !== Math.ceil(row)) {
+        rows.push(Math.ceil(row));
+      }
+
+      // finding all the cols it is at
+      let cols = [Math.floor(col)];
+      if (Math.floor(col) !== Math.ceil(col)) {
+        cols.push(Math.ceil(col));
+      }
+
+      return [rows, cols];
     },
 
-    getRow: function() {
-      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
+    // account for the floating point epsilon
+    fixRoundingErrors: function(n) {
+      let epsilon = 0.00005;
+      return (Math.abs(n - Math.round(n)) <= epsilon) ? Math.round(n) : n;
     }
   });
 
@@ -36,7 +64,7 @@ module.exports = function(Crafty, model) {
 
   Crafty.c('Wall', {
     init: function() {
-      this.requires('2D, Tile, Canvas, Solid, Color, Collision');
+      this.requires('2D, Canvas, Tile, Solid, Collision');
     }
   });
 
