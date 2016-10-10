@@ -131,9 +131,6 @@
 	      } else {
 	        this.loadNewRoomButton();
 	      }
-	
-	      //TODO: DELETE THIS
-	      socket.emit('makeNewRoom');
 	    }
 	  }, {
 	    key: 'setUpJoinRoom',
@@ -252,7 +249,7 @@
 	      socket.on('joinGame', function (data) {
 	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('You are player ' + data.selfId).textColor(data.playerColor);
 	        playerTextY += 30;
-	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
+	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty, true);
 	        _this3.playersInfo[data.selfId] = playerText;
 	        _this3.selfId = data.selfId;
 	      });
@@ -304,12 +301,12 @@
 	          var player = Crafty.e('Player, tileSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 	
 	          // place it on isometric map
+	          console.log(playerInfo.playerPos);
 	          _this4.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 	
 	          // after placing it on isometric map, figure out the translation of px
 	          _this4.translateX = player.x - playerX;
 	          _this4.translateY = player.y - playerY;
-	          console.log('player', player.x, player.y);
 	
 	          // if (player.playerColor === 'red') {
 	          //   player.addComponent('spr_red')
@@ -330,9 +327,10 @@
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer')
-	          // .at(playerRow, playerCol)
-	          .setUp(data.players.playerId, playerInfo.playerColor);
+	          var otherPlayer = Crafty.e('OtherPlayer, tileSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+	
+	          // place it on isometric map
+	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.ACTOR_Z);
 	
 	          // if (otherPlayer.playerColor === 'red') {
 	          //   otherPlayer.addComponent('spr_red')
@@ -363,7 +361,6 @@
 	      for (var i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
 	        for (var j = 0; j < mapGrid.NUM_MAZE_COLS; j++) {
 	          if (this.board.maze[i][j].isWall) {
-	            // this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
 	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
 	            this.iso.place(wallEntity, i, j, mapGrid.WALL_Z);
 	          } else {
@@ -373,8 +370,8 @@
 	        }
 	      }
 	
-	      Crafty.viewport.x = 500;
-	      Crafty.viewport.y = 500;
+	      Crafty.viewport.x = mapGrid.GAME_WIDTH / 2;
+	      Crafty.viewport.y = 100;
 	    }
 	  }, {
 	    key: 'setUpPlayersMove',
@@ -386,8 +383,10 @@
 	        if (player) {
 	          player.x = data.x + _this5.translateX;
 	          player.y = data.y + _this5.translateY;
+	          console.log(data.x / mapGrid.TILE_WIDTH, data.y / (mapGrid.TILE_WIDTH / 2));
+	          console.log(data.x, data.y);
+	          console.log(_this5.iso.px2pos(data.x, data.y));
 	        }
-	        console.log('player', player.x, player.y);
 	      });
 	    }
 	  }, {
@@ -521,14 +520,24 @@
 	
 	var NUM_ROWS = 8;
 	var NUM_COLS = 8;
+	var NUM_MAZE_ROWS = NUM_ROWS * 2 - 1;
+	var NUM_MAZE_COLS = NUM_COLS * 2 - 1;
+	var ORIGINAL_TILE_WIDTH = 101;
+	var ORIGINAL_TILE_HEIGHT = 122;
+	var TILE_RATIO = 1 / 2;
+	var TILE_WIDTH = ORIGINAL_TILE_WIDTH * TILE_RATIO;
+	var TILE_HEIGHT = ORIGINAL_TILE_HEIGHT * TILE_RATIO;
 	
 	var mapGrid = {
+	  GAME_WIDTH: NUM_MAZE_ROWS * TILE_WIDTH,
+	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
+	  GAME_HEIGHT: NUM_MAZE_COLS * TILE_WIDTH + TILE_HEIGHT,
 	  NUM_ROWS: NUM_ROWS,
 	  NUM_COLS: NUM_COLS,
-	  NUM_MAZE_ROWS: NUM_ROWS * 2 - 1,
-	  NUM_MAZE_COLS: NUM_COLS * 2 - 1,
-	  TILE_WIDTH: 75,
-	  TILE_HEIGHT: 92,
+	  NUM_MAZE_ROWS: NUM_MAZE_ROWS,
+	  NUM_MAZE_COLS: NUM_MAZE_COLS,
+	  TILE_WIDTH: TILE_WIDTH,
+	  TILE_HEIGHT: TILE_HEIGHT,
 	  PLAYER_WIDTH: 20,
 	  PLAYER_HEIGHT: 15,
 	  BALL_WIDTH: 25,
@@ -552,11 +561,11 @@
 	  WEAPON_RANGE: 10,
 	  BUFFER_DAMAGE_TIME: 1000,
 	  BUFFER_SHOOTING_TIME: 1500,
-	  WEAPON_SPAWN_TIME: 1000,
+	  WEAPON_SPAWN_TIME: 10000,
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 2000000, // 200
+	  GAME_DURATION: 2000, // 200
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
 	
@@ -604,6 +613,7 @@
 	      });
 	
 	      this.bind('KeyDown', function (e) {
+	        e.originalEvent.preventDefault();
 	        this.charMove.left = false;
 	        this.charMove.right = false;
 	        this.charMove.down = false;
@@ -809,7 +819,7 @@
 	var Cell = __webpack_require__(10);
 	
 	var Board = function () {
-	  function Board(m, n, seedRandomStr) {
+	  function Board(m, n, seedRandomStr, print) {
 	    _classCallCheck(this, Board);
 	
 	    console.log(seedRandomStr);
@@ -824,6 +834,7 @@
 	    this.maze = this.createStartingMaze();
 	    this.frontier = [];
 	    this.generateMaze();
+	    if (print) this.log(this.maze);
 	  }
 	
 	  // create a starting maze map with all the walls
@@ -1085,13 +1096,13 @@
 	var mapGrid = Constants.mapGrid;
 	
 	module.exports = function (Crafty, model) {
-	  var mazeRows = mapGrid.NUM_ROWS * 2 - 1;
-	  var mazeCols = mapGrid.NUM_COLS * 2 - 1;
-	  var width = mazeRows * mapGrid.TILE_WIDTH;
-	  var height = mazeCols * mapGrid.TILE_HEIGHT;
-	
+	  // const mazeRows = (mapGrid.NUM_ROWS * 2 - 1);
+	  // const mazeCols = (mapGrid.NUM_COLS * 2 - 1);
+	  // const width = mazeRows * mapGrid.TILE_WIDTH;
+	  // const height = mazeCols * mapGrid.TILE_HEIGHT;
+	  //
 	  // change name of the html element to stage
-	  Crafty.init(1000, 1000, 'stage');
+	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
 	
 	  createComponents(Crafty, model);
 	  createPlayerComponent(Crafty, model);
@@ -1120,18 +1131,46 @@
 	    },
 	
 	    at: function at(row, col) {
-	      var x = col * mapGrid.TILE_WIDTH;
-	      var y = row * mapGrid.TILE_HEIGHT;
+	      // the amount to move from one neighbor to the other
+	      var w = mapGrid.TILE_WIDTH / 2;
+	      var h = mapGrid.TILE_WIDTH / 4;
+	
+	      var x = (row - col) * w;
+	      var y = (row + col) * h;
 	      this.attr({ x: x, y: y });
 	      return this;
 	    },
 	
-	    getCol: function getCol() {
-	      return Math.floor(this.x / mapGrid.TILE_WIDTH);
+	    getRowsCols: function getRowsCols() {
+	      var w = mapGrid.TILE_WIDTH / 2;
+	      var h = mapGrid.TILE_WIDTH / 4;
+	
+	      var xOverW = this.x / w;
+	      var yOverH = this.y / h;
+	
+	      // (x/w) + (y/h) = 2*r
+	      var row = this.fixRoundingErrors((xOverW + yOverH) / 2);
+	      var col = this.fixRoundingErrors(row - xOverW);
+	
+	      // finding all the rows it is at
+	      var rows = [Math.floor(row)];
+	      if (Math.floor(row) !== Math.ceil(row)) {
+	        rows.push(Math.ceil(row));
+	      }
+	
+	      // finding all the cols it is at
+	      var cols = [Math.floor(col)];
+	      if (Math.floor(col) !== Math.ceil(col)) {
+	        cols.push(Math.ceil(col));
+	      }
+	
+	      return [rows, cols];
 	    },
 	
-	    getRow: function getRow() {
-	      return Math.floor(this.y / mapGrid.TILE_HEIGHT);
+	    // account for the floating point epsilon
+	    fixRoundingErrors: function fixRoundingErrors(n) {
+	      var epsilon = 0.00005;
+	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
 	    }
 	  });
 	
@@ -1143,7 +1182,7 @@
 	
 	  Crafty.c('Wall', {
 	    init: function init() {
-	      this.requires('2D, Tile, Canvas, Solid, Color, Collision');
+	      this.requires('2D, Canvas, Tile, Solid, Collision');
 	    }
 	  });
 	

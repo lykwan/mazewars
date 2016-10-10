@@ -119,7 +119,7 @@ class GameState {
     const allPlayerPos = this.getPlayerInitPos();
     socket.on('startNewGame', data => {
       // start the game when there are two or more players
-      if (Object.keys(this.players).length < 2) {
+      if (Object.keys(this.sockets).length < 2) {
         return;
       }
 
@@ -130,9 +130,8 @@ class GameState {
       const playerData = Object.keys(this.players).filter((playerId) => {
         return this.players[playerId] !== null;
       }).map(playerId => {
-        // const playerPos = allPlayerPos[playerId - 1];
+        const playerPos = allPlayerPos[playerId - 1];
         const playerEntity = this.players[playerId];
-        const playerPos = [playerEntity.getRow(), playerEntity.getCol()];
         return {
           playerId: playerId,
           playerColor: gameSettings.COLORS[playerId - 1],
@@ -141,15 +140,13 @@ class GameState {
         };
       });
 
-
       this.io.to(this.roomId).emit('startNewGame', {
         players: playerData,
         timer: this.timer
       });
 
-
       this.addBall();
-      this.addWeapon();
+      // this.addWeapon();
       this.addTimer();
     });
   }
@@ -159,8 +156,6 @@ class GameState {
       return this.players[playerId] !== null;
     }).forEach(playerId => {
       const [playerRow, playerCol] = allPlayerPos[playerId - 1];
-      // const [playerRow, playerCol] = [0, 0];
-      // const [playerX, playerY] = [0, 0];
       let player =
         this.Crafty.e('Player')
                    .at(playerRow, playerCol)
@@ -321,18 +316,27 @@ class GameState {
   setUpUpdatePos(socket) {
     socket.on('updatePos', data => {
       let movingPlayer = this.players[data.playerId];
+      let dirX, dirY;
       if (data.charMove.left) {
-        movingPlayer.moveDir(-1, -1);
+        dirX = -1;
+        dirY = -1;
       } else if (data.charMove.right) {
-        movingPlayer.moveDir(1, 1);
+        dirX = 1;
+        dirY = 1;
       } else if (data.charMove.up) {
-        movingPlayer.moveDir(1, -1);
+        dirX = 1;
+        dirY = -1;
       } else if (data.charMove.down) {
-        movingPlayer.moveDir(-1, 1);
-        // movingPlayer.y += movingPlayer.charSpeed;
-        // if (movingPlayer.hit("Wall")) {
-        //   movingPlayer.y -= movingPlayer.charSpeed;
-        // }
+        dirX = -1;
+        dirY = 1;
+      }
+
+      movingPlayer.moveDir(dirX, dirY);
+      if (this.collideWithWall(movingPlayer)) {
+        let undoDirX = dirX === -1 ? 1 : -1;
+        let undoDirY = dirY === -1 ? 1 : -1;
+        console.log('undoding move');
+        movingPlayer.moveDir(undoDirX, undoDirY);
       }
 
       this.io.to(this.roomId).emit('updatePos', {
@@ -341,6 +345,24 @@ class GameState {
         y: movingPlayer.y
       });
     });
+  }
+
+  // checking if player's current position is colliding with a wall or 
+  // if it is out of the grid
+  collideWithWall(player) {
+    let [rows, cols] = player.getRowsCols();
+    console.log('rows', rows);
+    console.log('cols', cols);
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < cols.length; j++) {
+        if (!this.board.isInGrid(rows[i], cols[j]) ||
+            this.board.maze[rows[i]][cols[j]].isWall) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   addWeapon() {
