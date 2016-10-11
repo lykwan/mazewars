@@ -7,8 +7,8 @@ module.exports = function(Crafty, model) {
   Crafty.c('Tile', {
     init: function() {
       this.attr({
-        w: mapGrid.PLAYER_WIDTH,
-        h: mapGrid.PLAYER_HEIGHT
+        w: mapGrid.TILE_WIDTH,
+        h: mapGrid.TILE_HEIGHT
       });
     },
 
@@ -36,6 +36,7 @@ module.exports = function(Crafty, model) {
 
       // finding all the rows it is at
       let rows = [Math.floor(row)];
+      // if ((row - Math.floor(row)) * w > (mapGrid.PLAYER_WIDTH / 2)) {
       if (Math.floor(row) !== Math.ceil(row)) {
         rows.push(Math.ceil(row));
       }
@@ -43,6 +44,7 @@ module.exports = function(Crafty, model) {
       // finding all the cols it is at
       let cols = [Math.floor(col)];
       if (Math.floor(col) !== Math.ceil(col)) {
+      // if ((col - Math.floor(col)) * h > (mapGrid.PLAYER_WIDTH / 4)) {
         cols.push(Math.ceil(col));
       }
 
@@ -51,7 +53,7 @@ module.exports = function(Crafty, model) {
 
     // account for the floating point epsilon
     fixRoundingErrors: function(n) {
-      let epsilon = 0.00005;
+      let epsilon = 0.000000001;
       return (Math.abs(n - Math.round(n)) <= epsilon) ? Math.round(n) : n;
     }
   });
@@ -68,42 +70,4 @@ module.exports = function(Crafty, model) {
     }
   });
 
-
-  // Crafty.c('Wall', {
-  //   init: function() {
-  //     this.requires('2D, Canvas, Solid, Color, Collision');
-  //     this.z = 10;
-  //   },
-  //
-  //   wallDir: function(wallDir) {
-  //     let wall = this;
-  //     if (wallDir === wallDirection.HORIZONTAL) {
-  //       wall.attr({
-  //            w: mapGrid.TILE_WIDTH,
-  //            h: mapGrid.WALL_THICKNESS
-  //          });
-  //     } else if (wallDir === wallDirection.VERTICAL) {
-  //       wall.attr({
-  //            w: mapGrid.WALL_THICKNESS,
-  //            h: mapGrid.TILE_HEIGHT
-  //          });
-  //     }
-  //
-  //     if (model.receiver === 'CLIENT') {
-  //       wall.color('#FFFFFF');
-  //     }
-  //
-  //     return wall;
-  //   },
-  //
-  //   atWall: function(row, col, offset) {
-  //     const [offSetX, offsetY] = offset;
-  //     const x = (row * mapGrid.TILE_WIDTH) +
-  //               (offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS));
-  //     const y = (col * mapGrid.TILE_HEIGHT) +
-  //               (offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS));
-  //     this.attr({ x: x, y: y });
-  //     return this;
-  //   }
-  // });
 };

@@ -141,29 +141,24 @@ class Game {
                    there are more than 2 people in the room`)
             .textColor('white');
 
-
-
-    // Crafty.load(['../assets/blue.png',
-    //              '../assets/green.png',
-    //              '../assets/red.png',
-    //              '../assets/yellow.png'],
-    //   function() {
-    //     Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
-    //     Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
-    //     Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
-    //     Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
-    //   });
-
-    Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
-    Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
-    Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
-    Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
-    Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
-    Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
-    Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
-
-    Crafty.sprite("../assets/tile.png", { tileSprite:[0, 0, 101, 122] });
-    Crafty.sprite("../assets/lava_tile.png", { wallSprite:[0, 0, 101, 122] });
+    // Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
+    // Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
+    // Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
+    // Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
+    // Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
+    // Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
+    // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
+    //
+    Crafty.sprite("../assets/tile.png", {
+      tileSprite:[0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+    });
+    Crafty.sprite("../assets/lava_tile.png", {
+      wallSprite:[0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+    });
+    Crafty.sprite(mapGrid.PLAYER_ORIG_WIDTH, mapGrid.PLAYER_ORIG_HEIGHT,
+                  "../assets/green_char.png", {
+      greenSprite: [1, 0]
+    });
 
     let playerTextY = 50;
     socket.on('joinGame', data => {
@@ -239,15 +234,18 @@ class Game {
                    .setUpSocket(socket)
                    .setUpSetBallTime()
                    .bindingKeyEvents()
-                   .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+                   .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 
         // place it on isometric map
-        console.log(playerInfo.playerPos);
+        // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
         this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 
         // after placing it on isometric map, figure out the translation of px
         this.translateX = player.x - playerX;
         this.translateY = player.y - playerY;
+
+        // player.x += mapGrid.PLAYER_WIDTH / 2;
+        // player.y -= mapGrid.PLAYER_WIDTH / 4;
 
         // if (player.playerColor === 'red') {
         //   player.addComponent('spr_red')
@@ -275,7 +273,7 @@ class Game {
         let otherPlayer =
           Crafty.e('OtherPlayer, tileSprite')
                 .setUp(data.players.playerId, playerInfo.playerColor)
-                .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 
 
           // place it on isometric map
@@ -307,7 +305,6 @@ class Game {
       }
     });
 
-
     this.createMapEntities();
   }
 
@@ -338,9 +335,6 @@ class Game {
       if (player) {
         player.x = data.x + this.translateX;
         player.y = data.y + this.translateY;
-        console.log(data.x / mapGrid.TILE_WIDTH, data.y / (mapGrid.TILE_WIDTH / 2));
-        console.log(data.x, data.y);
-        console.log(this.iso.px2pos(data.x, data.y));
       }
     });
   }
@@ -405,9 +399,10 @@ class Game {
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      this.ball = Crafty.e('Ball')
-                    .at(data.row, data.col)
-                    .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+      this.ball = Crafty.e('Ball, tileSprite')
+          .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+
+      this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
     });
   }
 
