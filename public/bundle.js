@@ -73,7 +73,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _init = __webpack_require__(11);
+	var _init = __webpack_require__(2);
 	
 	var _init2 = _interopRequireDefault(_init);
 	
@@ -223,27 +223,23 @@
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
 	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when\n                   there are more than 2 people in the room').textColor('white');
 	
-	      // Crafty.load(['../assets/blue.png',
-	      //              '../assets/green.png',
-	      //              '../assets/red.png',
-	      //              '../assets/yellow.png'],
-	      //   function() {
-	      //     Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
-	      //     Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
-	      //     Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
-	      //     Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
-	      //   });
-	
-	      Crafty.sprite("../assets/red.png", { spr_red: [0, 0, 174, 116] });
-	      Crafty.sprite("../assets/green.png", { spr_green: [0, 0, 166, 108] });
-	      Crafty.sprite("../assets/blue.png", { spr_blue: [0, 0, 154, 100] });
-	      Crafty.sprite("../assets/yellow.png", { spr_yellow: [0, 0, 167, 128] });
-	      Crafty.sprite("../assets/ball.png", { spr_ball: [0, 0, 144, 144] });
-	      Crafty.sprite("../assets/bfs_weapon.png", { spr_bfs: [0, 0, 144, 102] });
-	      Crafty.sprite("../assets/dfs_weapon.png", { spr_dfs: [0, 0, 288, 88] });
-	
-	      Crafty.sprite("../assets/tile.png", { tileSprite: [0, 0, 101, 122] });
-	      Crafty.sprite("../assets/lava_tile.png", { wallSprite: [0, 0, 101, 122] });
+	      // Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
+	      // Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
+	      // Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
+	      // Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
+	      // Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
+	      // Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
+	      // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
+	      //
+	      Crafty.sprite("../assets/tile.png", {
+	        tileSprite: [0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+	      });
+	      Crafty.sprite("../assets/lava_tile.png", {
+	        wallSprite: [0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+	      });
+	      Crafty.sprite(mapGrid.PLAYER_ORIG_WIDTH, mapGrid.PLAYER_ORIG_HEIGHT, "../assets/green_char.png", {
+	        greenSprite: [1, 0]
+	      });
 	
 	      var playerTextY = 50;
 	      socket.on('joinGame', function (data) {
@@ -298,15 +294,18 @@
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player, tileSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+	          var player = Crafty.e('Player, tileSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 	
 	          // place it on isometric map
-	          console.log(playerInfo.playerPos);
+	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 	          _this4.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 	
 	          // after placing it on isometric map, figure out the translation of px
 	          _this4.translateX = player.x - playerX;
 	          _this4.translateY = player.y - playerY;
+	
+	          // player.x += mapGrid.PLAYER_WIDTH / 2;
+	          // player.y -= mapGrid.PLAYER_WIDTH / 4;
 	
 	          // if (player.playerColor === 'red') {
 	          //   player.addComponent('spr_red')
@@ -327,7 +326,7 @@
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer, tileSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
+	          var otherPlayer = Crafty.e('OtherPlayer, tileSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
 	
 	          // place it on isometric map
 	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.ACTOR_Z);
@@ -383,9 +382,6 @@
 	        if (player) {
 	          player.x = data.x + _this5.translateX;
 	          player.y = data.y + _this5.translateY;
-	          console.log(data.x / mapGrid.TILE_WIDTH, data.y / (mapGrid.TILE_WIDTH / 2));
-	          console.log(data.x, data.y);
-	          console.log(_this5.iso.px2pos(data.x, data.y));
 	        }
 	      });
 	    }
@@ -454,7 +450,9 @@
 	      var _this9 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this9.ball = Crafty.e('Ball').at(data.row, data.col).attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+	        _this9.ball = Crafty.e('Ball, tileSprite').attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+	
+	        _this9.iso.place(_this9.ball, data.row, data.col, mapGrid.ACTOR_Z);
 	      });
 	    }
 	  }, {
@@ -511,8 +509,113 @@
 	exports.default = Game;
 
 /***/ },
-/* 2 */,
-/* 3 */,
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var createComponents = __webpack_require__(3);
+	var createPlayerComponent = __webpack_require__(5);
+	var createWeaponComponent = __webpack_require__(6);
+	var createBallComponent = __webpack_require__(7);
+	var Constants = __webpack_require__(4);
+	var mapGrid = Constants.mapGrid;
+	
+	module.exports = function (Crafty, model) {
+	  // const mazeRows = (mapGrid.NUM_ROWS * 2 - 1);
+	  // const mazeCols = (mapGrid.NUM_COLS * 2 - 1);
+	  // const width = mazeRows * mapGrid.TILE_WIDTH;
+	  // const height = mazeCols * mapGrid.TILE_HEIGHT;
+	  //
+	  // change name of the html element to stage
+	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
+	
+	  createComponents(Crafty, model);
+	  createPlayerComponent(Crafty, model);
+	  createWeaponComponent(Crafty);
+	  createBallComponent(Crafty);
+	};
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var Constants = __webpack_require__(4);
+	var mapGrid = Constants.mapGrid;
+	var wallDirection = Constants.wallDirection;
+	/* globals Crafty */
+	
+	module.exports = function (Crafty, model) {
+	  Crafty.c('Tile', {
+	    init: function init() {
+	      this.attr({
+	        w: mapGrid.TILE_WIDTH,
+	        h: mapGrid.TILE_HEIGHT
+	      });
+	    },
+	
+	    at: function at(row, col) {
+	      // the amount to move from one neighbor to the other
+	      var w = mapGrid.TILE_WIDTH / 2;
+	      var h = mapGrid.TILE_WIDTH / 4;
+	
+	      var x = (row - col) * w;
+	      var y = (row + col) * h;
+	      this.attr({ x: x, y: y });
+	      return this;
+	    },
+	
+	    getRowsCols: function getRowsCols() {
+	      var w = mapGrid.TILE_WIDTH / 2;
+	      var h = mapGrid.TILE_WIDTH / 4;
+	
+	      var xOverW = this.x / w;
+	      var yOverH = this.y / h;
+	
+	      // (x/w) + (y/h) = 2*r
+	      var row = this.fixRoundingErrors((xOverW + yOverH) / 2);
+	      var col = this.fixRoundingErrors(row - xOverW);
+	
+	      // finding all the rows it is at
+	      var rows = [Math.floor(row)];
+	      // if ((row - Math.floor(row)) * w > (mapGrid.PLAYER_WIDTH / 2)) {
+	      if (Math.floor(row) !== Math.ceil(row)) {
+	        rows.push(Math.ceil(row));
+	      }
+	
+	      // finding all the cols it is at
+	      var cols = [Math.floor(col)];
+	      if (Math.floor(col) !== Math.ceil(col)) {
+	        // if ((col - Math.floor(col)) * h > (mapGrid.PLAYER_WIDTH / 4)) {
+	        cols.push(Math.ceil(col));
+	      }
+	
+	      return [rows, cols];
+	    },
+	
+	    // account for the floating point epsilon
+	    fixRoundingErrors: function fixRoundingErrors(n) {
+	      var epsilon = 0.000000001;
+	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
+	    }
+	  });
+	
+	  Crafty.c('Actor', {
+	    init: function init() {
+	      this.requires('2D, Canvas, Tile');
+	    }
+	  });
+	
+	  Crafty.c('Wall', {
+	    init: function init() {
+	      this.requires('2D, Canvas, Tile, Solid, Collision');
+	    }
+	  });
+	};
+
+/***/ },
 /* 4 */
 /***/ function(module, exports) {
 
@@ -522,33 +625,45 @@
 	var NUM_COLS = 8;
 	var NUM_MAZE_ROWS = NUM_ROWS * 2 - 1;
 	var NUM_MAZE_COLS = NUM_COLS * 2 - 1;
-	var ORIGINAL_TILE_WIDTH = 101;
-	var ORIGINAL_TILE_HEIGHT = 122;
+	var TILE_ORIG_WIDTH = 101;
+	var TILE_ORIG_HEIGHT = 122;
 	var TILE_RATIO = 1 / 2;
-	var TILE_WIDTH = ORIGINAL_TILE_WIDTH * TILE_RATIO;
-	var TILE_HEIGHT = ORIGINAL_TILE_HEIGHT * TILE_RATIO;
+	var TILE_WIDTH = TILE_ORIG_WIDTH * TILE_RATIO;
+	var TILE_HEIGHT = TILE_ORIG_HEIGHT * TILE_RATIO;
+	
+	// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [40, 54];
+	var PLAYER_ORIG_WIDTH = 101;
+	var PLAYER_ORIG_HEIGHT = 122;
+	
+	var PLAYER_RATIO = 1 / 2;
+	var PLAYER_WIDTH = PLAYER_ORIG_WIDTH * PLAYER_RATIO;
+	var PLAYER_HEIGHT = PLAYER_ORIG_HEIGHT * PLAYER_RATIO;
 	
 	var mapGrid = {
 	  GAME_WIDTH: NUM_MAZE_ROWS * TILE_WIDTH,
 	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
 	  GAME_HEIGHT: NUM_MAZE_COLS * TILE_WIDTH + TILE_HEIGHT,
+	  TILE_ORIG_WIDTH: TILE_ORIG_WIDTH,
+	  TILE_ORIG_HEIGHT: TILE_ORIG_HEIGHT,
 	  NUM_ROWS: NUM_ROWS,
 	  NUM_COLS: NUM_COLS,
 	  NUM_MAZE_ROWS: NUM_MAZE_ROWS,
 	  NUM_MAZE_COLS: NUM_MAZE_COLS,
 	  TILE_WIDTH: TILE_WIDTH,
 	  TILE_HEIGHT: TILE_HEIGHT,
-	  PLAYER_WIDTH: 20,
-	  PLAYER_HEIGHT: 15,
-	  BALL_WIDTH: 25,
-	  BALL_HEIGHT: 25,
+	  PLAYER_ORIG_WIDTH: PLAYER_ORIG_WIDTH,
+	  PLAYER_ORIG_HEIGHT: PLAYER_ORIG_HEIGHT,
+	  PLAYER_WIDTH: PLAYER_WIDTH,
+	  PLAYER_HEIGHT: PLAYER_HEIGHT,
+	  BALL_WIDTH: 101 / 2,
+	  BALL_HEIGHT: 122 / 2,
 	  DFS_WIDTH: 25,
 	  DFS_HEIGHT: 0.30 * 25,
 	  BFS_WIDTH: 20,
 	  BFS_HEIGHT: 0.70 * 20,
 	  TILE_Z: 0,
 	  WALL_Z: 0,
-	  ACTOR_Z: 1.5,
+	  ACTOR_Z: 1.39,
 	  CHAR_STEP: 10
 	};
 	
@@ -779,9 +894,7 @@
 	module.exports = function (Crafty) {
 	  Crafty.c('Ball', {
 	    init: function init() {
-	      this.requires('Actor, spr_ball, Collision');
-	      //TODO: change spr_ball
-	      this.z = 8;
+	      this.requires('2D, DOM, Tile, Solid, Collision');
 	    }
 	  });
 	};
@@ -822,7 +935,6 @@
 	  function Board(m, n, seedRandomStr, print) {
 	    _classCallCheck(this, Board);
 	
-	    console.log(seedRandomStr);
 	    // how many cells rows and cols are there if walls were just borders
 	    this.numGridRows = m;
 	    this.numGridCols = n;
@@ -1043,20 +1155,6 @@
 	        this.expandMaze(row, col);
 	      }
 	    }
-	
-	    // createMapEntities(createWallEntityFunc, createTileEntityFunc) {
-	    //   for (let i = 0; i < this.numMazeRows; i++) {
-	    //     for (let j = 0; j < this.numMazeCols; j++) {
-	    //       if (this.maze[i][j].isWall) {
-	    //         // this.Crafty.e('Wall').at(i, j).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT}).color('#FFFFFF');
-	    //         createWallEntityFunc(i, j);
-	    //       } else {
-	    //         createTileEntityFunc(i, j);
-	    //       }
-	    //     }
-	    //   }
-	    // }
-	
 	  }]);
 	
 	  return Board;
@@ -1081,149 +1179,6 @@
 	};
 	
 	module.exports = Cell;
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var createComponents = __webpack_require__(12);
-	var createPlayerComponent = __webpack_require__(5);
-	var createWeaponComponent = __webpack_require__(6);
-	var createBallComponent = __webpack_require__(7);
-	var Constants = __webpack_require__(4);
-	var mapGrid = Constants.mapGrid;
-	
-	module.exports = function (Crafty, model) {
-	  // const mazeRows = (mapGrid.NUM_ROWS * 2 - 1);
-	  // const mazeCols = (mapGrid.NUM_COLS * 2 - 1);
-	  // const width = mazeRows * mapGrid.TILE_WIDTH;
-	  // const height = mazeCols * mapGrid.TILE_HEIGHT;
-	  //
-	  // change name of the html element to stage
-	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
-	
-	  createComponents(Crafty, model);
-	  createPlayerComponent(Crafty, model);
-	  createWeaponComponent(Crafty);
-	  createBallComponent(Crafty);
-	};
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var Constants = __webpack_require__(4);
-	var mapGrid = Constants.mapGrid;
-	var wallDirection = Constants.wallDirection;
-	/* globals Crafty */
-	
-	module.exports = function (Crafty, model) {
-	  Crafty.c('Tile', {
-	    init: function init() {
-	      this.attr({
-	        w: mapGrid.PLAYER_WIDTH,
-	        h: mapGrid.PLAYER_HEIGHT
-	      });
-	    },
-	
-	    at: function at(row, col) {
-	      // the amount to move from one neighbor to the other
-	      var w = mapGrid.TILE_WIDTH / 2;
-	      var h = mapGrid.TILE_WIDTH / 4;
-	
-	      var x = (row - col) * w;
-	      var y = (row + col) * h;
-	      this.attr({ x: x, y: y });
-	      return this;
-	    },
-	
-	    getRowsCols: function getRowsCols() {
-	      var w = mapGrid.TILE_WIDTH / 2;
-	      var h = mapGrid.TILE_WIDTH / 4;
-	
-	      var xOverW = this.x / w;
-	      var yOverH = this.y / h;
-	
-	      // (x/w) + (y/h) = 2*r
-	      var row = this.fixRoundingErrors((xOverW + yOverH) / 2);
-	      var col = this.fixRoundingErrors(row - xOverW);
-	
-	      // finding all the rows it is at
-	      var rows = [Math.floor(row)];
-	      if (Math.floor(row) !== Math.ceil(row)) {
-	        rows.push(Math.ceil(row));
-	      }
-	
-	      // finding all the cols it is at
-	      var cols = [Math.floor(col)];
-	      if (Math.floor(col) !== Math.ceil(col)) {
-	        cols.push(Math.ceil(col));
-	      }
-	
-	      return [rows, cols];
-	    },
-	
-	    // account for the floating point epsilon
-	    fixRoundingErrors: function fixRoundingErrors(n) {
-	      var epsilon = 0.00005;
-	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
-	    }
-	  });
-	
-	  Crafty.c('Actor', {
-	    init: function init() {
-	      this.requires('2D, Canvas, Tile');
-	    }
-	  });
-	
-	  Crafty.c('Wall', {
-	    init: function init() {
-	      this.requires('2D, Canvas, Tile, Solid, Collision');
-	    }
-	  });
-	
-	  // Crafty.c('Wall', {
-	  //   init: function() {
-	  //     this.requires('2D, Canvas, Solid, Color, Collision');
-	  //     this.z = 10;
-	  //   },
-	  //
-	  //   wallDir: function(wallDir) {
-	  //     let wall = this;
-	  //     if (wallDir === wallDirection.HORIZONTAL) {
-	  //       wall.attr({
-	  //            w: mapGrid.TILE_WIDTH,
-	  //            h: mapGrid.WALL_THICKNESS
-	  //          });
-	  //     } else if (wallDir === wallDirection.VERTICAL) {
-	  //       wall.attr({
-	  //            w: mapGrid.WALL_THICKNESS,
-	  //            h: mapGrid.TILE_HEIGHT
-	  //          });
-	  //     }
-	  //
-	  //     if (model.receiver === 'CLIENT') {
-	  //       wall.color('#FFFFFF');
-	  //     }
-	  //
-	  //     return wall;
-	  //   },
-	  //
-	  //   atWall: function(row, col, offset) {
-	  //     const [offSetX, offsetY] = offset;
-	  //     const x = (row * mapGrid.TILE_WIDTH) +
-	  //               (offSetX * (mapGrid.TILE_WIDTH - mapGrid.WALL_THICKNESS));
-	  //     const y = (col * mapGrid.TILE_HEIGHT) +
-	  //               (offsetY * (mapGrid.TILE_HEIGHT - mapGrid.WALL_THICKNESS));
-	  //     this.attr({ x: x, y: y });
-	  //     return this;
-	  //   }
-	  // });
-	};
 
 /***/ }
 /******/ ]);

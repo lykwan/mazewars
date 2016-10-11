@@ -183,6 +183,7 @@ class GameState {
     const col = Math.floor(this.board.numGridCols / 2);
     const row = Math.floor(this.board.numGridRows / 2);
     const [mazeRow, mazeCol] = this.board.gridToMazePos(row, col);
+    console.log('maze', mazeRow, mazeCol);
     this.ball =
       this.Crafty.e('Ball')
             .at(mazeRow, mazeCol)
@@ -347,12 +348,10 @@ class GameState {
     });
   }
 
-  // checking if player's current position is colliding with a wall or 
+  // checking if player's current position is colliding with a wall or
   // if it is out of the grid
   collideWithWall(player) {
     let [rows, cols] = player.getRowsCols();
-    console.log('rows', rows);
-    console.log('cols', cols);
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < cols.length; j++) {
         if (!this.board.isInGrid(rows[i], cols[j]) ||
