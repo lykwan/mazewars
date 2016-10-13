@@ -4,10 +4,9 @@ const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
 
 module.exports = function(Crafty) {
-  Crafty.c('Player', {
+  Crafty.c('SelfPlayer', {
     init: function() {
-      this.requires('Actor, Collision, Color');
-      this.HP = 100;
+      this.requires('Player');
       this.charStep = mapGrid.CHAR_STEP;
       this.hasTakenDamage = false;
       this.longestBallHoldingTime = 0;
@@ -132,12 +131,12 @@ module.exports = function(Crafty) {
     loseWeapon: function() {
       this.weaponType = null;
     }
+
   });
 
   Crafty.c('OtherPlayer', {
     init: function() {
-      this.requires('2D, DOM, Tile, Color');
-      this.HP = 100;
+      this.requires('Player');
     },
 
     setUp: function(playerId, playerColor, weaponDisplayId) {
@@ -157,11 +156,44 @@ module.exports = function(Crafty) {
     pickUpBall: function() {
       this.color('white');
       return this;
+    }
+  });
+
+  Crafty.c('Player', {
+    init: function() {
+      this.requires('Actor, Color');
+      this.HP = 100;
+    },
+
+    displayAnimation: function(charMove) {
+      // display the animation movement depending on the char move
+      if (charMove.left && !this.isPlaying('PlayerMovingLeft')) {
+        this.animate('PlayerMovingLeft', -1);
+        this.unflip('X');
+      } else if (charMove.down &&
+        !this.isPlaying('PlayerMovingDown')) {
+          this.animate('PlayerMovingDown', -1);
+          this.unflip('X');
+      } else if (charMove.up && !this.isPlaying('PlayerMovingUp')) {
+        this.animate('PlayerMovingUp', -1);
+        this.flip('X');
+      } else if (charMove.right &&
+        !this.isPlaying('PlayerMovingRight')) {
+          this.animate('PlayerMovingRight', -1);
+          this.flip('X');
+      }
     },
 
     loseWeapon: function() {
 
-    }
+    },
 
+    setUpAnimation: function() {
+      this.reel('PlayerMovingRight', 600, 0, 1, 5)
+      this.reel('PlayerMovingDown', 600, 0, 1, 5)
+      this.reel('PlayerMovingUp', 600, 0, 2, 5)
+      this.reel('PlayerMovingLeft', 600, 0, 2, 5);
+      return this;
+    }
   });
 };

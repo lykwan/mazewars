@@ -269,16 +269,13 @@ class Game {
       let [playerRow, playerCol] = playerInfo.playerPos;
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
-             Crafty.e('Player, SpriteAnimation, greenSprite')
+             Crafty.e('SelfPlayer, SpriteAnimation, greenSprite')
                    .setUp(playerInfo.playerId, playerInfo.playerColor)
                    .setUpSocket(socket)
                    .setUpSetBallTime()
+                   .setUpAnimation()
                    .bindingKeyEvents()
-                   .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT })
-                   .reel('PlayerMovingRight', 600, 0, 1, 5)
-                   .reel('PlayerMovingDown', 600, 0, 1, 5)
-                   .reel('PlayerMovingUp', 600, 0, 2, 5)
-                   .reel('PlayerMovingLeft', 600, 0, 2, 5);
+                   .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 
         // place it on isometric map
         // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
@@ -316,15 +313,11 @@ class Game {
         let otherPlayer =
           Crafty.e('OtherPlayer, SpriteAnimation, greenSprite')
                 .setUp(data.players.playerId, playerInfo.playerColor)
-                .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT })
-                .reel('PlayerMovingRight', 600, 0, 1, 5)
-                .reel('PlayerMovingDown', 600, 0, 1, 5)
-                .reel('PlayerMovingUp', 600, 0, 2, 5)
-                .reel('PlayerMovingLeft', 600, 0, 2, 5);
+                .setUpAnimation()
+                .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 
         // place it on isometric map
         this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
-
 
         // translate the player px in the initial rendering as well
         otherPlayer.x += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
@@ -376,22 +369,7 @@ class Game {
         player.x = data.x + this.translateX;
         player.y = data.y + this.translateY;
 
-        // display the animation movement depending on the char move
-        if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
-          player.animate('PlayerMovingLeft', -1);
-          player.unflip('X');
-        } else if (data.charMove.down &&
-            !player.isPlaying('PlayerMovingDown')) {
-          player.animate('PlayerMovingDown', -1);
-          player.unflip('X');
-        } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
-          player.animate('PlayerMovingUp', -1);
-          player.flip('X');
-        } else if (data.charMove.right &&
-            !player.isPlaying('PlayerMovingRight')) {
-          player.animate('PlayerMovingRight');
-          player.flip('X');
-        }
+        player.displayAnimation(data.charMove);
       }
     });
 
@@ -453,6 +431,7 @@ class Game {
 
   setUpHPChange() {
     socket.on('HPChange', data => {
+      console.log('changing hp!');
       const player = this.players[data.playerId];
       if (player) {
         player.HP = data.playerHP;
