@@ -145,7 +145,7 @@ class GameState {
       });
 
       this.addBall();
-      // this.addWeapon();
+      this.addWeapon();
       this.addTimer();
     });
   }
@@ -182,26 +182,13 @@ class GameState {
     const col = Math.floor(this.board.numGridCols / 2);
     const row = Math.floor(this.board.numGridRows / 2);
     const [mazeRow, mazeCol] = this.board.gridToMazePos(row, col);
-    console.log('maze', mazeRow, mazeCol);
     this.ball =
       this.Crafty.e('Ball')
-            .at(mazeRow, mazeCol)
-            .onHit('Player', this.pickUpBall.bind(this));
+                  .at(mazeRow, mazeCol)
+                  .setUpStaticPos(mazeRow, mazeCol);
     this.io.to(this.roomId).emit('addBall', {
       col: mazeCol,
       row: mazeRow
-    });
-  }
-
-   pickUpBall() {
-    const player = this.ball.hit('Player')[0].obj;
-    this.ball.destroy();
-    this.ball = null;
-    this.ballHolder = player;
-    this.setBallTime(player);
-
-    this.io.to(this.roomId).emit('showBall', {
-      playerId: player.playerId
     });
   }
 
@@ -338,6 +325,10 @@ class GameState {
         movingPlayer.moveDir(undoDirX, undoDirY);
       }
 
+      if (this.ball && this.collideWithItem(movingPlayer, this.ball)) {
+        this.pickUpBall(movingPlayer);
+      }
+
       this.io.to(this.roomId).emit('updatePos', {
         playerId: data.playerId,
         x: movingPlayer.x,
@@ -351,6 +342,17 @@ class GameState {
         playerId: data.playerId,
         keyCode: data.keyCode
       });
+    });
+  }
+
+  pickUpBall(player) {
+    this.ball.destroy();
+    this.ball = null;
+    this.ballHolder = player;
+    this.setBallTime(player);
+
+    this.io.to(this.roomId).emit('showBall', {
+      playerId: player.playerId
     });
   }
 
@@ -370,6 +372,19 @@ class GameState {
     return false;
   }
 
+  collideWithItem(player, item) {
+    let [rows, cols] = player.getRowsCols();
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < cols.length; j++) {
+        if (rows[i] === item.staticRow && cols[j] === item.staticCol) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   addWeapon() {
     this.addWeaponIntervalId = setInterval(() => {
       // Pick a random col, row
@@ -380,16 +395,18 @@ class GameState {
 
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
-      const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
+      // const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
+      const type = 'BFS';
       const weapon = this.Crafty.e('Weapon')
-                           .at(row, col)
-                           .setUp(type);
+                               .at(row, col)
+                               .setUpStaticPos(row, col)
+                               .setUp(type);
       this.weapons[[row, col]] = weapon;
 
       this.io.to(this.roomId).emit('addWeapon', {
         col: col,
         row: row,
-        type: type,
+        type: type
       });
 
     }, gameSettings.WEAPON_SPAWN_TIME);
@@ -398,16 +415,15 @@ class GameState {
   setUpPickUpWeapon(socket) {
     socket.on('pickUpWeapon', data => {
       const player = this.players[data.playerId];
-      const collidedWeapons = player.hit('Weapon');
-      if (collidedWeapons) {
-        const weapon = collidedWeapons[0].obj;
-        player.weaponType = weapon.type;
+      const collidedWeapon = this.collidedWeapon(player);
+      if (collidedWeapon !== null) {
+        player.weaponType = collidedWeapon.type;
         socket.emit('pickUpWeapon', {
-          type: weapon.type
+          type: collidedWeapon.type
         });
 
-        const [col, row] = [weapon.getCol(), weapon.getRow()];
-        weapon.destroy();
+        const [col, row] = [collidedWeapon.staticCol, collidedWeapon.staticRow];
+        collidedWeapon.destroy();
         delete this.weapons[[col, row]];
         this.io.to(this.roomId).emit('destroyWeapon', {
           col: col,
@@ -415,6 +431,18 @@ class GameState {
         });
       }
     });
+  }
+
+  collidedWeapon(player) {
+    let weaponPos = Object.keys(this.weapons);
+    for (let i = 0; i < weaponPos.length; i++) {
+      const weapon = this.weapons[weaponPos[i]];
+      if (this.collideWithItem(player, weapon)) {
+        return weapon;
+      }
+    }
+
+    return null;
   }
 
   setUpShootWeapon(socket) {

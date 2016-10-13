@@ -84,13 +84,26 @@ module.exports = function(Crafty) {
 
   Crafty.c('Actor', {
     init: function() {
-      this.requires('2D, Canvas, Tile');
+      this.requires('2D, DOM, Tile');
     },
+  });
+
+  Crafty.c('Item', {
+    init: function() {
+
+    },
+
+    // for items that are in a static position
+    setUpStaticPos(row, col) {
+      this.staticRow = row;
+      this.staticCol = col;
+      return this;
+    }
   });
 
   Crafty.c('Wall', {
     init: function() {
-      this.requires('2D, Canvas, Tile, Solid, Collision');
+      this.requires('2D, Canvas, Tile');
     }
   });
 

@@ -3,7 +3,7 @@
 module.exports = function(Crafty) {
   Crafty.c('Weapon', {
     init: function() {
-      this.requires('Actor, Color, Collision');
+      this.requires('Actor, Item');
     },
 
     setUp: function(type) {

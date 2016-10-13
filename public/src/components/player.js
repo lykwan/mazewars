@@ -6,7 +6,7 @@ const wallDirection = Constants.wallDirection;
 module.exports = function(Crafty) {
   Crafty.c('Player', {
     init: function() {
-      this.requires('2D, DOM, Tile, Collision, Color');
+      this.requires('Actor, Collision, Color');
       this.HP = 100;
       this.charStep = mapGrid.CHAR_STEP;
       this.hasTakenDamage = false;
