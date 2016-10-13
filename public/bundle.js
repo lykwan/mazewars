@@ -91,6 +91,7 @@
 	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
+	var gameSettings = Constants.gameSettings;
 	
 	var socket = io();
 	/* globals Crafty */
@@ -104,6 +105,7 @@
 	    this.weapons = {};
 	    this.playersInfo = {};
 	    this.board = null;
+	    this.tileBoard = this.createTileBoard();
 	    this.selfId = null;
 	    this.ball = null;
 	    this.translateX = 0;
@@ -162,12 +164,20 @@
 	      });
 	    }
 	  }, {
+	    key: 'createTileBoard',
+	    value: function createTileBoard() {
+	      var board = new Array(mapGrid.NUM_MAZE_ROWS);
+	      for (var i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
+	        board[i] = new Array(mapGrid.NUM_MAZE_COLS);
+	      }
+	      return board;
+	    }
+	  }, {
 	    key: 'start',
 	    value: function start() {
 	      var _this2 = this;
 	
 	      (0, _init2.default)(Crafty);
-	      //TODO: DELETE MODEL
 	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
 	
 	      this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH, mapGrid.TILE.SURFACE_HEIGHT, mapGrid.NUM_MAZE_ROWS, mapGrid.NUM_MAZE_COLS);
@@ -239,6 +249,13 @@
 	              'wallSprite': [0, 0]
 	            }
 	          },
+	          '../assets/lava_crack.png': {
+	            'tile': mapGrid.TILE.ORIG_WIDTH,
+	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	            'map': {
+	              'greenActiveTileSprite': [0, 0]
+	            }
+	          },
 	          '../assets/green_char.png': {
 	            'tile': mapGrid.PLAYER.ORIG_WIDTH,
 	            'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
@@ -253,7 +270,7 @@
 	              'ballSprite': [0, 0]
 	            }
 	          },
-	          '../assets/hammer1.png': {
+	          '../assets/flamesword.png': {
 	            'tile': mapGrid.BFS.ORIG_WIDTH,
 	            'tileh': mapGrid.BFS.ORIG_HEIGHT,
 	            'map': {
@@ -264,21 +281,6 @@
 	      };
 	
 	      Crafty.load(assetsObj);
-	
-	      // Crafty.sprite("../assets/tile.png", {
-	      //   tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-	      // });
-	      // Crafty.sprite("../assets/lava_tile.png", {
-	      //   wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-	      // });
-	      // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
-	      //               "../assets/green_char.png", {
-	      //   greenSprite: [0, 0]
-	      // });
-	      // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
-	      //               "../assets/green_char.png", {
-	      //   greenSprite: [0, 0]
-	      // });
 	
 	      var playerTextY = 50;
 	      socket.on('joinGame', function (data) {
@@ -357,20 +359,6 @@
 	          console.log('player', player.x);
 	          console.log('player', player.y);
 	
-	          // if (player.playerColor === 'red') {
-	          //   player.addComponent('spr_red')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (player.playerColor === 'green') {
-	          //   player.addComponent('spr_green')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (player.playerColor === 'blue') {
-	          //   player.addComponent('spr_blue')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (player.playerColor === 'yellow') {
-	          //   player.addComponent('spr_yellow')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // }
-	
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
 	
@@ -384,20 +372,6 @@
 	          // translate the player px in the initial rendering as well
 	          otherPlayer.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
 	          otherPlayer.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
-	
-	          // if (otherPlayer.playerColor === 'red') {
-	          //   otherPlayer.addComponent('spr_red')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (otherPlayer.playerColor === 'green') {
-	          //   otherPlayer.addComponent('spr_green')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (otherPlayer.playerColor === 'blue') {
-	          //   otherPlayer.addComponent('spr_blue')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // } else if (otherPlayer.playerColor === 'yellow') {
-	          //   otherPlayer.addComponent('spr_yellow')
-	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-	          // }
 	
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
@@ -414,11 +388,13 @@
 	      for (var i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
 	        for (var j = 0; j < mapGrid.NUM_MAZE_COLS; j++) {
 	          if (this.board.maze[i][j].isWall) {
-	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	            var wallEntity = Crafty.e('Actor, wallSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
+	            this.tileBoard[i][j] = wallEntity;
 	          } else {
-	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	            var tileEntity = Crafty.e('Tile').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
+	            this.tileBoard[i][j] = tileEntity;
 	          }
 	        }
 	      }
@@ -451,7 +427,7 @@
 	            player.animate('PlayerMovingUp', -1);
 	            player.flip('X');
 	          } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
-	            player.animate('PlayerMovingRight', -1);
+	            player.animate('PlayerMovingRight');
 	            player.flip('X');
 	          }
 	        }
@@ -508,7 +484,10 @@
 	      var _this7 = this;
 	
 	      socket.on('createDamage', function (data) {
-	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this7.players[data.creatorId].playerColor, 0.5);
+	        var activeComponent = 'greenActiveTileSprite';
+	        _this7.tileBoard[data.row][data.col].removeComponent('tileSprite');
+	        _this7.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	        _this7.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
 	      });
 	    }
 	  }, {
@@ -634,12 +613,13 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
+	var gameSettings = Constants.gameSettings;
 	/* globals Crafty */
 	
 	var epsilon = 0.000000001;
 	
 	module.exports = function (Crafty) {
-	  Crafty.c('Tile', {
+	  Crafty.c('Cell', {
 	    init: function init() {
 	      this.attr({
 	        w: mapGrid.TILE.WIDTH,
@@ -715,7 +695,7 @@
 	
 	  Crafty.c('Actor', {
 	    init: function init() {
-	      this.requires('2D, DOM, Tile');
+	      this.requires('2D, DOM, Cell');
 	    }
 	  });
 	
@@ -730,9 +710,18 @@
 	    }
 	  });
 	
-	  Crafty.c('Wall', {
+	  Crafty.c('Tile', {
 	    init: function init() {
-	      this.requires('2D, Canvas, Tile');
+	      this.requires('2D, DOM, tileSprite');
+	    },
+	
+	    damageDisappearAfter: function damageDisappearAfter(activeTileSprite) {
+	      var _this = this;
+	
+	      window.setTimeout(function () {
+	        _this.removeComponent(activeTileSprite);
+	        _this.addComponent('tileSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	      }, gameSettings.DAMAGE_DISAPPEAR_TIME);
 	    }
 	  });
 	};
@@ -768,9 +757,9 @@
 	};
 	
 	var BFS = {
-	  ORIG_WIDTH: 352,
-	  ORIG_HEIGHT: 514,
-	  RATIO: 1 / 10
+	  ORIG_WIDTH: 194,
+	  ORIG_HEIGHT: 204,
+	  RATIO: 1 / 4
 	};
 	
 	[TILE, PLAYER, BALL, BFS].forEach(function (actor) {
@@ -782,9 +771,9 @@
 	[PLAYER, BALL, BFS].forEach(function (actor) {
 	  var y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
 	  // need to increase it by player depth
-	  var y1 = y0 + (actor.HEIGHT - actor.SURFACE_HEIGHT);
+	  var y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
 	  // finding the z layer based on the craftyjs code
-	  actor.Z = (y1 - (actor.HEIGHT / TILE.SURFACE_HEIGHT - 2) * actor.SURFACE_HEIGHT) / TILE.SURFACE_HEIGHT;
+	  actor.Z = (y1 - (PLAYER.HEIGHT / TILE.SURFACE_HEIGHT - 2) * PLAYER.SURFACE_HEIGHT) / TILE.SURFACE_HEIGHT;
 	  // actor.Z = ((PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT) /
 	  //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
 	  // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
@@ -841,6 +830,7 @@
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
 	  GAME_DURATION: 2000, // 200
+	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
 	
@@ -1045,7 +1035,8 @@
 	
 	  Crafty.c('Damage', {
 	    init: function init() {
-	      this.requires('Actor, Color, Collision');
+	      this.requires('Actor, Item');
+	      this.checkCollisionInterval = null;
 	    },
 	
 	    setUpCreator: function setUpCreator(playerId) {
@@ -1056,7 +1047,10 @@
 	      var _this = this;
 	
 	      setTimeout(function () {
-	        return _this.destroy();
+	        if (_this.checkCollisionInterval) {
+	          clearInterval(_this.checkCollisionInterval);
+	        }
+	        _this.destroy();
 	      }, disappearTime);
 	      return this;
 	    }

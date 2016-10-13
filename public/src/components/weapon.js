@@ -14,7 +14,8 @@ module.exports = function(Crafty) {
 
   Crafty.c('Damage', {
     init: function() {
-      this.requires('Actor, Color, Collision');
+      this.requires('Actor, Item');
+      this.checkCollisionInterval = null;
     },
 
     setUpCreator(playerId) {
@@ -23,7 +24,12 @@ module.exports = function(Crafty) {
     },
 
     disappearAfter(disappearTime) {
-      setTimeout(() => this.destroy(), disappearTime);
+      setTimeout(() => {
+        if (this.checkCollisionInterval) {
+          clearInterval(this.checkCollisionInterval);
+        }
+        this.destroy();
+      }, disappearTime);
       return this;
     }
   });

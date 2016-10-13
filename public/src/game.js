@@ -3,6 +3,7 @@ import ClientModel from './model/client_model.js';
 import Board from './board.js';
 const Constants = require('./constants.js');
 const mapGrid = Constants.mapGrid;
+const gameSettings = Constants.gameSettings;
 
 const socket = io();
 /* globals Crafty */
@@ -14,11 +15,13 @@ class Game {
     this.weapons = {};
     this.playersInfo = {};
     this.board = null;
+    this.tileBoard = this.createTileBoard();
     this.selfId = null;
     this.ball = null;
     this.translateX = 0;
     this.translateY = 0;
   }
+
 
   run() {
     // getting the room id from the url params, if any
@@ -68,9 +71,16 @@ class Game {
     });
   }
 
+  createTileBoard() {
+    let board = new Array(mapGrid.NUM_MAZE_ROWS);
+    for (let i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
+      board[i] = new Array(mapGrid.NUM_MAZE_COLS);
+    }
+    return board;
+  }
+
   start() {
     initGame(Crafty);
-    //TODO: DELETE MODEL
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
     this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH,
@@ -157,6 +167,13 @@ class Game {
             'wallSprite': [0, 0]
           }
         },
+        '../assets/lava_crack.png': {
+          'tile': mapGrid.TILE.ORIG_WIDTH,
+          'tileh': mapGrid.TILE.ORIG_HEIGHT,
+          'map': {
+            'greenActiveTileSprite': [0, 0]
+          }
+        },
         '../assets/green_char.png': {
           'tile': mapGrid.PLAYER.ORIG_WIDTH,
           'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
@@ -171,7 +188,7 @@ class Game {
             'ballSprite': [0, 0]
           }
         },
-        '../assets/hammer1.png': {
+        '../assets/flamesword.png': {
           'tile': mapGrid.BFS.ORIG_WIDTH,
           'tileh': mapGrid.BFS.ORIG_HEIGHT,
           'map': {
@@ -182,21 +199,6 @@ class Game {
     };
 
     Crafty.load(assetsObj);
-
-    // Crafty.sprite("../assets/tile.png", {
-    //   tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-    // });
-    // Crafty.sprite("../assets/lava_tile.png", {
-    //   wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-    // });
-    // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
-    //               "../assets/green_char.png", {
-    //   greenSprite: [0, 0]
-    // });
-    // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
-    //               "../assets/green_char.png", {
-    //   greenSprite: [0, 0]
-    // });
 
     let playerTextY = 50;
     socket.on('joinGame', data => {
@@ -302,20 +304,6 @@ class Game {
         console.log('player', player.x);
         console.log('player', player.y);
 
-        // if (player.playerColor === 'red') {
-        //   player.addComponent('spr_red')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (player.playerColor === 'green') {
-        //   player.addComponent('spr_green')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (player.playerColor === 'blue') {
-        //   player.addComponent('spr_blue')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (player.playerColor === 'yellow') {
-        //   player.addComponent('spr_yellow')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // }
-
         $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                                   Player ${playerInfo.playerId}: ${ player.HP }
                                  </span>`);
@@ -343,21 +331,6 @@ class Game {
         otherPlayer.y -=
           ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
 
-
-        // if (otherPlayer.playerColor === 'red') {
-        //   otherPlayer.addComponent('spr_red')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (otherPlayer.playerColor === 'green') {
-        //   otherPlayer.addComponent('spr_green')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (otherPlayer.playerColor === 'blue') {
-        //   otherPlayer.addComponent('spr_blue')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // } else if (otherPlayer.playerColor === 'yellow') {
-        //   otherPlayer.addComponent('spr_yellow')
-        //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
-        // }
-
         $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                             Player ${playerInfo.playerId}: ${ otherPlayer.HP }
                            </span>`);
@@ -377,14 +350,16 @@ class Game {
       for (let j = 0; j < mapGrid.NUM_MAZE_COLS; j++) {
         if (this.board.maze[i][j].isWall) {
           const wallEntity =
-            Crafty.e('2D, DOM, wallSprite')
+            Crafty.e('Actor, wallSprite')
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
           this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
+          this.tileBoard[i][j] = wallEntity;
         } else {
           const tileEntity =
-            Crafty.e('2D, DOM, tileSprite')
+            Crafty.e('Tile')
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
           this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
+          this.tileBoard[i][j] = tileEntity;
         }
       }
     }
@@ -414,7 +389,7 @@ class Game {
           player.flip('X');
         } else if (data.charMove.right &&
             !player.isPlaying('PlayerMovingRight')) {
-          player.animate('PlayerMovingRight', -1);
+          player.animate('PlayerMovingRight');
           player.flip('X');
         }
       }
@@ -468,12 +443,11 @@ class Game {
 
   setUpCreateDamage() {
     socket.on('createDamage', data => {
-      Crafty.e('Damage')
-            .at(data.damageCell[0], data.damageCell[1])
-            .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT })
-            .setUpCreator(data.creatorId)
-            .disappearAfter(data.disappearTime)
-            .color(this.players[data.creatorId].playerColor, 0.5);
+      let activeComponent = 'greenActiveTileSprite';
+      this.tileBoard[data.row][data.col].removeComponent('tileSprite');
+      this.tileBoard[data.row][data.col].addComponent(activeComponent)
+                    .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+      this.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
     });
   }
 
