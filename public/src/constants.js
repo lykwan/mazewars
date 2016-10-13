@@ -23,9 +23,9 @@ const BALL = {
 };
 
 const BFS = {
-  ORIG_WIDTH: 352,
-  ORIG_HEIGHT: 514,
-  RATIO: 1 / 10
+  ORIG_WIDTH: 194,
+  ORIG_HEIGHT: 204,
+  RATIO: 1 / 4
 };
 
 [TILE, PLAYER, BALL, BFS].forEach(actor => {
@@ -37,9 +37,10 @@ const BFS = {
 [PLAYER, BALL, BFS].forEach(actor => {
   const y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
   // need to increase it by player depth
-  const y1 = y0 + (actor.HEIGHT - actor.SURFACE_HEIGHT);
+  const y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
   // finding the z layer based on the craftyjs code
-  actor.Z = (y1 - ((actor.HEIGHT / TILE.SURFACE_HEIGHT - 2) * actor.SURFACE_HEIGHT)) / TILE.SURFACE_HEIGHT;
+  actor.Z = (y1 - ((PLAYER.HEIGHT / TILE.SURFACE_HEIGHT - 2) *
+              PLAYER.SURFACE_HEIGHT)) / TILE.SURFACE_HEIGHT;
   // actor.Z = ((PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT) /
   //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
   // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
@@ -96,6 +97,7 @@ const gameSettings = {
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
   GAME_DURATION: 2000, // 200
+  CHECK_COLLISION_INTERVAL: 200, 
   COLORS: ['blue', 'red', 'yellow', 'green']
 };
 

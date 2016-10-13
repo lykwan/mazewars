@@ -1,12 +1,13 @@
 const Constants = require('../constants.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
+const gameSettings = Constants.gameSettings;
 /* globals Crafty */
 
 let epsilon = 0.000000001;
 
 module.exports = function(Crafty) {
-  Crafty.c('Tile', {
+  Crafty.c('Cell', {
     init: function() {
       this.attr({
         w: mapGrid.TILE.WIDTH,
@@ -84,7 +85,7 @@ module.exports = function(Crafty) {
 
   Crafty.c('Actor', {
     init: function() {
-      this.requires('2D, DOM, Tile');
+      this.requires('2D, DOM, Cell');
     },
   });
 
@@ -101,9 +102,17 @@ module.exports = function(Crafty) {
     }
   });
 
-  Crafty.c('Wall', {
+  Crafty.c('Tile', {
     init: function() {
-      this.requires('2D, Canvas, Tile');
+      this.requires('2D, DOM, tileSprite');
+    },
+
+    damageDisappearAfter: function(activeTileSprite) {
+      window.setTimeout(() => {
+        this.removeComponent(activeTileSprite);
+        this.addComponent('tileSprite')
+            .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+      }, gameSettings.DAMAGE_DISAPPEAR_TIME);
     }
   });
 

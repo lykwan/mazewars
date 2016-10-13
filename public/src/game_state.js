@@ -460,15 +460,17 @@ class GameState {
 
         let idx = 0;
         let intervalId = setInterval(() => {
+          const [row, col] = damageCells[idx];
           const damage = this.Crafty.e('Damage')
-                .at(damageCells[idx][0], damageCells[idx][1])
+                .at(row, col)
                 .setUpCreator(data.playerId)
                 .disappearAfter(gameSettings.DAMAGE_DISAPPEAR_TIME);
 
-          damage.onHit('Player', this.lowerHP.bind(this, damage));
+          this.checkForDamageCollision(damage);
 
           this.io.to(this.roomId).emit('createDamage', {
-            damageCell: damageCells[idx],
+            row: row,
+            col: col,
             creatorId: data.playerId,
             disappearTime: gameSettings.DAMAGE_DISAPPEAR_TIME
           });
@@ -484,6 +486,19 @@ class GameState {
     });
   }
 
+  // check if it hits a player once in a while
+  checkForDamageCollision(damage) {
+    damage.checkCollisionInterval = setInterval(() => {
+      Object.keys(this.players).forEach(playerId => {
+        let player = this.players[playerId];
+        // if player exists and it collides with a damage cell
+        if (player && this.collideWithItem(player, damage)) {
+          this.lowerHP(damage, player);
+        }
+      });
+    }, gameSettings.CHECK_COLLISION_INTERVAL);
+  }
+
   bufferShootingTime(player) {
     player.weaponCoolingDown = true;
     setTimeout(() => {
@@ -495,10 +510,11 @@ class GameState {
   shootBFSWeapon(player) {
     let damageCells = [];
     let exploredCells = {};
-    let initRow = player.getRow();
-    let initCol = player.getCol();
+    let [rows, cols] = player.getRowsCols();
+    let [initRow, initCol] = [rows[0], cols[0]];
     let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileQueue = [[initRow, initCol]];
+    console.log(tileQueue);
     while (remainingDistance > 0) {
       let [row, col] = tileQueue.shift();
       damageCells.push([row, col]);
@@ -570,23 +586,17 @@ class GameState {
     });
   }
 
-  lowerHP(damageEntity) {
-    const hitPlayers = damageEntity.hit('Player');
-    if (hitPlayers) {
-      hitPlayers.forEach(playerObj => {
-        const player = playerObj.obj;
-        if (!player.hasTakenDamage &&
-          parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
-          player.HP -= gameSettings.HP_DAMAGE;
-          if (player.HP <= 0) {
-            this.respawnPlayer(player);
-          }
-          this.bufferDamageTime(player);
-          this.io.to(this.roomId).emit('HPChange', {
-            playerId: player.playerId,
-            playerHP: player.HP
-          });
-        }
+  lowerHP(damageEntity, player) {
+    if (!player.hasTakenDamage &&
+      parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
+      player.HP -= gameSettings.HP_DAMAGE;
+      if (player.HP <= 0) {
+        this.respawnPlayer(player);
+      }
+      this.bufferDamageTime(player);
+      this.io.to(this.roomId).emit('HPChange', {
+        playerId: player.playerId,
+        playerHP: player.HP
       });
     }
   }
