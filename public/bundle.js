@@ -223,23 +223,62 @@
 	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
 	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when\n                   there are more than 2 people in the room').textColor('white');
 	
-	      // Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
-	      // Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
-	      // Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
-	      // Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
-	      // Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
-	      // Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
-	      // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
-	      //
-	      Crafty.sprite("../assets/tile.png", {
-	        tileSprite: [0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-	      });
-	      Crafty.sprite("../assets/lava_tile.png", {
-	        wallSprite: [0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-	      });
-	      Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT, "../assets/green_char.png", {
-	        greenSprite: [0, 0]
-	      });
+	      var assetsObj = {
+	        'sprites': {
+	          '../assets/tile.png': {
+	            'tile': mapGrid.TILE.ORIG_WIDTH,
+	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	            'map': {
+	              'tileSprite': [0, 0]
+	            }
+	          },
+	          '../assets/lava_tile.png': {
+	            'tile': mapGrid.TILE.ORIG_WIDTH,
+	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	            'map': {
+	              'wallSprite': [0, 0]
+	            }
+	          },
+	          '../assets/green_char.png': {
+	            'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	            'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	            'map': {
+	              'greenSprite': [0, 0]
+	            }
+	          },
+	          '../assets/ball.png': {
+	            'tile': mapGrid.BALL.ORIG_WIDTH,
+	            'tileh': mapGrid.BALL.ORIG_HEIGHT,
+	            'map': {
+	              'ballSprite': [0, 0]
+	            }
+	          },
+	          '../assets/hammer1.png': {
+	            'tile': mapGrid.BFS.ORIG_WIDTH,
+	            'tileh': mapGrid.BFS.ORIG_HEIGHT,
+	            'map': {
+	              'BFSSprite': [0, 0]
+	            }
+	          }
+	        }
+	      };
+	
+	      Crafty.load(assetsObj);
+	
+	      // Crafty.sprite("../assets/tile.png", {
+	      //   tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
+	      // });
+	      // Crafty.sprite("../assets/lava_tile.png", {
+	      //   wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
+	      // });
+	      // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
+	      //               "../assets/green_char.png", {
+	      //   greenSprite: [0, 0]
+	      // });
+	      // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
+	      //               "../assets/green_char.png", {
+	      //   greenSprite: [0, 0]
+	      // });
 	
 	      var playerTextY = 50;
 	      socket.on('joinGame', function (data) {
@@ -315,6 +354,9 @@
 	          player.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
 	          player.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	
+	          console.log('player', player.x);
+	          console.log('player', player.y);
+	
 	          // if (player.playerColor === 'red') {
 	          //   player.addComponent('spr_red')
 	          //         .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
@@ -338,6 +380,10 @@
 	
 	          // place it on isometric map
 	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
+	
+	          // translate the player px in the initial rendering as well
+	          otherPlayer.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	          otherPlayer.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	
 	          // if (otherPlayer.playerColor === 'red') {
 	          //   otherPlayer.addComponent('spr_red')
@@ -371,7 +417,6 @@
 	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
 	          } else {
-	            console.log(mapGrid.TILE.WIDTH);
 	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
 	          }
@@ -415,19 +460,6 @@
 	      socket.on('stopMovement', function (data) {
 	        var player = _this5.players[data.playerId];
 	        if (player) {
-	          // if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
-	          //   player.animate('PlayerMovingLeft', -1);
-	          //   player.unflip('X');
-	          // } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
-	          //   player.animate('PlayerMovingDown', -1);
-	          //   player.unflip('X');
-	          // } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
-	          //   player.animate('PlayerMovingUp', -1);
-	          //   player.flip('X');
-	          // } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
-	          //   player.animate('PlayerMovingRight', -1);
-	          //   player.flip('X');
-	          // }
 	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
 	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
 	            _this5.charMove.right = false;
@@ -453,16 +485,16 @@
 	      var _this6 = this;
 	
 	      socket.on('addWeapon', function (data) {
-	        var weapon = Crafty.e('Weapon').at(data.row, data.col).setUp(data.type);
+	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
 	
 	        if (data.type === 'BFS') {
-	          weapon.addComponent('spr_bfs').attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
-	        } else if (data.type === 'DFS') {
-	          weapon.addComponent('spr_dfs').attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+	          weapon.addComponent('BFSSprite').attr({ w: mapGrid.BFS.WIDTH, h: mapGrid.BFS.HEIGHT });
+	          // } else if (data.type === 'DFS') {
+	          //   weapon.addComponent('spr_dfs')
+	          //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
 	        }
-	        var col = weapon.getCol();
-	        var row = weapon.getRow();
-	        _this6.weapons[[col, row]] = weapon;
+	        _this6.weapons[[data.col, data.row]] = weapon;
+	        _this6.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
@@ -509,25 +541,26 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
+	      var _this9 = this;
+	
 	      socket.on('addBall', function (data) {
-	        // this.ball = Crafty.e('Ball, tileSprite')
-	        //     .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
-	        //
-	        // this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
+	        _this9.ball = Crafty.e('Ball, swordSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
+	
+	        _this9.iso.place(_this9.ball, data.row, data.col, mapGrid.BALL.Z);
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this9 = this;
+	      var _this10 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this9.ball.destroy();
-	        _this9.players[data.playerId].pickUpBall();
+	        _this10.ball.destroy();
+	        _this10.players[data.playerId].pickUpBall();
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this9.players[data.playerId].color('black');
+	        _this10.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
@@ -544,10 +577,10 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this10 = this;
+	      var _this11 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this10.players[_this10.selfId].weaponType = data.type;
+	        _this11.players[_this11.selfId].weaponType = data.type;
 	        $('#weapon-type').text(data.type);
 	        if (data.type === 'BFS') {
 	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
@@ -557,7 +590,7 @@
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this10.players[data.playerId].loseWeapon();
+	        _this11.players[data.playerId].loseWeapon();
 	        $('#weapon-type').empty();
 	        $('#weapon-img').empty();
 	      });
@@ -682,13 +715,24 @@
 	
 	  Crafty.c('Actor', {
 	    init: function init() {
-	      this.requires('2D, Canvas, Tile');
+	      this.requires('2D, DOM, Tile');
+	    }
+	  });
+	
+	  Crafty.c('Item', {
+	    init: function init() {},
+	
+	    // for items that are in a static position
+	    setUpStaticPos: function setUpStaticPos(row, col) {
+	      this.staticRow = row;
+	      this.staticCol = col;
+	      return this;
 	    }
 	  });
 	
 	  Crafty.c('Wall', {
 	    init: function init() {
-	      this.requires('2D, Canvas, Tile, Solid, Collision');
+	      this.requires('2D, Canvas, Tile');
 	    }
 	  });
 	};
@@ -717,23 +761,37 @@
 	  RATIO: 1
 	};
 	
-	[TILE, PLAYER].forEach(function (actor) {
+	var BALL = {
+	  ORIG_WIDTH: 70,
+	  ORIG_HEIGHT: 70,
+	  RATIO: 1
+	};
+	
+	var BFS = {
+	  ORIG_WIDTH: 352,
+	  ORIG_HEIGHT: 514,
+	  RATIO: 1 / 10
+	};
+	
+	[TILE, PLAYER, BALL, BFS].forEach(function (actor) {
 	  actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
 	  actor.HEIGHT = actor.ORIG_HEIGHT * actor.RATIO;
 	  actor.SURFACE_HEIGHT = actor.WIDTH / 2;
 	});
 	
-	[PLAYER].forEach(function (actor) {
+	[PLAYER, BALL, BFS].forEach(function (actor) {
 	  var y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
 	  // need to increase it by player depth
-	  var y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
+	  var y1 = y0 + (actor.HEIGHT - actor.SURFACE_HEIGHT);
 	  // finding the z layer based on the craftyjs code
-	  actor.Z = (y1 - (PLAYER.HEIGHT / TILE.SURFACE_HEIGHT - 2) * PLAYER.SURFACE_HEIGHT) / TILE.SURFACE_HEIGHT;
+	  actor.Z = (y1 - (actor.HEIGHT / TILE.SURFACE_HEIGHT - 2) * actor.SURFACE_HEIGHT) / TILE.SURFACE_HEIGHT;
 	  // actor.Z = ((PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT) /
 	  //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
 	  // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
 	});
 	console.log(PLAYER.Z);
+	console.log(BALL.Z);
+	console.log(BFS.Z);
 	
 	// const TILE_ORIG_WIDTH = 101;
 	// const TILE_ORIG_HEIGHT = 122;
@@ -760,8 +818,8 @@
 	  NUM_MAZE_COLS: NUM_MAZE_COLS,
 	  TILE: TILE,
 	  PLAYER: PLAYER,
-	  BALL_WIDTH: 101 / 2,
-	  BALL_HEIGHT: 122 / 2,
+	  BALL: BALL,
+	  BFS: BFS,
 	  DFS_WIDTH: 25,
 	  DFS_HEIGHT: 0.30 * 25,
 	  BFS_WIDTH: 20,
@@ -778,7 +836,7 @@
 	  WEAPON_RANGE: 10,
 	  BUFFER_DAMAGE_TIME: 1000,
 	  BUFFER_SHOOTING_TIME: 1500,
-	  WEAPON_SPAWN_TIME: 10000,
+	  WEAPON_SPAWN_TIME: 3000,
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
@@ -806,7 +864,7 @@
 	module.exports = function (Crafty) {
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('2D, DOM, Tile, Collision, Color');
+	      this.requires('Actor, Collision, Color');
 	      this.HP = 100;
 	      this.charStep = mapGrid.CHAR_STEP;
 	      this.hasTakenDamage = false;
@@ -976,7 +1034,7 @@
 	module.exports = function (Crafty) {
 	  Crafty.c('Weapon', {
 	    init: function init() {
-	      this.requires('Actor, Color, Collision');
+	      this.requires('Actor, Item');
 	    },
 	
 	    setUp: function setUp(type) {
@@ -1016,7 +1074,7 @@
 	module.exports = function (Crafty) {
 	  Crafty.c('Ball', {
 	    init: function init() {
-	      this.requires('2D, DOM, Tile, Solid, Collision');
+	      this.requires('Actor, Item');
 	    }
 	  });
 	};

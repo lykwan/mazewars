@@ -141,24 +141,62 @@ class Game {
                    there are more than 2 people in the room`)
             .textColor('white');
 
-    // Crafty.sprite("../assets/red.png", {spr_red:[0,0,174,116]});
-    // Crafty.sprite("../assets/green.png", {spr_green:[0,0,166,108]});
-    // Crafty.sprite("../assets/blue.png", {spr_blue:[0,0,154,100]});
-    // Crafty.sprite("../assets/yellow.png", {spr_yellow:[0,0,167,128]});
-    // Crafty.sprite("../assets/ball.png", {spr_ball:[0,0,144,144]});
-    // Crafty.sprite("../assets/bfs_weapon.png", {spr_bfs:[0,0,144,102]});
-    // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
-    //
-    Crafty.sprite("../assets/tile.png", {
-      tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-    });
-    Crafty.sprite("../assets/lava_tile.png", {
-      wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
-    });
-    Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
-                  "../assets/green_char.png", {
-      greenSprite: [0, 0]
-    });
+    const assetsObj = {
+      'sprites': {
+        '../assets/tile.png': {
+          'tile': mapGrid.TILE.ORIG_WIDTH,
+          'tileh': mapGrid.TILE.ORIG_HEIGHT,
+          'map': {
+            'tileSprite': [0, 0]
+          }
+        },
+        '../assets/lava_tile.png': {
+          'tile': mapGrid.TILE.ORIG_WIDTH,
+          'tileh': mapGrid.TILE.ORIG_HEIGHT,
+          'map': {
+            'wallSprite': [0, 0]
+          }
+        },
+        '../assets/green_char.png': {
+          'tile': mapGrid.PLAYER.ORIG_WIDTH,
+          'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+          'map': {
+            'greenSprite': [0, 0]
+          }
+        },
+        '../assets/ball.png': {
+          'tile': mapGrid.BALL.ORIG_WIDTH,
+          'tileh': mapGrid.BALL.ORIG_HEIGHT,
+          'map': {
+            'ballSprite': [0, 0]
+          }
+        },
+        '../assets/hammer1.png': {
+          'tile': mapGrid.BFS.ORIG_WIDTH,
+          'tileh': mapGrid.BFS.ORIG_HEIGHT,
+          'map': {
+            'BFSSprite': [0, 0]
+          }
+        }
+      }
+    };
+
+    Crafty.load(assetsObj);
+
+    // Crafty.sprite("../assets/tile.png", {
+    //   tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
+    // });
+    // Crafty.sprite("../assets/lava_tile.png", {
+    //   wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
+    // });
+    // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
+    //               "../assets/green_char.png", {
+    //   greenSprite: [0, 0]
+    // });
+    // Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
+    //               "../assets/green_char.png", {
+    //   greenSprite: [0, 0]
+    // });
 
     let playerTextY = 50;
     socket.on('joinGame', data => {
@@ -240,7 +278,6 @@ class Game {
                    .reel('PlayerMovingUp', 600, 0, 2, 5)
                    .reel('PlayerMovingLeft', 600, 0, 2, 5);
 
-
         // place it on isometric map
         // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
         this.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
@@ -261,6 +298,9 @@ class Game {
         player.x += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
         player.y -=
           ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
+
+        console.log('player', player.x);
+        console.log('player', player.y);
 
         // if (player.playerColor === 'red') {
         //   player.addComponent('spr_red')
@@ -296,6 +336,12 @@ class Game {
 
         // place it on isometric map
         this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
+
+
+        // translate the player px in the initial rendering as well
+        otherPlayer.x += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
+        otherPlayer.y -=
+          ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
 
 
         // if (otherPlayer.playerColor === 'red') {
@@ -335,7 +381,6 @@ class Game {
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
           this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
         } else {
-          console.log(mapGrid.TILE.WIDTH);
           const tileEntity =
             Crafty.e('2D, DOM, tileSprite')
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
@@ -360,13 +405,15 @@ class Game {
         if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
           player.animate('PlayerMovingLeft', -1);
           player.unflip('X');
-        } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
+        } else if (data.charMove.down &&
+            !player.isPlaying('PlayerMovingDown')) {
           player.animate('PlayerMovingDown', -1);
           player.unflip('X');
         } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
           player.animate('PlayerMovingUp', -1);
           player.flip('X');
-        } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
+        } else if (data.charMove.right &&
+            !player.isPlaying('PlayerMovingRight')) {
           player.animate('PlayerMovingRight', -1);
           player.flip('X');
         }
@@ -376,19 +423,6 @@ class Game {
     socket.on('stopMovement', data => {
       const player = this.players[data.playerId];
       if (player) {
-        // if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
-        //   player.animate('PlayerMovingLeft', -1);
-        //   player.unflip('X');
-        // } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
-        //   player.animate('PlayerMovingDown', -1);
-        //   player.unflip('X');
-        // } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
-        //   player.animate('PlayerMovingUp', -1);
-        //   player.flip('X');
-        // } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
-        //   player.animate('PlayerMovingRight', -1);
-        //   player.flip('X');
-        // }
         if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
           if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
           this.charMove.right = false;
@@ -412,19 +446,18 @@ class Game {
   setUpPlacingWeapons() {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
-                           .at(data.row, data.col)
+                           .setUpStaticPos(data.row, data.col)
                            .setUp(data.type);
 
       if (data.type === 'BFS') {
-        weapon.addComponent('spr_bfs')
-              .attr({ w: mapGrid.BFS_WIDTH, h: mapGrid.BFS_HEIGHT });
-      } else if (data.type === 'DFS') {
-        weapon.addComponent('spr_dfs')
-              .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+        weapon.addComponent('BFSSprite')
+              .attr({ w: mapGrid.BFS.WIDTH, h: mapGrid.BFS.HEIGHT });
+      // } else if (data.type === 'DFS') {
+      //   weapon.addComponent('spr_dfs')
+      //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
       }
-      const col = weapon.getCol();
-      const row = weapon.getRow();
-      this.weapons[[col, row]] = weapon;
+      this.weapons[[data.col, data.row]] = weapon;
+      this.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
     });
 
     socket.on('destroyWeapon', data => {
@@ -469,10 +502,10 @@ class Game {
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      // this.ball = Crafty.e('Ball, tileSprite')
-      //     .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
-      //
-      // this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
+      this.ball = Crafty.e('Ball, swordSprite')
+          .attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
+
+      this.iso.place(this.ball, data.row, data.col, mapGrid.BALL.Z);
     });
   }
 
