@@ -3,7 +3,7 @@ const Constants = require('../constants.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
 
-module.exports = function(Crafty, model) {
+module.exports = function(Crafty) {
   Crafty.c('Player', {
     init: function() {
       this.requires('2D, DOM, Tile, Collision, Color');

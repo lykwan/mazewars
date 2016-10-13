@@ -5,12 +5,12 @@ var createBallComponent = require('./ball.js');
 const Constants = require('../constants.js');
 const mapGrid = Constants.mapGrid;
 
-module.exports = function(Crafty, model) {
+module.exports = function(Crafty) {
   // change name of the html element to stage
   Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
 
-  createComponents(Crafty, model);
-  createPlayerComponent(Crafty, model);
+  createComponents(Crafty);
+  createPlayerComponent(Crafty);
   createWeaponComponent(Crafty);
   createBallComponent(Crafty);
 };
