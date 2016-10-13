@@ -94,7 +94,7 @@ class Game {
 
     Crafty.scene('Game', (data) => {
       this.setUpNewGame(data);
-      this.setUpPlayersMove();
+      this.setUpPlayersMovement();
       this.setUpPlacingWeapons();
       this.setUpCreateDamage();
       this.setUpHPChange();
@@ -239,7 +239,6 @@ class Game {
                    .reel('PlayerMovingDown', 600, 0, 1, 5)
                    .reel('PlayerMovingUp', 600, 0, 2, 5)
                    .reel('PlayerMovingLeft', 600, 0, 2, 5);
-                  //  .animate('PlayerMovingDown', -1);
 
 
         // place it on isometric map
@@ -287,13 +286,16 @@ class Game {
         this.players[playerInfo.playerId] = player;
       } else {
         let otherPlayer =
-          Crafty.e('OtherPlayer, tileSprite')
+          Crafty.e('OtherPlayer, SpriteAnimation, greenSprite')
                 .setUp(data.players.playerId, playerInfo.playerColor)
-                .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+                .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT })
+                .reel('PlayerMovingRight', 600, 0, 1, 5)
+                .reel('PlayerMovingDown', 600, 0, 1, 5)
+                .reel('PlayerMovingUp', 600, 0, 2, 5)
+                .reel('PlayerMovingLeft', 600, 0, 2, 5);
 
-
-          // place it on isometric map
-          this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
+        // place it on isometric map
+        this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
 
 
         // if (otherPlayer.playerColor === 'red') {
@@ -346,12 +348,63 @@ class Game {
     Crafty.viewport.y = 0 + mapGrid.PLAYER.HEIGHT;
   }
 
-  setUpPlayersMove() {
+  setUpPlayersMovement() {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
+        let [playerOldX, playerOldY] = [player.x, player.y];
         player.x = data.x + this.translateX;
         player.y = data.y + this.translateY;
+
+        // display the animation movement depending on the char move
+        if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
+          player.animate('PlayerMovingLeft', -1);
+          player.unflip('X');
+        } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
+          player.animate('PlayerMovingDown', -1);
+          player.unflip('X');
+        } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
+          player.animate('PlayerMovingUp', -1);
+          player.flip('X');
+        } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
+          player.animate('PlayerMovingRight', -1);
+          player.flip('X');
+        }
+      }
+    });
+
+    socket.on('stopMovement', data => {
+      const player = this.players[data.playerId];
+      if (player) {
+        // if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
+        //   player.animate('PlayerMovingLeft', -1);
+        //   player.unflip('X');
+        // } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
+        //   player.animate('PlayerMovingDown', -1);
+        //   player.unflip('X');
+        // } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
+        //   player.animate('PlayerMovingUp', -1);
+        //   player.flip('X');
+        // } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
+        //   player.animate('PlayerMovingRight', -1);
+        //   player.flip('X');
+        // }
+        if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
+          if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
+          this.charMove.right = false;
+        }
+        if (data.keyCode === Crafty.keys.LEFT_ARROW) {
+          if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
+          this.charMove.left = false;
+        }
+        if (data.keyCode === Crafty.keys.UP_ARROW) {
+          if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
+          this.charMove.up = false;
+        }
+        if (data.keyCode === Crafty.keys.DOWN_ARROW) {
+          if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
+          this.charMove.down = false;
+        }
       }
     });
   }
