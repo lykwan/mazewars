@@ -63,8 +63,8 @@ module.exports = function(Crafty, model) {
 
     moveDir(dirX, dirY) {
       // the offset it needs to move to the neighbor blocks
-      const w = mapGrid.TILE_WIDTH / 2;
-      const h = mapGrid.TILE_WIDTH / 4;
+      const w = mapGrid.TILE.WIDTH / 2;
+      const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 
       this.x += (w / this.charStep) * dirX;
       this.y += (h / this.charStep) * dirY;

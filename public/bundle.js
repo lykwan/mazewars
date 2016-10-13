@@ -170,7 +170,7 @@
 	      //TODO: DELETE MODEL
 	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
 	
-	      this.iso = Crafty.diamondIso.init(mapGrid.TILE_WIDTH, mapGrid.TILE_WIDTH / 2, mapGrid.NUM_MAZE_ROWS, mapGrid.NUM_MAZE_COLS);
+	      this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH, mapGrid.TILE.SURFACE_HEIGHT, mapGrid.NUM_MAZE_ROWS, mapGrid.NUM_MAZE_COLS);
 	
 	      socket.emit('setUpLoadingScene');
 	
@@ -232,12 +232,12 @@
 	      // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
 	      //
 	      Crafty.sprite("../assets/tile.png", {
-	        tileSprite: [0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+	        tileSprite: [0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
 	      });
 	      Crafty.sprite("../assets/lava_tile.png", {
-	        wallSprite: [0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+	        wallSprite: [0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
 	      });
-	      Crafty.sprite(mapGrid.PLAYER_ORIG_WIDTH, mapGrid.PLAYER_ORIG_HEIGHT, "../assets/green_char.png", {
+	      Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT, "../assets/green_char.png", {
 	        greenSprite: [1, 0]
 	      });
 	
@@ -294,18 +294,28 @@
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player, tileSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          var player = Crafty.e('Player, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+	          //  .reel('PlayerMovingDown', 20, 2, 1, 3)
+	          //  .animate('PlayerMovingDown', -1);
 	
 	          // place it on isometric map
 	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
-	          _this4.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
+	          _this4.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
 	          // after placing it on isometric map, figure out the translation of px
+	          // from the server side to client side rendering
 	          _this4.translateX = player.x - playerX;
 	          _this4.translateY = player.y - playerY;
 	
-	          // player.x += mapGrid.PLAYER_WIDTH / 2;
-	          // player.y -= mapGrid.PLAYER_WIDTH / 4;
+	          // since the player block always starts at bottom left corner
+	          // when rendering, we need to account for the translation so we can
+	          // render the player block in the top left corner instead
+	          _this4.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	          _this4.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
+	
+	          // translate the player px in the initial rendering as well
+	          player.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	          player.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	
 	          // if (player.playerColor === 'red') {
 	          //   player.addComponent('spr_red')
@@ -326,10 +336,10 @@
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer, tileSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+	          var otherPlayer = Crafty.e('OtherPlayer, tileSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          // place it on isometric map
-	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.ACTOR_Z);
+	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
 	          // if (otherPlayer.playerColor === 'red') {
 	          //   otherPlayer.addComponent('spr_red')
@@ -360,11 +370,11 @@
 	      for (var i = 0; i < mapGrid.NUM_MAZE_ROWS; i++) {
 	        for (var j = 0; j < mapGrid.NUM_MAZE_COLS; j++) {
 	          if (this.board.maze[i][j].isWall) {
-	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-	            this.iso.place(wallEntity, i, j, mapGrid.WALL_Z);
+	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	            this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
 	          } else {
-	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-	            this.iso.place(tileEntity, i, j, mapGrid.TILE_Z);
+	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	            this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
 	          }
 	        }
 	      }
@@ -414,7 +424,7 @@
 	      var _this7 = this;
 	
 	      socket.on('createDamage', function (data) {
-	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this7.players[data.creatorId].playerColor, 0.5);
+	        Crafty.e('Damage').at(data.damageCell[0], data.damageCell[1]).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT }).setUpCreator(data.creatorId).disappearAfter(data.disappearTime).color(_this7.players[data.creatorId].playerColor, 0.5);
 	      });
 	    }
 	  }, {
@@ -447,26 +457,25 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this9 = this;
-	
 	      socket.on('addBall', function (data) {
-	        _this9.ball = Crafty.e('Ball, tileSprite').attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
-	
-	        _this9.iso.place(_this9.ball, data.row, data.col, mapGrid.ACTOR_Z);
+	        // this.ball = Crafty.e('Ball, tileSprite')
+	        //     .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+	        //
+	        // this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this10 = this;
+	      var _this9 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this10.ball.destroy();
-	        _this10.players[data.playerId].pickUpBall();
+	        _this9.ball.destroy();
+	        _this9.players[data.playerId].pickUpBall();
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this10.players[data.playerId].color('black');
+	        _this9.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
@@ -483,10 +492,10 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this11 = this;
+	      var _this10 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this11.players[_this11.selfId].weaponType = data.type;
+	        _this10.players[_this10.selfId].weaponType = data.type;
 	        $('#weapon-type').text(data.type);
 	        if (data.type === 'BFS') {
 	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
@@ -496,7 +505,7 @@
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this11.players[data.playerId].loseWeapon();
+	        _this10.players[data.playerId].loseWeapon();
 	        $('#weapon-type').empty();
 	        $('#weapon-img').empty();
 	      });
@@ -547,19 +556,21 @@
 	var wallDirection = Constants.wallDirection;
 	/* globals Crafty */
 	
+	var epsilon = 0.000000001;
+	
 	module.exports = function (Crafty, model) {
 	  Crafty.c('Tile', {
 	    init: function init() {
 	      this.attr({
-	        w: mapGrid.TILE_WIDTH,
-	        h: mapGrid.TILE_HEIGHT
+	        w: mapGrid.TILE.WIDTH,
+	        h: mapGrid.TILE.HEIGHT
 	      });
 	    },
 	
 	    at: function at(row, col) {
 	      // the amount to move from one neighbor to the other
-	      var w = mapGrid.TILE_WIDTH / 2;
-	      var h = mapGrid.TILE_WIDTH / 4;
+	      var w = mapGrid.TILE.WIDTH / 2;
+	      var h = mapGrid.TILE.WIDTH / 4;
 	
 	      var x = (row - col) * w;
 	      var y = (row + col) * h;
@@ -568,8 +579,8 @@
 	    },
 	
 	    getRowsCols: function getRowsCols() {
-	      var w = mapGrid.TILE_WIDTH / 2;
-	      var h = mapGrid.TILE_WIDTH / 4;
+	      var w = mapGrid.TILE.WIDTH / 2;
+	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 	
 	      var xOverW = this.x / w;
 	      var yOverH = this.y / h;
@@ -578,26 +589,47 @@
 	      var row = this.fixRoundingErrors((xOverW + yOverH) / 2);
 	      var col = this.fixRoundingErrors(row - xOverW);
 	
+	      // const bottomRightX = this.x + mapGrid.PLAYER_WIDTH;
+	      // const bottomRightY = this.y + mapGrid.SURFACE_HEIGHT;
+	      // const xOverWBR = bottomRightX / w;
+	      // const yOverHBR = bottomRightY / h;
+	      // const rowBR = this.fixRoundingErrors((xOverWBR + yOverHBR) / 2);
+	      // const colBR = this.fixRoundingErrors(rowBR - xOverWBR);
+	
 	      // finding all the rows it is at
 	      var rows = [Math.floor(row)];
-	      // if ((row - Math.floor(row)) * w > (mapGrid.PLAYER_WIDTH / 2)) {
-	      if (Math.floor(row) !== Math.ceil(row)) {
+	      // if (((row - Math.floor(row)) * w - (mapGrid.PLAYER_WIDTH / 2)) > epsilon) {
+	
+	      // if the offset of the block + half the width of the block is more than
+	      // the width of half a tile, then it is overlapping two rows
+	      var spaceOccupyingX = (row - Math.floor(row)) * w + mapGrid.PLAYER.WIDTH / 2;
+	      if (spaceOccupyingX - w > epsilon) {
+	        // console.log('really?');
+	        // console.log((row - Math.floor(row)) * w);
+	        // console.log(mapGrid.PLAYER_WIDTH / 2);
+	        // console.log(w);
 	        rows.push(Math.ceil(row));
 	      }
 	
 	      // finding all the cols it is at
 	      var cols = [Math.floor(col)];
-	      if (Math.floor(col) !== Math.ceil(col)) {
-	        // if ((col - Math.floor(col)) * h > (mapGrid.PLAYER_WIDTH / 4)) {
+	      // if (Math.floor(col) !== Math.floor(colBR)) {
+	      var spaceOccupyingY = (col - Math.floor(col)) * h + mapGrid.PLAYER.SURFACE_HEIGHT / 2;
+	      if (spaceOccupyingY - h > epsilon) {
+	        // rows.push(Math.floor(colBR));
 	        cols.push(Math.ceil(col));
 	      }
+	      // if (Math.floor(col) !== Math.ceil(col)) {
+	      // if ((col - Math.floor(col)) * h - (mapGrid.PLAYER_WIDTH / 4) > epsilon) {
+	      //   cols.push(Math.ceil(col));
+	      // }
 	
+	      console.log([rows, cols]);
 	      return [rows, cols];
 	    },
 	
 	    // account for the floating point epsilon
 	    fixRoundingErrors: function fixRoundingErrors(n) {
-	      var epsilon = 0.000000001;
 	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
 	    }
 	  });
@@ -625,46 +657,70 @@
 	var NUM_COLS = 8;
 	var NUM_MAZE_ROWS = NUM_ROWS * 2 - 1;
 	var NUM_MAZE_COLS = NUM_COLS * 2 - 1;
-	var TILE_ORIG_WIDTH = 101;
-	var TILE_ORIG_HEIGHT = 122;
-	var TILE_RATIO = 1 / 2;
-	var TILE_WIDTH = TILE_ORIG_WIDTH * TILE_RATIO;
-	var TILE_HEIGHT = TILE_ORIG_HEIGHT * TILE_RATIO;
+	
+	var TILE = {
+	  ORIG_WIDTH: 101,
+	  ORIG_HEIGHT: 122,
+	  RATIO: 1 / 2,
+	  Z: 0
+	};
+	
+	var PLAYER = {
+	  ORIG_WIDTH: 40,
+	  ORIG_HEIGHT: 54,
+	  RATIO: 2 / 3
+	};
+	
+	[TILE, PLAYER].forEach(function (actor) {
+	  actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
+	  actor.HEIGHT = actor.ORIG_HEIGHT * actor.RATIO;
+	  actor.SURFACE_HEIGHT = actor.WIDTH / 2;
+	});
+	
+	[PLAYER].forEach(function (actor) {
+	  var y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
+	  // need to increase it by player depth
+	  var y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
+	  // finding the z layer based on the craftyjs code
+	  actor.Z = (y1 - (PLAYER.HEIGHT / TILE.SURFACE_HEIGHT - 2) * PLAYER.SURFACE_HEIGHT) / TILE.SURFACE_HEIGHT;
+	  // actor.Z = ((PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT) /
+	  //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
+	  // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
+	});
+	console.log(PLAYER.Z);
+	
+	// const TILE_ORIG_WIDTH = 101;
+	// const TILE_ORIG_HEIGHT = 122;
+	// const TILE_RATIO = (1 / 2);
+	// const TILE_WIDTH = TILE_ORIG_WIDTH * TILE_RATIO;
+	// const TILE_HEIGHT = TILE_ORIG_HEIGHT * TILE_RATIO;
+	// const TILE_SURFACE_HEIGHT = TILE_WIDTH / 2;
 	
 	// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [40, 54];
-	var PLAYER_ORIG_WIDTH = 101;
-	var PLAYER_ORIG_HEIGHT = 122;
-	
-	var PLAYER_RATIO = 1 / 2;
-	var PLAYER_WIDTH = PLAYER_ORIG_WIDTH * PLAYER_RATIO;
-	var PLAYER_HEIGHT = PLAYER_ORIG_HEIGHT * PLAYER_RATIO;
+	// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [101, 122];
+	// const PLAYER_RATIO = (1 / 2);
+	// const PLAYER_WIDTH = PLAYER_ORIG_WIDTH * PLAYER_RATIO;
+	// const PLAYER_HEIGHT = PLAYER_ORIG_HEIGHT * PLAYER_RATIO;
+	// const PLAYER_SURFACE_HEIGHT = PLAYER_WIDTH / 2;
+	// the z layer if it was the same height as the tile
 	
 	var mapGrid = {
-	  GAME_WIDTH: NUM_MAZE_ROWS * TILE_WIDTH,
+	  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH,
 	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
-	  GAME_HEIGHT: NUM_MAZE_COLS * TILE_WIDTH + TILE_HEIGHT,
-	  TILE_ORIG_WIDTH: TILE_ORIG_WIDTH,
-	  TILE_ORIG_HEIGHT: TILE_ORIG_HEIGHT,
+	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.WIDTH + TILE.HEIGHT,
 	  NUM_ROWS: NUM_ROWS,
 	  NUM_COLS: NUM_COLS,
 	  NUM_MAZE_ROWS: NUM_MAZE_ROWS,
 	  NUM_MAZE_COLS: NUM_MAZE_COLS,
-	  TILE_WIDTH: TILE_WIDTH,
-	  TILE_HEIGHT: TILE_HEIGHT,
-	  PLAYER_ORIG_WIDTH: PLAYER_ORIG_WIDTH,
-	  PLAYER_ORIG_HEIGHT: PLAYER_ORIG_HEIGHT,
-	  PLAYER_WIDTH: PLAYER_WIDTH,
-	  PLAYER_HEIGHT: PLAYER_HEIGHT,
+	  TILE: TILE,
+	  PLAYER: PLAYER,
 	  BALL_WIDTH: 101 / 2,
 	  BALL_HEIGHT: 122 / 2,
 	  DFS_WIDTH: 25,
 	  DFS_HEIGHT: 0.30 * 25,
 	  BFS_WIDTH: 20,
 	  BFS_HEIGHT: 0.70 * 20,
-	  TILE_Z: 0,
-	  WALL_Z: 0,
-	  ACTOR_Z: 1.39,
-	  CHAR_STEP: 10
+	  CHAR_STEP: 10 // how many steps it needs from one tile to another
 	};
 	
 	var weaponTypes = {
@@ -759,8 +815,8 @@
 	    },
 	    moveDir: function moveDir(dirX, dirY) {
 	      // the offset it needs to move to the neighbor blocks
-	      var w = mapGrid.TILE_WIDTH / 2;
-	      var h = mapGrid.TILE_WIDTH / 4;
+	      var w = mapGrid.TILE.WIDTH / 2;
+	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 	
 	      this.x += w / this.charStep * dirX;
 	      this.y += h / this.charStep * dirY;

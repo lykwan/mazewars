@@ -336,7 +336,6 @@ class GameState {
       if (this.collideWithWall(movingPlayer)) {
         let undoDirX = dirX === -1 ? 1 : -1;
         let undoDirY = dirY === -1 ? 1 : -1;
-        console.log('undoding move');
         movingPlayer.moveDir(undoDirX, undoDirY);
       }
 
