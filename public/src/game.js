@@ -157,7 +157,7 @@ class Game {
     });
     Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
                   "../assets/green_char.png", {
-      greenSprite: [1, 0]
+      greenSprite: [0, 0]
     });
 
     let playerTextY = 50;
@@ -235,8 +235,12 @@ class Game {
                    .setUpSetBallTime()
                    .bindingKeyEvents()
                    .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT })
-                  //  .reel('PlayerMovingDown', 20, 2, 1, 3)
+                   .reel('PlayerMovingRight', 600, 0, 1, 5)
+                   .reel('PlayerMovingDown', 600, 0, 1, 5)
+                   .reel('PlayerMovingUp', 600, 0, 2, 5)
+                   .reel('PlayerMovingLeft', 600, 0, 2, 5);
                   //  .animate('PlayerMovingDown', -1);
+
 
         // place it on isometric map
         // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
@@ -329,6 +333,7 @@ class Game {
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
           this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
         } else {
+          console.log(mapGrid.TILE.WIDTH);
           const tileEntity =
             Crafty.e('2D, DOM, tileSprite')
                   .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
@@ -338,7 +343,7 @@ class Game {
     }
 
     Crafty.viewport.x = mapGrid.GAME_WIDTH / 2;
-    Crafty.viewport.y = 100;
+    Crafty.viewport.y = 0 + mapGrid.PLAYER.HEIGHT;
   }
 
   setUpPlayersMove() {

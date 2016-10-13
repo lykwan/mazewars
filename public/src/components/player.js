@@ -37,10 +37,30 @@ module.exports = function(Crafty, model) {
         this.charMove.down = false;
         this.charMove.up = false;
 
-        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
-        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
-        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
-        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
+        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+          this.charMove.right = true;
+          console.log("animating!");
+          this.animate('PlayerMovingRight', -1);
+          console.log(this.flip("X"));
+        }
+        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+          console.log("animating!");
+          this.animate('PlayerMovingLeft', -1);
+          this.charMove.left = true;
+          this.unflip("X");
+        }
+        if (e.keyCode === Crafty.keys.UP_ARROW) {
+          console.log("animating!");
+          this.animate('PlayerMovingUp', -1);
+          this.charMove.up = true;
+          this.flip("X");
+        }
+        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+          console.log("animating!");
+          this.animate('PlayerMovingDown', -1);
+          this.charMove.down = true;
+          this.unflip("X");
+        }
 
         if (e.keyCode === Crafty.keys.Z) {
           this.pickUpWeapon();
@@ -52,10 +72,23 @@ module.exports = function(Crafty, model) {
       });
 
       this.bind('KeyUp', function(e) {
-        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
-        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
-        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
-        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
+        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+          if (this.isPlaying('PlayerMovingRight')) this.pauseAnimation();
+          this.charMove.right = false;
+        }
+        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+          if (this.isPlaying('PlayerMovingLeft')) this.pauseAnimation();
+          this.charMove.left = false;
+        }
+        if (e.keyCode === Crafty.keys.UP_ARROW) {
+          if (this.isPlaying('PlayerMovingUp')) this.pauseAnimation();
+          this.charMove.up = false;
+        }
+        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+          if (this.isPlaying('PlayerMovingDown')) this.pauseAnimation();
+          this.charMove.down = false;
+        }
+        // this.pauseAnimation();
       });
 
       return this;

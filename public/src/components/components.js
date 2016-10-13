@@ -73,7 +73,6 @@ module.exports = function(Crafty, model) {
       //   cols.push(Math.ceil(col));
       // }
 
-console.log([rows, cols]);
       return [rows, cols];
     },
 

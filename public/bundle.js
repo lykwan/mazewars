@@ -238,7 +238,7 @@
 	        wallSprite: [0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
 	      });
 	      Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT, "../assets/green_char.png", {
-	        greenSprite: [1, 0]
+	        greenSprite: [0, 0]
 	      });
 	
 	      var playerTextY = 50;
@@ -294,9 +294,9 @@
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
-	          //  .reel('PlayerMovingDown', 20, 2, 1, 3)
+	          var player = Crafty.e('Player, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT }).reel('PlayerMovingRight', 600, 0, 1, 5).reel('PlayerMovingDown', 600, 0, 1, 5).reel('PlayerMovingUp', 600, 0, 2, 5).reel('PlayerMovingLeft', 600, 0, 2, 5);
 	          //  .animate('PlayerMovingDown', -1);
+	
 	
 	          // place it on isometric map
 	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
@@ -373,6 +373,7 @@
 	            var wallEntity = Crafty.e('2D, DOM, wallSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
 	          } else {
+	            console.log(mapGrid.TILE.WIDTH);
 	            var tileEntity = Crafty.e('2D, DOM, tileSprite').attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	            this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
 	          }
@@ -380,7 +381,7 @@
 	      }
 	
 	      Crafty.viewport.x = mapGrid.GAME_WIDTH / 2;
-	      Crafty.viewport.y = 100;
+	      Crafty.viewport.y = 0 + mapGrid.PLAYER.HEIGHT;
 	    }
 	  }, {
 	    key: 'setUpPlayersMove',
@@ -531,11 +532,6 @@
 	var mapGrid = Constants.mapGrid;
 	
 	module.exports = function (Crafty, model) {
-	  // const mazeRows = (mapGrid.NUM_ROWS * 2 - 1);
-	  // const mazeCols = (mapGrid.NUM_COLS * 2 - 1);
-	  // const width = mazeRows * mapGrid.TILE_WIDTH;
-	  // const height = mazeCols * mapGrid.TILE_HEIGHT;
-	  //
 	  // change name of the html element to stage
 	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
 	
@@ -624,7 +620,6 @@
 	      //   cols.push(Math.ceil(col));
 	      // }
 	
-	      console.log([rows, cols]);
 	      return [rows, cols];
 	    },
 	
@@ -661,14 +656,14 @@
 	var TILE = {
 	  ORIG_WIDTH: 101,
 	  ORIG_HEIGHT: 122,
-	  RATIO: 1 / 2,
+	  RATIO: 3 / 4,
 	  Z: 0
 	};
 	
 	var PLAYER = {
 	  ORIG_WIDTH: 40,
 	  ORIG_HEIGHT: 54,
-	  RATIO: 2 / 3
+	  RATIO: 1
 	};
 	
 	[TILE, PLAYER].forEach(function (actor) {
@@ -707,7 +702,7 @@
 	var mapGrid = {
 	  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH,
 	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
-	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.WIDTH + TILE.HEIGHT,
+	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT,
 	  NUM_ROWS: NUM_ROWS,
 	  NUM_COLS: NUM_COLS,
 	  NUM_MAZE_ROWS: NUM_MAZE_ROWS,
@@ -720,7 +715,7 @@
 	  DFS_HEIGHT: 0.30 * 25,
 	  BFS_WIDTH: 20,
 	  BFS_HEIGHT: 0.70 * 20,
-	  CHAR_STEP: 10 // how many steps it needs from one tile to another
+	  CHAR_STEP: 20 // how many steps it needs from one tile to another
 	};
 	
 	var weaponTypes = {
@@ -790,10 +785,30 @@
 	        this.charMove.down = false;
 	        this.charMove.up = false;
 	
-	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = true;
-	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = true;
-	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = true;
-	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = true;
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+	          this.charMove.right = true;
+	          console.log("animating!");
+	          this.animate('PlayerMovingRight', -1);
+	          console.log(this.flip("X"));
+	        }
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+	          console.log("animating!");
+	          this.animate('PlayerMovingLeft', -1);
+	          this.charMove.left = true;
+	          this.unflip("X");
+	        }
+	        if (e.keyCode === Crafty.keys.UP_ARROW) {
+	          console.log("animating!");
+	          this.animate('PlayerMovingUp', -1);
+	          this.charMove.up = true;
+	          this.flip("X");
+	        }
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+	          console.log("animating!");
+	          this.animate('PlayerMovingDown', -1);
+	          this.charMove.down = true;
+	          this.unflip("X");
+	        }
 	
 	        if (e.keyCode === Crafty.keys.Z) {
 	          this.pickUpWeapon();
@@ -805,10 +820,23 @@
 	      });
 	
 	      this.bind('KeyUp', function (e) {
-	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) this.charMove.right = false;
-	        if (e.keyCode === Crafty.keys.LEFT_ARROW) this.charMove.left = false;
-	        if (e.keyCode === Crafty.keys.UP_ARROW) this.charMove.up = false;
-	        if (e.keyCode === Crafty.keys.DOWN_ARROW) this.charMove.down = false;
+	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+	          if (this.isPlaying('PlayerMovingRight')) this.pauseAnimation();
+	          this.charMove.right = false;
+	        }
+	        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+	          if (this.isPlaying('PlayerMovingLeft')) this.pauseAnimation();
+	          this.charMove.left = false;
+	        }
+	        if (e.keyCode === Crafty.keys.UP_ARROW) {
+	          if (this.isPlaying('PlayerMovingUp')) this.pauseAnimation();
+	          this.charMove.up = false;
+	        }
+	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+	          if (this.isPlaying('PlayerMovingDown')) this.pauseAnimation();
+	          this.charMove.down = false;
+	        }
+	        // this.pauseAnimation();
 	      });
 	
 	      return this;
