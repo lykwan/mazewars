@@ -28,13 +28,21 @@ const BFS = {
   RATIO: 1 / 4
 };
 
-[TILE, PLAYER, BALL, BFS].forEach(actor => {
+const DFS = {
+  ORIG_WIDTH: 194,
+  ORIG_HEIGHT: 204,
+  RATIO: 1 / 4
+};
+
+const actors = [TILE, PLAYER, BALL, BFS, DFS];
+
+actors.forEach(actor => {
   actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
   actor.HEIGHT = actor.ORIG_HEIGHT * actor.RATIO;
   actor.SURFACE_HEIGHT = actor.WIDTH / 2;
 });
 
-[PLAYER, BALL, BFS].forEach(actor => {
+actors.slice(1).forEach(actor => {
   const y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
   // need to increase it by player depth
   const y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
@@ -76,10 +84,7 @@ const mapGrid = {
   PLAYER: PLAYER,
   BALL: BALL,
   BFS: BFS,
-  DFS_WIDTH: 25,
-  DFS_HEIGHT: 0.30 * 25,
-  BFS_WIDTH: 20,
-  BFS_HEIGHT: 0.70 * 20,
+  DFS: DFS,
   CHAR_STEP: 20 // how many steps it needs from one tile to another
 };
 
@@ -97,7 +102,7 @@ const gameSettings = {
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
   GAME_DURATION: 2000, // 200
-  CHECK_COLLISION_INTERVAL: 200, 
+  CHECK_COLLISION_INTERVAL: 200,
   COLORS: ['blue', 'red', 'yellow', 'green']
 };
 

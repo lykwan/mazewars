@@ -188,11 +188,18 @@ class Game {
             'ballSprite': [0, 0]
           }
         },
-        '../assets/flamesword.png': {
+        '../assets/flameswordd.png': {
           'tile': mapGrid.BFS.ORIG_WIDTH,
           'tileh': mapGrid.BFS.ORIG_HEIGHT,
           'map': {
             'BFSSprite': [0, 0]
+          }
+        },
+        '../assets/flamesword.png': {
+          'tile': mapGrid.DFS.ORIG_WIDTH,
+          'tileh': mapGrid.DFS.ORIG_HEIGHT,
+          'map': {
+            'DFSSprite': [0, 0]
           }
         }
       }
@@ -399,18 +406,23 @@ class Game {
   setUpPlacingWeapons() {
     socket.on('addWeapon', data => {
       const weapon = Crafty.e('Weapon')
-                           .setUpStaticPos(data.row, data.col)
-                           .setUp(data.type);
+         .setUpStaticPos(data.row, data.col)
+         .setUp(data.type);
+         console.log(mapGrid[data.type].WIDTH);
+         console.log(mapGrid[data.type].HEIGHT);
 
       if (data.type === 'BFS') {
-        weapon.addComponent('BFSSprite')
-              .attr({ w: mapGrid.BFS.WIDTH, h: mapGrid.BFS.HEIGHT });
-      // } else if (data.type === 'DFS') {
-      //   weapon.addComponent('spr_dfs')
-      //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+        weapon.addComponent('BFSSprite');
+      } else if (data.type === 'DFS') {
+        weapon.addComponent('DFSSprite');
       }
+
+      weapon.attr({
+        w: mapGrid[data.type].WIDTH,
+        h: mapGrid[data.type].HEIGHT
+      });
       this.weapons[[data.row, data.col]] = weapon;
-      this.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
+      this.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
     });
 
     socket.on('destroyWeapon', data => {
