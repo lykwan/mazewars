@@ -270,11 +270,18 @@
 	              'ballSprite': [0, 0]
 	            }
 	          },
-	          '../assets/flamesword.png': {
+	          '../assets/flameswordd.png': {
 	            'tile': mapGrid.BFS.ORIG_WIDTH,
 	            'tileh': mapGrid.BFS.ORIG_HEIGHT,
 	            'map': {
 	              'BFSSprite': [0, 0]
+	            }
+	          },
+	          '../assets/flamesword.png': {
+	            'tile': mapGrid.DFS.ORIG_WIDTH,
+	            'tileh': mapGrid.DFS.ORIG_HEIGHT,
+	            'map': {
+	              'DFSSprite': [0, 0]
 	            }
 	          }
 	        }
@@ -449,15 +456,21 @@
 	
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
+	        console.log(mapGrid[data.type].WIDTH);
+	        console.log(mapGrid[data.type].HEIGHT);
 	
 	        if (data.type === 'BFS') {
-	          weapon.addComponent('BFSSprite').attr({ w: mapGrid.BFS.WIDTH, h: mapGrid.BFS.HEIGHT });
-	          // } else if (data.type === 'DFS') {
-	          //   weapon.addComponent('spr_dfs')
-	          //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
+	          weapon.addComponent('BFSSprite');
+	        } else if (data.type === 'DFS') {
+	          weapon.addComponent('DFSSprite');
 	        }
+	
+	        weapon.attr({
+	          w: mapGrid[data.type].WIDTH,
+	          h: mapGrid[data.type].HEIGHT
+	        });
 	        _this6.weapons[[data.row, data.col]] = weapon;
-	        _this6.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
+	        _this6.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
@@ -750,13 +763,21 @@
 	  RATIO: 1 / 4
 	};
 	
-	[TILE, PLAYER, BALL, BFS].forEach(function (actor) {
+	var DFS = {
+	  ORIG_WIDTH: 194,
+	  ORIG_HEIGHT: 204,
+	  RATIO: 1 / 4
+	};
+	
+	var actors = [TILE, PLAYER, BALL, BFS, DFS];
+	
+	actors.forEach(function (actor) {
 	  actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
 	  actor.HEIGHT = actor.ORIG_HEIGHT * actor.RATIO;
 	  actor.SURFACE_HEIGHT = actor.WIDTH / 2;
 	});
 	
-	[PLAYER, BALL, BFS].forEach(function (actor) {
+	actors.slice(1).forEach(function (actor) {
 	  var y0 = (TILE.HEIGHT / TILE.SURFACE_HEIGHT - 2) * TILE.SURFACE_HEIGHT;
 	  // need to increase it by player depth
 	  var y1 = y0 + (PLAYER.HEIGHT - PLAYER.SURFACE_HEIGHT);
@@ -797,10 +818,7 @@
 	  PLAYER: PLAYER,
 	  BALL: BALL,
 	  BFS: BFS,
-	  DFS_WIDTH: 25,
-	  DFS_HEIGHT: 0.30 * 25,
-	  BFS_WIDTH: 20,
-	  BFS_HEIGHT: 0.70 * 20,
+	  DFS: DFS,
 	  CHAR_STEP: 20 // how many steps it needs from one tile to another
 	};
 	

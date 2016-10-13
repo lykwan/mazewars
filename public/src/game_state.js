@@ -396,7 +396,7 @@ class GameState {
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
       // const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
-      const type = 'BFS';
+      const type = 'DFS';
       const weapon = this.Crafty.e('Weapon')
                                .at(row, col)
                                .setUpStaticPos(row, col)
@@ -515,8 +515,7 @@ class GameState {
     let [initRow, initCol] = [rows[0], cols[0]];
     let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileQueue = [[initRow, initCol]];
-    console.log(tileQueue);
-    while (remainingDistance > 0) {
+    while (remainingDistance > 0 && tileQueue.length !== 0) {
       let [row, col] = tileQueue.shift();
       damageCells.push([row, col]);
       exploredCells[[row, col]] = true; // so we won't duplicate damage cells
@@ -536,55 +535,39 @@ class GameState {
 
   shootDFSWeapon(player) {
     let damageCells = [];
-    let col = player.getCol();
-    let row = player.getRow();
+    let exploredCells = {};
+    let [rows, cols] = player.getRowsCols();
+    let [row, col] = [rows[0], cols[0]];
     let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileStack = [];
     while (remainingDistance > 0) {
-      if (!this.hasCell(damageCells, [col, row])) {
-        damageCells.push([col, row]);
-      }
-      let tile = this.board.maze[col][row];
-      let untouchedPaths =
-        this.getUntouchedPaths(col, row, damageCells, tile.remainingPaths());
-      if (untouchedPaths.length !== 0) {
+      if (exploredCells[[row, col]] === undefined) {
+        damageCells.push([row, col]);
+        exploredCells[[row, col]] = true;
         remainingDistance--;
-        tileStack.push([col, row]);
-        let randomIdx = Math.floor(Math.random() * untouchedPaths.length);
-        let path = untouchedPaths[randomIdx];
-        [col, row] = this.getNewColRow(col, row, path);
+      }
+
+      // check its remaining neighbor tiles, see if there's another path we
+      // can go to
+      let neighborTiles = this.board.getNeighborTiles(row, col);
+      let unvisitedNeighbors = neighborTiles.filter(pos => {
+        return exploredCells[pos] === undefined;
+      });
+
+      if (unvisitedNeighbors.length !== 0) {
+        tileStack.push([row, col]);
+        let randomIdx = Math.floor(Math.random() * unvisitedNeighbors.length);
+        [row, col] = unvisitedNeighbors[randomIdx];
       } else {
-        [col, row] = tileStack.pop();
+        if (tileStack.length === 0) {
+          break;
+        }
+
+        [row, col] = tileStack.pop(); // no remaining paths, have to backtrack
       }
     }
 
     return damageCells;
-  }
-
-  getNewColRow(col, row, path) {
-    if (path === 'left') {
-      return [col - 1, row];
-    } else if (path === 'top') {
-      return [col, row - 1];
-    } else if (path === 'right') {
-      return [col + 1, row];
-    } else if (path === 'bottom') {
-      return [col, row + 1];
-    }
-  }
-
-  getUntouchedPaths(col, row, damageCells, remainingPaths) {
-    let newPos;
-    return remainingPaths.filter((path) => {
-      newPos = this.getNewColRow(col, row, path);
-      return !this.hasCell(damageCells, newPos);
-    });
-  }
-
-  hasCell(damageCells, damageCell) {
-    return damageCells.some(cell => {
-      return cell[0] === damageCell[0] && cell[1] === damageCell[1];
-    });
   }
 
   lowerHP(player, damageEntity) {
