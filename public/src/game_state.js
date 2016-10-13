@@ -156,7 +156,7 @@ class GameState {
     }).forEach(playerId => {
       const [playerRow, playerCol] = allPlayerPos[playerId - 1];
       let player =
-        this.Crafty.e('Player')
+        this.Crafty.e('SelfPlayer')
                    .at(playerRow, playerCol)
                    .setUp(playerId, gameSettings.COLORS[playerId - 1]);
         this.players[playerId] = player;
@@ -462,9 +462,10 @@ class GameState {
         let intervalId = setInterval(() => {
           const [row, col] = damageCells[idx];
           const damage = this.Crafty.e('Damage')
-                .at(row, col)
-                .setUpCreator(data.playerId)
-                .disappearAfter(gameSettings.DAMAGE_DISAPPEAR_TIME);
+                        .at(row, col)
+                        .setUpCreator(data.playerId)
+                        .setUpStaticPos(row, col)
+                        .disappearAfter(gameSettings.DAMAGE_DISAPPEAR_TIME);
 
           this.checkForDamageCollision(damage);
 
@@ -493,7 +494,7 @@ class GameState {
         let player = this.players[playerId];
         // if player exists and it collides with a damage cell
         if (player && this.collideWithItem(player, damage)) {
-          this.lowerHP(damage, player);
+          this.lowerHP(player, damage);
         }
       });
     }, gameSettings.CHECK_COLLISION_INTERVAL);
@@ -586,7 +587,7 @@ class GameState {
     });
   }
 
-  lowerHP(damageEntity, player) {
+  lowerHP(player, damageEntity) {
     if (!player.hasTakenDamage &&
       parseInt(damageEntity.creatorId) !== parseInt(player.playerId)) {
       player.HP -= gameSettings.HP_DAMAGE;

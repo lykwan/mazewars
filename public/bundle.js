@@ -335,7 +335,7 @@
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
-	          var player = Crafty.e('Player, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT }).reel('PlayerMovingRight', 600, 0, 1, 5).reel('PlayerMovingDown', 600, 0, 1, 5).reel('PlayerMovingUp', 600, 0, 2, 5).reel('PlayerMovingLeft', 600, 0, 2, 5);
+	          var player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().setUpAnimation().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          // place it on isometric map
 	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
@@ -364,7 +364,7 @@
 	
 	          _this4.players[playerInfo.playerId] = player;
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite').setUp(data.players.playerId, playerInfo.playerColor).attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT }).reel('PlayerMovingRight', 600, 0, 1, 5).reel('PlayerMovingDown', 600, 0, 1, 5).reel('PlayerMovingUp', 600, 0, 2, 5).reel('PlayerMovingLeft', 600, 0, 2, 5);
+	          var otherPlayer = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite').setUp(data.players.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          // place it on isometric map
 	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
@@ -416,20 +416,7 @@
 	          player.x = data.x + _this5.translateX;
 	          player.y = data.y + _this5.translateY;
 	
-	          // display the animation movement depending on the char move
-	          if (data.charMove.left && !player.isPlaying('PlayerMovingLeft')) {
-	            player.animate('PlayerMovingLeft', -1);
-	            player.unflip('X');
-	          } else if (data.charMove.down && !player.isPlaying('PlayerMovingDown')) {
-	            player.animate('PlayerMovingDown', -1);
-	            player.unflip('X');
-	          } else if (data.charMove.up && !player.isPlaying('PlayerMovingUp')) {
-	            player.animate('PlayerMovingUp', -1);
-	            player.flip('X');
-	          } else if (data.charMove.right && !player.isPlaying('PlayerMovingRight')) {
-	            player.animate('PlayerMovingRight');
-	            player.flip('X');
-	          }
+	          player.displayAnimation(data.charMove);
 	        }
 	      });
 	
@@ -496,6 +483,7 @@
 	      var _this8 = this;
 	
 	      socket.on('HPChange', function (data) {
+	        console.log('changing hp!');
 	        var player = _this8.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
@@ -852,10 +840,9 @@
 	var wallDirection = Constants.wallDirection;
 	
 	module.exports = function (Crafty) {
-	  Crafty.c('Player', {
+	  Crafty.c('SelfPlayer', {
 	    init: function init() {
-	      this.requires('Actor, Collision, Color');
-	      this.HP = 100;
+	      this.requires('Player');
 	      this.charStep = mapGrid.CHAR_STEP;
 	      this.hasTakenDamage = false;
 	      this.longestBallHoldingTime = 0;
@@ -981,12 +968,12 @@
 	    loseWeapon: function loseWeapon() {
 	      this.weaponType = null;
 	    }
+	
 	  });
 	
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
-	      this.requires('2D, DOM, Tile, Color');
-	      this.HP = 100;
+	      this.requires('Player');
 	    },
 	
 	    setUp: function setUp(playerId, playerColor, weaponDisplayId) {
@@ -1006,10 +993,41 @@
 	    pickUpBall: function pickUpBall() {
 	      this.color('white');
 	      return this;
+	    }
+	  });
+	
+	  Crafty.c('Player', {
+	    init: function init() {
+	      this.requires('Actor, Color');
+	      this.HP = 100;
 	    },
 	
-	    loseWeapon: function loseWeapon() {}
+	    displayAnimation: function displayAnimation(charMove) {
+	      // display the animation movement depending on the char move
+	      if (charMove.left && !this.isPlaying('PlayerMovingLeft')) {
+	        this.animate('PlayerMovingLeft', -1);
+	        this.unflip('X');
+	      } else if (charMove.down && !this.isPlaying('PlayerMovingDown')) {
+	        this.animate('PlayerMovingDown', -1);
+	        this.unflip('X');
+	      } else if (charMove.up && !this.isPlaying('PlayerMovingUp')) {
+	        this.animate('PlayerMovingUp', -1);
+	        this.flip('X');
+	      } else if (charMove.right && !this.isPlaying('PlayerMovingRight')) {
+	        this.animate('PlayerMovingRight', -1);
+	        this.flip('X');
+	      }
+	    },
 	
+	    loseWeapon: function loseWeapon() {},
+	
+	    setUpAnimation: function setUpAnimation() {
+	      this.reel('PlayerMovingRight', 600, 0, 1, 5);
+	      this.reel('PlayerMovingDown', 600, 0, 1, 5);
+	      this.reel('PlayerMovingUp', 600, 0, 2, 5);
+	      this.reel('PlayerMovingLeft', 600, 0, 2, 5);
+	      return this;
+	    }
 	  });
 	};
 
