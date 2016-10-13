@@ -456,12 +456,12 @@ class Game {
       //   weapon.addComponent('spr_dfs')
       //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
       }
-      this.weapons[[data.col, data.row]] = weapon;
+      this.weapons[[data.row, data.col]] = weapon;
       this.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
     });
 
     socket.on('destroyWeapon', data => {
-      const weapon = this.weapons[[data.col, data.row]];
+      const weapon = this.weapons[[data.row, data.col]];
       weapon.destroy();
     });
   }
