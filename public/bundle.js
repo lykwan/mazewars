@@ -493,12 +493,12 @@
 	          //   weapon.addComponent('spr_dfs')
 	          //         .attr({ w: mapGrid.DFS_WIDTH, h: mapGrid.DFS_HEIGHT });
 	        }
-	        _this6.weapons[[data.col, data.row]] = weapon;
+	        _this6.weapons[[data.row, data.col]] = weapon;
 	        _this6.iso.place(weapon, data.row, data.col, mapGrid.BFS.Z);
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this6.weapons[[data.col, data.row]];
+	        var weapon = _this6.weapons[[data.row, data.col]];
 	        weapon.destroy();
 	      });
 	    }

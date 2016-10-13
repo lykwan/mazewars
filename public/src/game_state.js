@@ -404,8 +404,8 @@ class GameState {
       this.weapons[[row, col]] = weapon;
 
       this.io.to(this.roomId).emit('addWeapon', {
-        col: col,
         row: row,
+        col: col,
         type: type
       });
 
@@ -422,12 +422,12 @@ class GameState {
           type: collidedWeapon.type
         });
 
-        const [col, row] = [collidedWeapon.staticCol, collidedWeapon.staticRow];
+        const [row, col] = [collidedWeapon.staticRow, collidedWeapon.staticCol];
         collidedWeapon.destroy();
-        delete this.weapons[[col, row]];
+        delete this.weapons[[row, col]];
         this.io.to(this.roomId).emit('destroyWeapon', {
-          col: col,
-          row: row
+          row: row,
+          col: col
         });
       }
     });
