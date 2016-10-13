@@ -83,7 +83,7 @@ class GameState {
     this.setUpAddNewPlayer(socket, playerId,
                             gameSettings.COLORS[playerId - 1]);
     this.setUpStartGame(socket);
-    this.setUpUpdatePos(socket);
+    this.setUpUpdateMovement(socket);
     this.setUpPickUpWeapon(socket);
     this.setUpShootWeapon(socket);
   }
@@ -313,7 +313,7 @@ class GameState {
 
   }
 
-  setUpUpdatePos(socket) {
+  setUpUpdateMovement(socket) {
     socket.on('updatePos', data => {
       let movingPlayer = this.players[data.playerId];
       let dirX, dirY;
@@ -341,7 +341,15 @@ class GameState {
       this.io.to(this.roomId).emit('updatePos', {
         playerId: data.playerId,
         x: movingPlayer.x,
-        y: movingPlayer.y
+        y: movingPlayer.y,
+        charMove: data.charMove
+      });
+    });
+
+    socket.on('stopMovement', data => {
+      this.io.to(this.roomId).emit('stopMovement', {
+        playerId: data.playerId,
+        keyCode: data.keyCode
       });
     });
   }
