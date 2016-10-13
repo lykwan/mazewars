@@ -6,14 +6,14 @@ const NUM_MAZE_COLS = NUM_COLS * 2 - 1;
 const TILE = {
   ORIG_WIDTH: 101,
   ORIG_HEIGHT: 122,
-  RATIO: 1 / 2,
+  RATIO: 3 / 4,
   Z: 0
 };
 
 const PLAYER = {
   ORIG_WIDTH: 40,
   ORIG_HEIGHT: 54,
-  RATIO: 2 / 3
+  RATIO: 1
 };
 
 [TILE, PLAYER].forEach(actor => {
@@ -52,7 +52,7 @@ const PLAYER = {
 const mapGrid = {
   GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH,
   // CHANGE TILE HEIGHT TO CHAR HEIGHT
-  GAME_HEIGHT: NUM_MAZE_COLS * TILE.WIDTH + TILE.HEIGHT,
+  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT,
   NUM_ROWS: NUM_ROWS,
   NUM_COLS: NUM_COLS,
   NUM_MAZE_ROWS: NUM_MAZE_ROWS,
@@ -65,7 +65,7 @@ const mapGrid = {
   DFS_HEIGHT: 0.30 * 25,
   BFS_WIDTH: 20,
   BFS_HEIGHT: 0.70 * 20,
-  CHAR_STEP: 10 // how many steps it needs from one tile to another
+  CHAR_STEP: 20 // how many steps it needs from one tile to another
 };
 
 const weaponTypes = {
