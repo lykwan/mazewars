@@ -73,8 +73,8 @@ class Game {
     //TODO: DELETE MODEL
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
-    this.iso = Crafty.diamondIso.init(mapGrid.TILE_WIDTH,
-                                       mapGrid.TILE_WIDTH / 2,
+    this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH,
+                                       mapGrid.TILE.SURFACE_HEIGHT,
                                        mapGrid.NUM_MAZE_ROWS,
                                        mapGrid.NUM_MAZE_COLS);
 
@@ -150,12 +150,12 @@ class Game {
     // Crafty.sprite("../assets/dfs_weapon.png", {spr_dfs:[0,0,288,88]});
     //
     Crafty.sprite("../assets/tile.png", {
-      tileSprite:[0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+      tileSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
     });
     Crafty.sprite("../assets/lava_tile.png", {
-      wallSprite:[0, 0, mapGrid.TILE_ORIG_WIDTH, mapGrid.TILE_ORIG_HEIGHT]
+      wallSprite:[0, 0, mapGrid.TILE.ORIG_WIDTH, mapGrid.TILE.ORIG_HEIGHT]
     });
-    Crafty.sprite(mapGrid.PLAYER_ORIG_WIDTH, mapGrid.PLAYER_ORIG_HEIGHT,
+    Crafty.sprite(mapGrid.PLAYER.ORIG_WIDTH, mapGrid.PLAYER.ORIG_HEIGHT,
                   "../assets/green_char.png", {
       greenSprite: [1, 0]
     });
@@ -229,23 +229,35 @@ class Game {
       let [playerRow, playerCol] = playerInfo.playerPos;
       if (parseInt(playerInfo.playerId) === this.selfId) {
         let player =
-             Crafty.e('Player, tileSprite')
+             Crafty.e('Player, SpriteAnimation, greenSprite')
                    .setUp(playerInfo.playerId, playerInfo.playerColor)
                    .setUpSocket(socket)
                    .setUpSetBallTime()
                    .bindingKeyEvents()
-                   .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+                   .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT })
+                  //  .reel('PlayerMovingDown', 20, 2, 1, 3)
+                  //  .animate('PlayerMovingDown', -1);
 
         // place it on isometric map
         // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
-        this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
+        this.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 
         // after placing it on isometric map, figure out the translation of px
+        // from the server side to client side rendering
         this.translateX = player.x - playerX;
         this.translateY = player.y - playerY;
 
-        // player.x += mapGrid.PLAYER_WIDTH / 2;
-        // player.y -= mapGrid.PLAYER_WIDTH / 4;
+        // since the player block always starts at bottom left corner
+        // when rendering, we need to account for the translation so we can
+        // render the player block in the top left corner instead
+        this.translateX += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
+        this.translateY -=
+          ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
+
+        // translate the player px in the initial rendering as well
+        player.x += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
+        player.y -=
+          ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
 
         // if (player.playerColor === 'red') {
         //   player.addComponent('spr_red')
@@ -273,11 +285,11 @@ class Game {
         let otherPlayer =
           Crafty.e('OtherPlayer, tileSprite')
                 .setUp(data.players.playerId, playerInfo.playerColor)
-                .attr({ w: mapGrid.PLAYER_WIDTH, h: mapGrid.PLAYER_HEIGHT });
+                .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 
 
           // place it on isometric map
-          this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.ACTOR_Z);
+          this.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
 
 
         // if (otherPlayer.playerColor === 'red') {
@@ -314,13 +326,13 @@ class Game {
         if (this.board.maze[i][j].isWall) {
           const wallEntity =
             Crafty.e('2D, DOM, wallSprite')
-                  .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-          this.iso.place(wallEntity, i, j, mapGrid.WALL_Z);
+                  .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+          this.iso.place(wallEntity, i, j, mapGrid.TILE.Z);
         } else {
           const tileEntity =
             Crafty.e('2D, DOM, tileSprite')
-                  .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT });
-          this.iso.place(tileEntity, i, j, mapGrid.TILE_Z);
+                  .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+          this.iso.place(tileEntity, i, j, mapGrid.TILE.Z);
         }
       }
     }
@@ -367,7 +379,7 @@ class Game {
     socket.on('createDamage', data => {
       Crafty.e('Damage')
             .at(data.damageCell[0], data.damageCell[1])
-            .attr({ w: mapGrid.TILE_WIDTH, h: mapGrid.TILE_HEIGHT })
+            .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT })
             .setUpCreator(data.creatorId)
             .disappearAfter(data.disappearTime)
             .color(this.players[data.creatorId].playerColor, 0.5);
@@ -399,10 +411,10 @@ class Game {
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      this.ball = Crafty.e('Ball, tileSprite')
-          .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
-
-      this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
+      // this.ball = Crafty.e('Ball, tileSprite')
+      //     .attr({ w: mapGrid.BALL_WIDTH, h: mapGrid.BALL_HEIGHT });
+      //
+      // this.iso.place(this.ball, data.row, data.col, mapGrid.ACTOR_Z);
     });
   }
 
