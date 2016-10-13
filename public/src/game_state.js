@@ -1,7 +1,6 @@
 const seedrandom = require('seedrandom');
 const Constants = require('./constants.js');
 const Craftyjs = require('craftyjs');
-const ServerModel = require('./model/server_model.js');
 const initGame = require('./components/init.js');
 const Board = require('./board.js');
 const mapGrid = Constants.mapGrid;
@@ -35,7 +34,7 @@ class GameState {
 
     this.addSocket(socket);
     this.Crafty = Craftyjs();
-    initGame(this.Crafty, ServerModel);
+    initGame(this.Crafty);
   }
 
   addSocket(socket) {

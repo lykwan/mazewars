@@ -5,7 +5,7 @@ const wallDirection = Constants.wallDirection;
 
 let epsilon = 0.000000001;
 
-module.exports = function(Crafty, model) {
+module.exports = function(Crafty) {
   Crafty.c('Tile', {
     init: function() {
       this.attr({

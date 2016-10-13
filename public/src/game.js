@@ -69,7 +69,7 @@ class Game {
   }
 
   start() {
-    initGame(Crafty, ClientModel);
+    initGame(Crafty);
     //TODO: DELETE MODEL
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 

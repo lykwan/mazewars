@@ -166,7 +166,7 @@
 	    value: function start() {
 	      var _this2 = this;
 	
-	      (0, _init2.default)(Crafty, _client_model2.default);
+	      (0, _init2.default)(Crafty);
 	      //TODO: DELETE MODEL
 	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
 	
@@ -531,12 +531,12 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	
-	module.exports = function (Crafty, model) {
+	module.exports = function (Crafty) {
 	  // change name of the html element to stage
 	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
 	
-	  createComponents(Crafty, model);
-	  createPlayerComponent(Crafty, model);
+	  createComponents(Crafty);
+	  createPlayerComponent(Crafty);
 	  createWeaponComponent(Crafty);
 	  createBallComponent(Crafty);
 	};
@@ -554,7 +554,7 @@
 	
 	var epsilon = 0.000000001;
 	
-	module.exports = function (Crafty, model) {
+	module.exports = function (Crafty) {
 	  Crafty.c('Tile', {
 	    init: function init() {
 	      this.attr({
@@ -752,7 +752,7 @@
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
 	
-	module.exports = function (Crafty, model) {
+	module.exports = function (Crafty) {
 	  Crafty.c('Player', {
 	    init: function init() {
 	      this.requires('2D, DOM, Tile, Collision, Color');
