@@ -8,10 +8,11 @@
     <script src="lib/jquery-3.1.0.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="bundle.js"></script>
+    <link rel="stylesheet" href="reset.css">
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div id='game'>
+    <div id="game">
       <!-- <div id='instructions'>
         <h2>Instructions</h2>
         <span>Arrow-keys: moving around</span>
@@ -21,8 +22,11 @@
         <span>The goal of the game is to hold onto the ball for the longest duration of time. You can pick up weapons to kill people, and if the ball holder dies, he releases the ball.
         </span>
       </div> -->
-      <div id='stage'></div>
-      <div id="game-status"></div>
+      <div class="waiting-room hidden page"></div>
+      <div class="stage-container hidden">
+        <div id="stage"></div>
+      </div>
+      <div class="game-status hidden"></div>
     </div>
   </body>
 </html>

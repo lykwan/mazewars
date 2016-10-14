@@ -8,6 +8,8 @@ const mapGrid = Constants.mapGrid;
 module.exports = function(Crafty) {
   // change name of the html element to stage
   Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
+  console.log(mapGrid.GAME_WIDTH);
+  console.log(mapGrid.GAME_HEIGHT);
 
   createComponents(Crafty);
   createPlayerComponent(Crafty);

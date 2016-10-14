@@ -61,7 +61,7 @@ class GameState {
       }
     }
 
-    socket.emit('joinGame', {
+    socket.emit('setUpGame', {
       selfId: playerId,
       seedRandomStr: this.seedRandomStr,
       playerColor: gameSettings.COLORS[playerId - 1]
@@ -101,7 +101,8 @@ class GameState {
 
       // notify other people that this player disconnected
       this.io.to(this.roomId).emit('othersDisconnected', {
-        playerId: playerId
+        playerId: playerId,
+        playerColor: gameSettings.COLORS[playerId - 1]
       });
     });
   }
@@ -173,9 +174,6 @@ class GameState {
     });
 
     return playerPos;
-  }
-
-  drawBoard() {
   }
 
   addBall() {
@@ -390,13 +388,13 @@ class GameState {
       // Pick a random col, row
       let [row, col] = this.board.getRandomCell();
       while (this.weapons[[row, col]]) {
+        console.log('finding weapon');
         [row, col] = this.board.getRandomCell();
       }
 
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
-      // const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
-      const type = 'DFS';
+      const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
       const weapon = this.Crafty.e('Weapon')
                                .at(row, col)
                                .setUpStaticPos(row, col)

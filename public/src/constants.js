@@ -6,7 +6,7 @@ const NUM_MAZE_COLS = NUM_COLS * 2 - 1;
 const TILE = {
   ORIG_WIDTH: 101,
   ORIG_HEIGHT: 122,
-  RATIO: 3 / 4,
+  RATIO: 2 / 3,
   Z: 0
 };
 
@@ -16,10 +16,16 @@ const PLAYER = {
   RATIO: 1
 };
 
-const BALL = {
-  ORIG_WIDTH: 70,
-  ORIG_HEIGHT: 70,
+const PLAYER_ATTACKING = {
+  ORIG_WIDTH: 51,
+  ORIG_HEIGHT: 54,
   RATIO: 1
+};
+
+const BALL = {
+  ORIG_WIDTH: 128,
+  ORIG_HEIGHT: 128,
+  RATIO: 2 / 5
 };
 
 const BFS = {
@@ -29,12 +35,12 @@ const BFS = {
 };
 
 const DFS = {
-  ORIG_WIDTH: 194,
-  ORIG_HEIGHT: 204,
+  ORIG_WIDTH: 83,
+  ORIG_HEIGHT: 296,
   RATIO: 1 / 4
 };
 
-const actors = [TILE, PLAYER, BALL, BFS, DFS];
+const actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS];
 
 actors.forEach(actor => {
   actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
@@ -82,6 +88,7 @@ const mapGrid = {
   NUM_MAZE_COLS: NUM_MAZE_COLS,
   TILE: TILE,
   PLAYER: PLAYER,
+  // PLAYER_ATTACKING: PLAYER_ATTACKING,
   BALL: BALL,
   BFS: BFS,
   DFS: DFS,
@@ -101,7 +108,7 @@ const gameSettings = {
   DAMAGE_ANIMATION_TIME: 100,
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
-  GAME_DURATION: 2000, // 200
+  GAME_DURATION: 50, // 200
   CHECK_COLLISION_INTERVAL: 200,
   COLORS: ['blue', 'red', 'yellow', 'green']
 };
