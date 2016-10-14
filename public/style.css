@@ -1,27 +1,84 @@
-#game-status {
-  display: inline-block;
-  width: 200px;
-  height: 585px;
-  background-color: black;
+#game {
+  display: flex;
+  color: white;
+  font-size: 0;
 }
 
-#game span {
-  display: block;
-  color: blue;
-}
+  #stage {
+    display: inline-block;
+    vertical-align: top;
+  }
 
-#stage {
-  display: inline-block;
-  vertical-align: top;
-}
+  #instructions {
+    display: inline-block;
+    background-color: black;
+    width: 200px;
+    height: 585px;
+    vertical-align: top;
+  }
 
-#instructions {
-  display: inline-block;
-  background-color: black;
-  width: 200px;
-  height: 585px;
-  vertical-align: top;
-}
+  .content {
+    color: white;
+    margin: auto;
+    width: 400px;
+    text-align: center;
+  }
+
+  .content h1 {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 30px;
+  }
+
+  .content span {
+    font-size: 15px;
+  }
+
+  .page {
+    background-color: black;
+    display: flex;
+    align-items: center;
+  }
+
+  .new-room {
+    width: 1210px; /* 1010px + 200px */
+    height: 559px;
+    background-color: black;
+    display: flex;
+    align-items: center;
+  }
+
+  .new-room .content button {
+    font-size: 20px;
+    color: white;
+    background: black;
+    border: 1px solid white;
+  }
+
+  .waiting-room {
+    width: 1010px; /* 1010px + 200px */
+    height: 559px;
+  }
+
+  .game-status {
+    width: 200px;
+    height: 559px;
+    background-color: black;
+    font-size: 20px;
+  }
+
+    .players-list {
+      color: white;
+    }
+
+    .self-player {
+      color: yellow;
+    }
+
+  .error-msg {
+    font-size: 20px;
+  }
+
 
 .player-1 {
   color: blue;
@@ -39,12 +96,6 @@
   color: green;
 }
 
-body {
-  /*overflow: hidden;*/
-}
-
-#game {
-  margin: auto;
-  width: 1000px;
-  color: white;
+.hidden {
+  display: none;
 }

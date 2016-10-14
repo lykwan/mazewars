@@ -92,6 +92,7 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var gameSettings = Constants.gameSettings;
+	var AssetsObj = __webpack_require__(11);
 	
 	var socket = io();
 	/* globals Crafty */
@@ -103,7 +104,6 @@
 	
 	    this.players = {};
 	    this.weapons = {};
-	    this.playersInfo = {};
 	    this.board = null;
 	    this.tileBoard = this.createTileBoard();
 	    this.selfId = null;
@@ -123,16 +123,18 @@
 	        roomId = param[1];
 	      }
 	
-	      this.setUpJoinRoom();
-	
+	      // if the user is joining a room
 	      if (roomId !== undefined) {
 	        socket.emit('joinRoom', { roomId: roomId });
 	        socket.on('failedToJoin', function (data) {
-	          $('#game').append('<span class=\'error-msg\'>' + data.msg + '</span>');
+	          //TODO: fix this
+	          $('#game').prepend('<span class=\'error-msg\'>' + data.msg + '</span>');
 	        });
 	      } else {
 	        this.loadNewRoomButton();
 	      }
+	
+	      this.setUpJoinRoom();
 	    }
 	  }, {
 	    key: 'setUpJoinRoom',
@@ -141,24 +143,29 @@
 	
 	      socket.on('joinRoom', function (data) {
 	        var param = '?room_id=' + data.roomId;
-	        $('#game').append('<span>\n                           Link: amazeball.lilykwan.me/' + param + '\n                         </span>');
 	
 	        if (data.isNewRoom) {
 	          // replace the url with room id query
 	          window.history.replaceState({}, '', param);
-	          $('#game .new-room').remove();
+	          $('.new-room').remove();
 	        }
 	
-	        _this.start();
+	        // load room content
+	        // TODO: change link
+	        $('.game-status').removeClass('hidden');
+	        $('.waiting-room').removeClass('hidden');
+	        $('.waiting-room').append('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n        </div>');
+	
+	        _this.setUpGame();
 	      });
 	    }
 	  }, {
 	    key: 'loadNewRoomButton',
 	    value: function loadNewRoomButton() {
-	      var makeNewRoomButton = "<button class='new-room'>Create Room</button>";
-	      $('#game').append(makeNewRoomButton);
+	      var newRoomPage = '<div class="new-room page">\n                            <div class="content">\n                              <h1>Maze Wars</h1>\n                              <button>Create Room</button>\n                            </div>\n                          </div>';
+	      $('#game').prepend(newRoomPage);
 	
-	      $('#game .new-room').on('click', function (e) {
+	      $('.new-room button').on('click', function (e) {
 	        e.preventDefault();
 	        socket.emit('makeNewRoom');
 	      });
@@ -173,8 +180,8 @@
 	      return board;
 	    }
 	  }, {
-	    key: 'start',
-	    value: function start() {
+	    key: 'setUpGame',
+	    value: function setUpGame() {
 	      var _this2 = this;
 	
 	      (0, _init2.default)(Crafty);
@@ -184,18 +191,14 @@
 	
 	      socket.emit('setUpLoadingScene');
 	
-	      var game = this;
+	      // set up loading scene
 	      Crafty.scene('Loading', function () {
-	        game.setUpLoadingScene.bind(game)();
-	        this.startGame = this.bind('KeyDown', function (e) {
-	          if (e.keyCode === Crafty.keys.S) {
-	            socket.emit('startNewGame');
-	          }
-	        });
-	      }, function () {
-	        this.unbind('KeyDown', this.startGame);
+	        _this2.installStartGameListener();
+	        _this2.setUpLoadingScene();
+	        _this2.setUpDisconnect();
 	      });
 	
+	      // set up the game scene
 	      Crafty.scene('Game', function (data) {
 	        _this2.setUpNewGame(data);
 	        _this2.setUpPlayersMovement();
@@ -210,6 +213,7 @@
 	        _this2.setUpHaveWeapon();
 	      });
 	
+	      // set up game over scene
 	      Crafty.scene('GameOver', function (data) {
 	        Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('Game Over').textColor('white');
 	
@@ -223,97 +227,37 @@
 	        Crafty.e('2D, DOM, Text').attr({ x: 50, y: 50, w: 400 }).text(winnerText).textColor('white');
 	      });
 	
+	      // start loading scene
 	      Crafty.scene('Loading');
+	    }
+	  }, {
+	    key: 'installStartGameListener',
+	    value: function installStartGameListener() {
+	      $(document).on('keydown', function (e) {
+	        var spaceBarKeyCode = 32;
+	        if (e.keyCode === spaceBarKeyCode) {
+	          $(document).off('keydown');
+	          socket.emit('startNewGame');
+	        }
+	      });
 	    }
 	  }, {
 	    key: 'setUpLoadingScene',
 	    value: function setUpLoadingScene() {
 	      var _this3 = this;
 	
-	      var loadingScene = Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('A-maze Ball - Press s to start').textColor('white');
-	      Crafty.e('2D, DOM, Text').attr({ x: 0, y: 30, w: 300 }).text('Game can only be started when\n                   there are more than 2 people in the room').textColor('white');
+	      Crafty.load(AssetsObj);
 	
-	      var assetsObj = {
-	        'sprites': {
-	          '../assets/tile.png': {
-	            'tile': mapGrid.TILE.ORIG_WIDTH,
-	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
-	            'map': {
-	              'tileSprite': [0, 0]
-	            }
-	          },
-	          '../assets/lava_tile.png': {
-	            'tile': mapGrid.TILE.ORIG_WIDTH,
-	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
-	            'map': {
-	              'wallSprite': [0, 0]
-	            }
-	          },
-	          '../assets/lava_crack.png': {
-	            'tile': mapGrid.TILE.ORIG_WIDTH,
-	            'tileh': mapGrid.TILE.ORIG_HEIGHT,
-	            'map': {
-	              'greenActiveTileSprite': [0, 0]
-	            }
-	          },
-	          '../assets/green_char.png': {
-	            'tile': mapGrid.PLAYER.ORIG_WIDTH,
-	            'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
-	            'map': {
-	              'greenSprite': [0, 0]
-	            }
-	          },
-	          '../assets/ball.png': {
-	            'tile': mapGrid.BALL.ORIG_WIDTH,
-	            'tileh': mapGrid.BALL.ORIG_HEIGHT,
-	            'map': {
-	              'ballSprite': [0, 0]
-	            }
-	          },
-	          '../assets/flameswordd.png': {
-	            'tile': mapGrid.BFS.ORIG_WIDTH,
-	            'tileh': mapGrid.BFS.ORIG_HEIGHT,
-	            'map': {
-	              'BFSSprite': [0, 0]
-	            }
-	          },
-	          '../assets/flamesword.png': {
-	            'tile': mapGrid.DFS.ORIG_WIDTH,
-	            'tileh': mapGrid.DFS.ORIG_HEIGHT,
-	            'map': {
-	              'DFSSprite': [0, 0]
-	            }
-	          }
-	        }
-	      };
-	
-	      Crafty.load(assetsObj);
-	
-	      var playerTextY = 50;
-	      socket.on('joinGame', function (data) {
-	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('You are player ' + data.selfId).textColor(data.playerColor);
-	        playerTextY += 30;
-	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty, true);
-	        _this3.playersInfo[data.selfId] = playerText;
+	      socket.on('setUpGame', function (data) {
 	        _this3.selfId = data.selfId;
+	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
+	
+	        $('.game-status').append('<ul class="players-list"><ul>');
+	        _this3.appendToPlayersList(data.playerColor, true);
 	      });
 	
 	      socket.on('addNewPlayer', function (data) {
-	        var playerText = Crafty.e('2D, DOM, Text').attr({ x: 50, y: playerTextY, w: 200 }).text('connected with player ' + data.playerId).textColor(data.playerColor);
-	        playerTextY += 30;
-	        _this3.playersInfo[data.playerId] = playerText;
-	      });
-	
-	      socket.on('othersDisconnected', function (data) {
-	        if (_this3.players[data.playerId]) {
-	          _this3.players[data.playerId].destroy();
-	          delete _this3.players[data.playerId];
-	        }
-	
-	        if (_this3.playersInfo[data.playerId]) {
-	          _this3.playersInfo[data.playerId].destroy();
-	          delete _this3.playersInfo[data.playerId];
-	        }
+	        _this3.appendToPlayersList(data.playerColor, false);
 	      });
 	
 	      socket.on('startNewGame', function (data) {
@@ -321,9 +265,34 @@
 	      });
 	    }
 	  }, {
+	    key: 'setUpDisconnect',
+	    value: function setUpDisconnect() {
+	      var _this4 = this;
+	
+	      socket.on('othersDisconnected', function (data) {
+	        if (_this4.players[data.playerId]) {
+	          _this4.players[data.playerId].destroy();
+	          delete _this4.players[data.playerId];
+	        }
+	
+	        $('.player-item.' + data.playerColor).remove();
+	      });
+	    }
+	  }, {
+	    key: 'appendToPlayersList',
+	    value: function appendToPlayersList(playerColor, isSelfPlayer) {
+	      var selfPlayerClass = isSelfPlayer ? 'self-player' : '';
+	      var iconImgSrc = '../assets/green_char_icon.png';
+	      $('.players-list').append('<li class="player-item ' + selfPlayerClass + ' ' + playerColor + '">\n          <img src=' + iconImgSrc + '></img>\n          <span>Player ' + playerColor + '</span>\n        </li>');
+	    }
+	  }, {
 	    key: 'setUpNewGame',
 	    value: function setUpNewGame(data) {
-	      var _this4 = this;
+	      var _this5 = this;
+	
+	      // add the game stage div in and remove the loading scene
+	      $('.stage-container').removeClass('hidden');
+	      $('.waiting-room').remove();
 	
 	      $('#game-status').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
 	      $('#game-status').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
@@ -341,40 +310,37 @@
 	        var playerRow = _playerInfo$playerPos[0];
 	        var playerCol = _playerInfo$playerPos[1];
 	
-	        if (parseInt(playerInfo.playerId) === _this4.selfId) {
+	        if (parseInt(playerInfo.playerId) === _this5.selfId) {
 	          var player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().setUpAnimation().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          // place it on isometric map
 	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
-	          _this4.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
+	          _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
 	          // after placing it on isometric map, figure out the translation of px
 	          // from the server side to client side rendering
-	          _this4.translateX = player.x - playerX;
-	          _this4.translateY = player.y - playerY;
+	          _this5.translateX = player.x - playerX;
+	          _this5.translateY = player.y - playerY;
 	
 	          // since the player block always starts at bottom left corner
 	          // when rendering, we need to account for the translation so we can
 	          // render the player block in the top left corner instead
-	          _this4.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
-	          _this4.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
+	          _this5.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	          _this5.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	
 	          // translate the player px in the initial rendering as well
 	          player.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
 	          player.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	
-	          console.log('player', player.x);
-	          console.log('player', player.y);
-	
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
 	
-	          _this4.players[playerInfo.playerId] = player;
+	          _this5.players[playerInfo.playerId] = player;
 	        } else {
 	          var otherPlayer = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite').setUp(data.players.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          // place it on isometric map
-	          _this4.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
+	          _this5.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
 	          // translate the player px in the initial rendering as well
 	          otherPlayer.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
@@ -383,7 +349,7 @@
 	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
 	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
 	
-	          _this4.players[playerInfo.playerId] = otherPlayer;
+	          _this5.players[playerInfo.playerId] = otherPlayer;
 	        }
 	      });
 	
@@ -412,39 +378,39 @@
 	  }, {
 	    key: 'setUpPlayersMovement',
 	    value: function setUpPlayersMovement() {
-	      var _this5 = this;
+	      var _this6 = this;
 	
 	      socket.on('updatePos', function (data) {
-	        var player = _this5.players[data.playerId];
+	        var player = _this6.players[data.playerId];
 	        if (player) {
 	          var playerOldX = player.x;
 	          var playerOldY = player.y;
 	
-	          player.x = data.x + _this5.translateX;
-	          player.y = data.y + _this5.translateY;
+	          player.x = data.x + _this6.translateX;
+	          player.y = data.y + _this6.translateY;
 	
 	          player.displayAnimation(data.charMove);
 	        }
 	      });
 	
 	      socket.on('stopMovement', function (data) {
-	        var player = _this5.players[data.playerId];
+	        var player = _this6.players[data.playerId];
 	        if (player) {
 	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
 	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-	            _this5.charMove.right = false;
+	            _this6.charMove.right = false;
 	          }
 	          if (data.keyCode === Crafty.keys.LEFT_ARROW) {
 	            if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-	            _this5.charMove.left = false;
+	            _this6.charMove.left = false;
 	          }
 	          if (data.keyCode === Crafty.keys.UP_ARROW) {
 	            if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-	            _this5.charMove.up = false;
+	            _this6.charMove.up = false;
 	          }
 	          if (data.keyCode === Crafty.keys.DOWN_ARROW) {
 	            if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-	            _this5.charMove.down = false;
+	            _this6.charMove.down = false;
 	          }
 	        }
 	      });
@@ -452,12 +418,10 @@
 	  }, {
 	    key: 'setUpPlacingWeapons',
 	    value: function setUpPlacingWeapons() {
-	      var _this6 = this;
+	      var _this7 = this;
 	
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
-	        console.log(mapGrid[data.type].WIDTH);
-	        console.log(mapGrid[data.type].HEIGHT);
 	
 	        if (data.type === 'BFS') {
 	          weapon.addComponent('BFSSprite');
@@ -469,35 +433,39 @@
 	          w: mapGrid[data.type].WIDTH,
 	          h: mapGrid[data.type].HEIGHT
 	        });
-	        _this6.weapons[[data.row, data.col]] = weapon;
-	        _this6.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
+	        _this7.weapons[[data.row, data.col]] = weapon;
+	        _this7.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
+	
+	        // translate the weapon px in the initial rendering to the middle of tile
+	        weapon.x += (mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2;
+	        // weapon.y -=
+	        //   ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid[data.type].SURFACE_HEIGHT) / 4);
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this6.weapons[[data.row, data.col]];
+	        var weapon = _this7.weapons[[data.row, data.col]];
 	        weapon.destroy();
 	      });
 	    }
 	  }, {
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
-	      var _this7 = this;
+	      var _this8 = this;
 	
 	      socket.on('createDamage', function (data) {
 	        var activeComponent = 'greenActiveTileSprite';
-	        _this7.tileBoard[data.row][data.col].removeComponent('tileSprite');
-	        _this7.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
-	        _this7.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
+	        _this8.tileBoard[data.row][data.col].removeComponent('tileSprite');
+	        _this8.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	        _this8.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
 	      });
 	    }
 	  }, {
 	    key: 'setUpHPChange',
 	    value: function setUpHPChange() {
-	      var _this8 = this;
+	      var _this9 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        console.log('changing hp!');
-	        var player = _this8.players[data.playerId];
+	        var player = _this9.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
 	          $('#hp .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
@@ -521,26 +489,26 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this9 = this;
+	      var _this10 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this9.ball = Crafty.e('Ball, swordSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
+	        _this10.ball = Crafty.e('Ball, ballSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
 	
-	        _this9.iso.place(_this9.ball, data.row, data.col, mapGrid.BALL.Z);
+	        _this10.iso.place(_this10.ball, data.row, data.col, mapGrid.BALL.Z);
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this10 = this;
+	      var _this11 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this10.ball.destroy();
-	        _this10.players[data.playerId].pickUpBall();
+	        _this11.ball.destroy();
+	        _this11.players[data.playerId].pickUpBall();
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this10.players[data.playerId].color('black');
+	        _this11.players[data.playerId].color('black');
 	      });
 	    }
 	  }, {
@@ -557,10 +525,10 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this11 = this;
+	      var _this12 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this11.players[_this11.selfId].weaponType = data.type;
+	        _this12.players[_this12.selfId].weaponType = data.type;
 	        $('#weapon-type').text(data.type);
 	        if (data.type === 'BFS') {
 	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
@@ -570,7 +538,7 @@
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this11.players[data.playerId].loseWeapon();
+	        _this12.players[data.playerId].loseWeapon();
 	        $('#weapon-type').empty();
 	        $('#weapon-img').empty();
 	      });
@@ -598,6 +566,8 @@
 	module.exports = function (Crafty) {
 	  // change name of the html element to stage
 	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
+	  console.log(mapGrid.GAME_WIDTH);
+	  console.log(mapGrid.GAME_HEIGHT);
 	
 	  createComponents(Crafty);
 	  createPlayerComponent(Crafty);
@@ -741,7 +711,7 @@
 	var TILE = {
 	  ORIG_WIDTH: 101,
 	  ORIG_HEIGHT: 122,
-	  RATIO: 3 / 4,
+	  RATIO: 2 / 3,
 	  Z: 0
 	};
 	
@@ -751,10 +721,16 @@
 	  RATIO: 1
 	};
 	
-	var BALL = {
-	  ORIG_WIDTH: 70,
-	  ORIG_HEIGHT: 70,
+	var PLAYER_ATTACKING = {
+	  ORIG_WIDTH: 51,
+	  ORIG_HEIGHT: 54,
 	  RATIO: 1
+	};
+	
+	var BALL = {
+	  ORIG_WIDTH: 128,
+	  ORIG_HEIGHT: 128,
+	  RATIO: 2 / 5
 	};
 	
 	var BFS = {
@@ -764,12 +740,12 @@
 	};
 	
 	var DFS = {
-	  ORIG_WIDTH: 194,
-	  ORIG_HEIGHT: 204,
+	  ORIG_WIDTH: 83,
+	  ORIG_HEIGHT: 296,
 	  RATIO: 1 / 4
 	};
 	
-	var actors = [TILE, PLAYER, BALL, BFS, DFS];
+	var actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS];
 	
 	actors.forEach(function (actor) {
 	  actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
@@ -816,6 +792,7 @@
 	  NUM_MAZE_COLS: NUM_MAZE_COLS,
 	  TILE: TILE,
 	  PLAYER: PLAYER,
+	  // PLAYER_ATTACKING: PLAYER_ATTACKING,
 	  BALL: BALL,
 	  BFS: BFS,
 	  DFS: DFS,
@@ -835,7 +812,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 2000, // 200
+	  GAME_DURATION: 50, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
@@ -1142,7 +1119,7 @@
 	var Cell = __webpack_require__(10);
 	
 	var Board = function () {
-	  function Board(m, n, seedRandomStr, print) {
+	  function Board(m, n, seedRandomStr) {
 	    _classCallCheck(this, Board);
 	
 	    // how many cells rows and cols are there if walls were just borders
@@ -1156,7 +1133,6 @@
 	    this.maze = this.createStartingMaze();
 	    this.frontier = [];
 	    this.generateMaze();
-	    if (print) this.log(this.maze);
 	  }
 	
 	  // create a starting maze map with all the walls
@@ -1389,6 +1365,71 @@
 	};
 	
 	module.exports = Cell;
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var Constants = __webpack_require__(4);
+	var mapGrid = Constants.mapGrid;
+	
+	var assetsObj = {
+	  'sprites': {
+	    '../assets/tile.png': {
+	      'tile': mapGrid.TILE.ORIG_WIDTH,
+	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	      'map': {
+	        'tileSprite': [0, 0]
+	      }
+	    },
+	    '../assets/lava_tile.png': {
+	      'tile': mapGrid.TILE.ORIG_WIDTH,
+	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	      'map': {
+	        'wallSprite': [0, 0]
+	      }
+	    },
+	    '../assets/lava_crack.png': {
+	      'tile': mapGrid.TILE.ORIG_WIDTH,
+	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
+	      'map': {
+	        'greenActiveTileSprite': [0, 0]
+	      }
+	    },
+	    '../assets/green_char.png': {
+	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	      'map': {
+	        'greenSprite': [0, 0]
+	      }
+	    },
+	    '../assets/blue_ring.png': {
+	      'tile': mapGrid.BALL.ORIG_WIDTH,
+	      'tileh': mapGrid.BALL.ORIG_HEIGHT,
+	      'map': {
+	        'ballSprite': [0, 0]
+	      }
+	    },
+	    '../assets/flamesword.png': {
+	      'tile': mapGrid.BFS.ORIG_WIDTH,
+	      'tileh': mapGrid.BFS.ORIG_HEIGHT,
+	      'map': {
+	        'BFSSprite': [0, 0]
+	      }
+	    },
+	    '../assets/purple_sword2.png': {
+	      'tile': mapGrid.DFS.ORIG_WIDTH,
+	      'tileh': mapGrid.DFS.ORIG_HEIGHT,
+	      'map': {
+	        'DFSSprite': [0, 0]
+	      }
+	    }
+	  }
+	};
+	
+	module.exports = assetsObj;
 
 /***/ }
 /******/ ]);

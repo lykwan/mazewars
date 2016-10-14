@@ -4,6 +4,7 @@ import Board from './board.js';
 const Constants = require('./constants.js');
 const mapGrid = Constants.mapGrid;
 const gameSettings = Constants.gameSettings;
+const AssetsObj = require('./load_assets.js');
 
 const socket = io();
 /* globals Crafty */
@@ -13,7 +14,6 @@ class Game {
   constructor() {
     this.players = {};
     this.weapons = {};
-    this.playersInfo = {};
     this.board = null;
     this.tileBoard = this.createTileBoard();
     this.selfId = null;
@@ -21,7 +21,6 @@ class Game {
     this.translateX = 0;
     this.translateY = 0;
   }
-
 
   run() {
     // getting the room id from the url params, if any
@@ -32,40 +31,55 @@ class Game {
       roomId = param[1];
     }
 
-    this.setUpJoinRoom();
-
+    // if the user is joining a room
     if (roomId !== undefined) {
       socket.emit('joinRoom', { roomId: roomId });
       socket.on('failedToJoin', data => {
-        $('#game').append(`<span class='error-msg'>${ data.msg }</span>`);
+        //TODO: fix this
+        $('#game').prepend(`<span class='error-msg'>${ data.msg }</span>`);
       });
     } else {
       this.loadNewRoomButton();
     }
+
+    this.setUpJoinRoom();
   }
 
   setUpJoinRoom() {
     socket.on('joinRoom', data => {
       let param = `?room_id=${ data.roomId }`;
-      $('#game').append(`<span>
-                           Link: amazeball.lilykwan.me/${ param }
-                         </span>`);
 
       if (data.isNewRoom) {
         // replace the url with room id query
         window.history.replaceState({}, '', param);
-        $('#game .new-room').remove();
+        $('.new-room').remove();
       }
 
-      this.start();
+      // load room content
+      // TODO: change link
+      $('.game-status').removeClass('hidden');
+      $('.waiting-room').removeClass('hidden');
+      $('.waiting-room').append(
+        `<div class="content">
+          <h1>Maze Wars</h1>
+          <span>Room Link: amazeball.lilykwan.me/${ param }</span>
+        </div>`
+      );
+
+      this.setUpGame();
     });
   }
 
   loadNewRoomButton() {
-    const makeNewRoomButton = "<button class='new-room'>Create Room</button>";
-    $('#game').append(makeNewRoomButton);
+    const newRoomPage = `<div class="new-room page">
+                            <div class="content">
+                              <h1>Maze Wars</h1>
+                              <button>Create Room</button>
+                            </div>
+                          </div>`;
+    $('#game').prepend(newRoomPage);
 
-    $('#game .new-room').on('click', e => {
+    $('.new-room button').on('click', e => {
       e.preventDefault();
       socket.emit('makeNewRoom');
     });
@@ -79,7 +93,7 @@ class Game {
     return board;
   }
 
-  start() {
+  setUpGame() {
     initGame(Crafty);
     Crafty.background('url(../assets/free-space-background-7.png) repeat');
 
@@ -90,18 +104,14 @@ class Game {
 
     socket.emit('setUpLoadingScene');
 
-    let game = this;
-    Crafty.scene('Loading', function() {
-      game.setUpLoadingScene.bind(game)();
-      this.startGame = this.bind('KeyDown', function(e) {
-        if (e.keyCode === Crafty.keys.S) {
-          socket.emit('startNewGame');
-        }
-      });
-    }, function() {
-      this.unbind('KeyDown', this.startGame);
+    // set up loading scene
+    Crafty.scene('Loading', () => {
+      this.installStartGameListener();
+      this.setUpLoadingScene();
+      this.setUpDisconnect();
     });
 
+    // set up the game scene
     Crafty.scene('Game', (data) => {
       this.setUpNewGame(data);
       this.setUpPlayersMovement();
@@ -116,6 +126,7 @@ class Game {
       this.setUpHaveWeapon();
     });
 
+    // set up game over scene
     Crafty.scene('GameOver', (data) => {
       Crafty.e('2D, DOM, Text')
             .attr({ x: 0, y: 0, w: 300 })
@@ -136,111 +147,34 @@ class Game {
         .textColor('white');
     });
 
+    // start loading scene
     Crafty.scene('Loading');
   }
 
-  setUpLoadingScene() {
-    let loadingScene =
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 0, y: 0, w: 300 })
-            .text('A-maze Ball - Press s to start')
-            .textColor('white');
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 0, y: 30, w: 300 })
-            .text(`Game can only be started when
-                   there are more than 2 people in the room`)
-            .textColor('white');
-
-    const assetsObj = {
-      'sprites': {
-        '../assets/tile.png': {
-          'tile': mapGrid.TILE.ORIG_WIDTH,
-          'tileh': mapGrid.TILE.ORIG_HEIGHT,
-          'map': {
-            'tileSprite': [0, 0]
-          }
-        },
-        '../assets/lava_tile.png': {
-          'tile': mapGrid.TILE.ORIG_WIDTH,
-          'tileh': mapGrid.TILE.ORIG_HEIGHT,
-          'map': {
-            'wallSprite': [0, 0]
-          }
-        },
-        '../assets/lava_crack.png': {
-          'tile': mapGrid.TILE.ORIG_WIDTH,
-          'tileh': mapGrid.TILE.ORIG_HEIGHT,
-          'map': {
-            'greenActiveTileSprite': [0, 0]
-          }
-        },
-        '../assets/green_char.png': {
-          'tile': mapGrid.PLAYER.ORIG_WIDTH,
-          'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
-          'map': {
-            'greenSprite': [0, 0]
-          }
-        },
-        '../assets/ball.png': {
-          'tile': mapGrid.BALL.ORIG_WIDTH,
-          'tileh': mapGrid.BALL.ORIG_HEIGHT,
-          'map': {
-            'ballSprite': [0, 0]
-          }
-        },
-        '../assets/flameswordd.png': {
-          'tile': mapGrid.BFS.ORIG_WIDTH,
-          'tileh': mapGrid.BFS.ORIG_HEIGHT,
-          'map': {
-            'BFSSprite': [0, 0]
-          }
-        },
-        '../assets/flamesword.png': {
-          'tile': mapGrid.DFS.ORIG_WIDTH,
-          'tileh': mapGrid.DFS.ORIG_HEIGHT,
-          'map': {
-            'DFSSprite': [0, 0]
-          }
-        }
+  installStartGameListener() {
+    $(document).on('keydown', e => {
+      let spaceBarKeyCode = 32;
+      if (e.keyCode === spaceBarKeyCode) {
+        $(document).off('keydown');
+        socket.emit('startNewGame');
       }
-    };
+    });
+  }
 
-    Crafty.load(assetsObj);
+  setUpLoadingScene() {
+    Crafty.load(AssetsObj);
 
-    let playerTextY = 50;
-    socket.on('joinGame', data => {
-      let playerText = Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY, w: 200 })
-            .text(`You are player ${data.selfId}`)
-            .textColor(data.playerColor);
-      playerTextY += 30;
-        this.board =
-        new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
-                  data.seedRandomStr, Crafty, true);
-      this.playersInfo[data.selfId] = playerText;
+    socket.on('setUpGame', data => {
       this.selfId = data.selfId;
+      this.board = new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
+                    data.seedRandomStr, Crafty);
 
+      $('.game-status').append(`<ul class="players-list"><ul>`);
+      this.appendToPlayersList(data.playerColor, true);
     });
 
     socket.on('addNewPlayer', data => {
-      let playerText = Crafty.e('2D, DOM, Text')
-            .attr({ x: 50, y: playerTextY, w: 200 })
-            .text(`connected with player ${ data.playerId }`)
-            .textColor(data.playerColor);
-      playerTextY += 30;
-      this.playersInfo[data.playerId] = playerText;
-    });
-
-    socket.on('othersDisconnected', data => {
-      if (this.players[data.playerId]) {
-        this.players[data.playerId].destroy();
-        delete this.players[data.playerId];
-      }
-
-      if (this.playersInfo[data.playerId]) {
-        this.playersInfo[data.playerId].destroy();
-        delete this.playersInfo[data.playerId];
-      }
+      this.appendToPlayersList(data.playerColor, false);
     });
 
     socket.on('startNewGame', (data) => {
@@ -248,7 +182,33 @@ class Game {
     });
   }
 
+  setUpDisconnect() {
+    socket.on('othersDisconnected', data => {
+      if (this.players[data.playerId]) {
+        this.players[data.playerId].destroy();
+        delete this.players[data.playerId];
+      }
+
+      $(`.player-item.${ data.playerColor }`).remove();
+    });
+  }
+
+  appendToPlayersList(playerColor, isSelfPlayer) {
+    let selfPlayerClass = isSelfPlayer ? 'self-player' : '';
+    let iconImgSrc = `../assets/green_char_icon.png`;
+    $('.players-list').append(
+      `<li class="player-item ${ selfPlayerClass} ${ playerColor }">
+          <img src=${ iconImgSrc }></img>
+          <span>Player ${ playerColor }</span>
+        </li>`
+    );
+  }
+
   setUpNewGame(data) {
+    // add the game stage div in and remove the loading scene
+    $('.stage-container').removeClass('hidden');
+    $('.waiting-room').remove();
+
     $('#game-status').append(`<div id='hp'>
                               <h2>HP</h2>
                              </div>`);
@@ -304,9 +264,6 @@ class Game {
         player.x += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
         player.y -=
           ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
-
-        console.log('player', player.x);
-        console.log('player', player.y);
 
         $('#hp').append(`<span class='player-${ playerInfo.playerId }'>
                                   Player ${playerInfo.playerId}: ${ player.HP }
@@ -408,8 +365,6 @@ class Game {
       const weapon = Crafty.e('Weapon')
          .setUpStaticPos(data.row, data.col)
          .setUp(data.type);
-         console.log(mapGrid[data.type].WIDTH);
-         console.log(mapGrid[data.type].HEIGHT);
 
       if (data.type === 'BFS') {
         weapon.addComponent('BFSSprite');
@@ -423,6 +378,11 @@ class Game {
       });
       this.weapons[[data.row, data.col]] = weapon;
       this.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
+
+      // translate the weapon px in the initial rendering to the middle of tile
+      weapon.x += ((mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2);
+      // weapon.y -=
+      //   ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid[data.type].SURFACE_HEIGHT) / 4);
     });
 
     socket.on('destroyWeapon', data => {
@@ -443,7 +403,6 @@ class Game {
 
   setUpHPChange() {
     socket.on('HPChange', data => {
-      console.log('changing hp!');
       const player = this.players[data.playerId];
       if (player) {
         player.HP = data.playerHP;
@@ -467,7 +426,7 @@ class Game {
 
   setUpAddBall() {
     socket.on('addBall', data => {
-      this.ball = Crafty.e('Ball, swordSprite')
+      this.ball = Crafty.e('Ball, ballSprite')
           .attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
 
       this.iso.place(this.ball, data.row, data.col, mapGrid.BALL.Z);
