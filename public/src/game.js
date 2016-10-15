@@ -342,19 +342,19 @@ class Game {
       if (player) {
         if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
           if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-          this.charMove.right = false;
+          // this.charMove.right = false;
         }
         if (data.keyCode === Crafty.keys.LEFT_ARROW) {
           if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-          this.charMove.left = false;
+          // this.charMove.left = false;
         }
         if (data.keyCode === Crafty.keys.UP_ARROW) {
           if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-          this.charMove.up = false;
+          // this.charMove.up = false;
         }
         if (data.keyCode === Crafty.keys.DOWN_ARROW) {
           if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-          this.charMove.down = false;
+          // this.charMove.down = false;
         }
       }
     });
@@ -366,12 +366,14 @@ class Game {
          .setUpStaticPos(data.row, data.col)
          .setUp(data.type);
 
-      if (data.type === 'BFS') {
-        weapon.addComponent('BFSSprite');
-      } else if (data.type === 'DFS') {
-        weapon.addComponent('DFSSprite');
-      }
+      const sprite = `${ data.type }Sprite`;
+      // if (data.type === 'BFS') {
+      //   weapon.addComponent('BFSSprite');
+      // } else if (data.type === 'DFS') {
+      //   weapon.addComponent('DFSSprite');
+      // }
 
+      weapon.addComponent(sprite);
       weapon.attr({
         w: mapGrid[data.type].WIDTH,
         h: mapGrid[data.type].HEIGHT
@@ -381,8 +383,6 @@ class Game {
 
       // translate the weapon px in the initial rendering to the middle of tile
       weapon.x += ((mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2);
-      // weapon.y -=
-      //   ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid[data.type].SURFACE_HEIGHT) / 4);
     });
 
     socket.on('destroyWeapon', data => {

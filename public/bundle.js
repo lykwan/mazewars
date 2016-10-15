@@ -398,19 +398,19 @@
 	        if (player) {
 	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
 	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-	            _this6.charMove.right = false;
+	            // this.charMove.right = false;
 	          }
 	          if (data.keyCode === Crafty.keys.LEFT_ARROW) {
 	            if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-	            _this6.charMove.left = false;
+	            // this.charMove.left = false;
 	          }
 	          if (data.keyCode === Crafty.keys.UP_ARROW) {
 	            if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-	            _this6.charMove.up = false;
+	            // this.charMove.up = false;
 	          }
 	          if (data.keyCode === Crafty.keys.DOWN_ARROW) {
 	            if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-	            _this6.charMove.down = false;
+	            // this.charMove.down = false;
 	          }
 	        }
 	      });
@@ -423,12 +423,14 @@
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
 	
-	        if (data.type === 'BFS') {
-	          weapon.addComponent('BFSSprite');
-	        } else if (data.type === 'DFS') {
-	          weapon.addComponent('DFSSprite');
-	        }
+	        var sprite = data.type + 'Sprite';
+	        // if (data.type === 'BFS') {
+	        //   weapon.addComponent('BFSSprite');
+	        // } else if (data.type === 'DFS') {
+	        //   weapon.addComponent('DFSSprite');
+	        // }
 	
+	        weapon.addComponent(sprite);
 	        weapon.attr({
 	          w: mapGrid[data.type].WIDTH,
 	          h: mapGrid[data.type].HEIGHT
@@ -438,8 +440,6 @@
 	
 	        // translate the weapon px in the initial rendering to the middle of tile
 	        weapon.x += (mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2;
-	        // weapon.y -=
-	        //   ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid[data.type].SURFACE_HEIGHT) / 4);
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
@@ -581,6 +581,8 @@
 
 	'use strict';
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
@@ -661,6 +663,17 @@
 	    // account for the floating point epsilon
 	    fixRoundingErrors: function fixRoundingErrors(n) {
 	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
+	    },
+	
+	    getTopLeftRowCol: function getTopLeftRowCol() {
+	      var _getRowsCols = this.getRowsCols();
+	
+	      var _getRowsCols2 = _slicedToArray(_getRowsCols, 2);
+	
+	      var rows = _getRowsCols2[0];
+	      var cols = _getRowsCols2[1];
+	
+	      return [rows[0], cols[0]];
 	    }
 	  });
 	
@@ -745,7 +758,13 @@
 	  RATIO: 1 / 4
 	};
 	
-	var actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS];
+	var ASTAR = {
+	  ORIG_WIDTH: 233,
+	  ORIG_HEIGHT: 269,
+	  RATIO: 1 / 5
+	};
+	
+	var actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS, ASTAR];
 	
 	actors.forEach(function (actor) {
 	  actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
@@ -796,12 +815,14 @@
 	  BALL: BALL,
 	  BFS: BFS,
 	  DFS: DFS,
+	  ASTAR: ASTAR,
 	  CHAR_STEP: 20 // how many steps it needs from one tile to another
 	};
 	
 	var weaponTypes = {
 	  BFS: 'BFS',
-	  DFS: 'DFS'
+	  DFS: 'DFS',
+	  ASTAR: 'ASTAR'
 	};
 	
 	var gameSettings = {
@@ -1425,7 +1446,15 @@
 	      'map': {
 	        'DFSSprite': [0, 0]
 	      }
+	    },
+	    '../assets/dreadbloom_lash.png': {
+	      'tile': mapGrid.ASTAR.ORIG_WIDTH,
+	      'tileh': mapGrid.ASTAR.ORIG_HEIGHT,
+	      'map': {
+	        'ASTARSprite': [0, 0]
+	      }
 	    }
+	
 	  }
 	};
 	

@@ -51,7 +51,15 @@ const assetsObj = {
       'map': {
         'DFSSprite': [0, 0]
       }
+    },
+    '../assets/dreadbloom_lash.png': {
+      'tile': mapGrid.ASTAR.ORIG_WIDTH,
+      'tileh': mapGrid.ASTAR.ORIG_HEIGHT,
+      'map': {
+        'ASTARSprite': [0, 0]
+      }
     }
+
   }
 };
 
