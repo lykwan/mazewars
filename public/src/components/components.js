@@ -80,6 +80,11 @@ module.exports = function(Crafty) {
     // account for the floating point epsilon
     fixRoundingErrors: function(n) {
       return (Math.abs(n - Math.round(n)) <= epsilon) ? Math.round(n) : n;
+    },
+
+    getTopLeftRowCol: function() {
+      let [rows, cols] = this.getRowsCols();
+      return [rows[0], cols[0]];
     }
   });
 

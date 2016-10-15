@@ -1,4 +1,5 @@
 const seedrandom = require('seedrandom');
+const PriorityQueue = require('js-priority-queue');
 const Constants = require('./constants.js');
 const Craftyjs = require('craftyjs');
 const initGame = require('./components/init.js');
@@ -388,13 +389,13 @@ class GameState {
       // Pick a random col, row
       let [row, col] = this.board.getRandomCell();
       while (this.weapons[[row, col]]) {
-        console.log('finding weapon');
         [row, col] = this.board.getRandomCell();
       }
 
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
-      const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
+      // const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
+      const type = 'ASTAR';
       const weapon = this.Crafty.e('Weapon')
                                .at(row, col)
                                .setUpStaticPos(row, col)
@@ -452,7 +453,11 @@ class GameState {
           damageCells = this.shootBFSWeapon(player);
         } else if (player.weaponType === weaponTypes.DFS) {
           damageCells = this.shootDFSWeapon(player);
+        } else if (player.weaponType === weaponTypes.ASTAR) {
+          damageCells = this.shootASTARWeapon(player);
         }
+
+        console.log('dmg', damageCells);
 
         this.bufferShootingTime(player);
 
@@ -509,8 +514,7 @@ class GameState {
   shootBFSWeapon(player) {
     let damageCells = [];
     let exploredCells = {};
-    let [rows, cols] = player.getRowsCols();
-    let [initRow, initCol] = [rows[0], cols[0]];
+    let [initRow, initCol] = player.getTopLeftRowCol();
     let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileQueue = [[initRow, initCol]];
     while (remainingDistance > 0 && tileQueue.length !== 0) {
@@ -534,8 +538,7 @@ class GameState {
   shootDFSWeapon(player) {
     let damageCells = [];
     let exploredCells = {};
-    let [rows, cols] = player.getRowsCols();
-    let [row, col] = [rows[0], cols[0]];
+    let [row, col] = player.getTopLeftRowCol();
     let remainingDistance = gameSettings.WEAPON_RANGE;
     let tileStack = [];
     while (remainingDistance > 0) {
@@ -567,6 +570,102 @@ class GameState {
 
     return damageCells;
   }
+
+  shootASTARWeapon(player) {
+    // the priority queue comparator to determine which path is the best path
+    const compareTwoPathCosts = function([tile1, cost1], [tile2, cost2]) {
+      return cost1 - cost2;
+    };
+    let frontier = new PriorityQueue({ comparator: compareTwoPathCosts });
+    let cameFrom = {}; // recording the parent tile (prev path) of a tile
+    // recording the min distance from start tile to a tile
+    let distanceFromStart = {};
+
+    // the goals are the other players
+    let goals = this.getOtherPlayersPos(player.playerId);
+
+    let initPos = player.getTopLeftRowCol();
+    frontier.queue([initPos, 0]); // enqueue the initial pos
+    cameFrom[initPos] = null;
+    distanceFromStart[initPos] = 0;
+
+    // keep expanding from the lowest cost tile to the closest goal
+    while (frontier.length !== 0) {
+      const [curr, cost] = frontier.dequeue();
+
+      const goal = this.getPosEqual(goals, curr);
+      if (goal !== null) {
+        return this.constructPath(cameFrom, goal);
+      }
+
+      const neighborTiles = this.board.getNeighborTiles(curr[0], curr[1]);
+      neighborTiles.forEach(next => {
+        const newDistance = distanceFromStart[curr] + 1;
+        if (distanceFromStart[next] === undefined ||
+            newDistance < distanceFromStart[next]) {
+          distanceFromStart[next] = newDistance;
+          cameFrom[next] = curr;
+          let newCost = newDistance + this.getMinManhattanDistance(next, goals);
+          frontier.queue([next, newCost]);
+        }
+      });
+    }
+
+    return [];
+  }
+
+  // heuristic function for a star algorithm
+  getMinManhattanDistance([row, col], goals) {
+    let shortestDistance = null;
+    for (let i = 0; i < goals.length; i++) {
+      const [goalRow, goalCol] = goals[i];
+      const dRow = Math.abs(row - goalRow);
+      const dCol = Math.abs(col - goalCol);
+      const distance = dRow + dCol;
+      if (shortestDistance === null || distance < shortestDistance) {
+        shortestDistance = distance;
+      }
+    }
+
+    return shortestDistance;
+  }
+
+  getOtherPlayersPos(currPlayerId) {
+    let otherPlayers = Object.keys(this.players).filter(id => {
+      return parseInt(id) !== parseInt(currPlayerId)
+          && this.players[id] !== null;
+    });
+
+    return otherPlayers.map(id => {
+      return this.players[id].getTopLeftRowCol();
+    });
+  }
+
+  // return one of the goals if they're the same distance, else null
+  getPosEqual(goals, curr) {
+    for (let i = 0; i < goals.length; i++) {
+      // if row and col are the same
+      if (curr[0] === goals[i][0] && curr[1] === goals[i][1]) {
+        return goals[i];
+      }
+    }
+
+    return null;
+  }
+
+  // path needs to expand a little more than just the path to goal because
+  // the goal(other player) can be moving around
+  constructPath(cameFrom, goal) {
+    let path = this.board.getNeighborTiles(goal[0], goal[1]);
+    let pos = goal;
+    while (pos !== null) {
+      path.unshift(pos);
+      pos = cameFrom[pos]; // set the pos to prev pos
+    }
+
+    return path;
+  }
+
 
   lowerHP(player, damageEntity) {
     if (!player.hasTakenDamage &&

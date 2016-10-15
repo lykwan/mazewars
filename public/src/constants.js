@@ -40,7 +40,13 @@ const DFS = {
   RATIO: 1 / 4
 };
 
-const actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS];
+const ASTAR = {
+  ORIG_WIDTH: 233,
+  ORIG_HEIGHT: 269,
+  RATIO: 1 / 5
+};
+
+const actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS, ASTAR];
 
 actors.forEach(actor => {
   actor.WIDTH = actor.ORIG_WIDTH * actor.RATIO;
@@ -92,12 +98,14 @@ const mapGrid = {
   BALL: BALL,
   BFS: BFS,
   DFS: DFS,
+  ASTAR: ASTAR,
   CHAR_STEP: 20 // how many steps it needs from one tile to another
 };
 
 const weaponTypes = {
   BFS: 'BFS',
-  DFS: 'DFS'
+  DFS: 'DFS',
+  ASTAR: 'ASTAR'
 };
 
 const gameSettings = {
