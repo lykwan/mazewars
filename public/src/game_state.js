@@ -258,28 +258,27 @@ class GameState {
   gameOver() {
     clearInterval(this.addWeaponIntervalId);
     clearInterval(this.setScoreIntervalId);
-    let winner = null;
-    let winnerScore = 0;
-    let playerIds = Object.keys(this.players);
-    for (let i = 0; i < playerIds.length; i++) {
-      let player = this.players[playerIds[i]];
-      if (player) {
-        let playerScore = player.longestBallHoldingTime;
-        if (playerScore > winnerScore) {
-          winner = player;
-          winnerScore = playerScore;
-        }
-      }
-    }
+    // let winner = null;
+    // let winnerScore = 0;
+    // let playerIds = Object.keys(this.players);
+    // for (let i = 0; i < playerIds.length; i++) {
+    //   let player = this.players[playerIds[i]];
+    //   if (player) {
+    //     let playerScore = player.longestBallHoldingTime;
+    //     if (playerScore > winnerScore) {
+    //       winner = player;
+    //       winnerScore = playerScore;
+    //     }
+    //   }
+    // }
 
-    let winnerId;
-    if (winner !== null) {
-      winnerId = winner.playerId;
-    }
-
+    // let winnerId;
+    // if (winner !== null) {
+    //   winnerId = winner.playerId;
+    // }
+    //
     this.io.to(this.roomId).emit('gameOver', {
-      winnerId: winnerId,
-      winnerScore: winnerScore
+      rankedPlayerScores: this.getRankedPlayerScores()
     });
 
     setTimeout(() => {

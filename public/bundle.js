@@ -213,16 +213,30 @@
 	
 	      // set up game over scene
 	      Crafty.scene('GameOver', function (data) {
-	        Crafty.e('2D, DOM, Text').attr({ x: 0, y: 0, w: 300 }).text('Game Over').textColor('white');
+	        // Crafty.e('2D, DOM, Text')
+	        //       .attr({ x: 0, y: 0, w: 300 })
+	        //       .text('Game Over')
+	        //       .textColor('white');
+	        //
+	        // let winnerText;
+	        // if (data.winnerId !== undefined) {
+	        //   winnerText = `player ${ data.winnerId } has
+	        //           won with ${ data.winnerScore } secs`;
+	        // } else {
+	        //   winnerText = 'No one won!';
+	        // }
 	
-	        var winnerText = void 0;
-	        if (data.winnerId !== undefined) {
-	          winnerText = 'player ' + data.winnerId + ' has\n                won with ' + data.winnerScore + ' secs';
-	        } else {
-	          winnerText = 'No one won!';
-	        }
+	        // Crafty.e('2D, DOM, Text')
+	        //   .attr({ x: 50, y: 50, w: 400})
+	        //   .text(winnerText)
+	        //   .textColor('white');
+	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
+	          var selfPlayerClass = player.playerColor === _this2.selfPlayerColor ? "self-player" : "";
+	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
+	          return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                  <span>' + (i + 1) + '</span>\n                  <img class="icon" src="' + iconImgSrc + '"></img>\n                  <span>' + player.longestBallHoldingTime + '</span>\n                </li>';
+	        });
 	
-	        Crafty.e('2D, DOM, Text').attr({ x: 50, y: 50, w: 400 }).text(winnerText).textColor('white');
+	        $(".game-status").html('\n        <div class="results-container">\n          <h1>GAME OVER</h1>\n          <div class="results container">\n            <h2>SCORE</h2>\n            <h3 class="row-header">PLAYER</h3>\n            <h3 class="row-header">TIME RECORD</h3>\n            <ul class="ranking">\n              ' + rankedPlayerScoreLis.join("") + '\n            </ul>\n          </div>\n        </div>\n      ');
 	      });
 	
 	      // start loading scene
@@ -856,7 +870,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 100, // 200
+	  GAME_DURATION: 60, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};

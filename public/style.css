@@ -3,6 +3,8 @@
   color: white;
   font-size: 0;
   position: relative;
+  height: 672.125px;
+  width: 1186.25px;
 }
 
   #stage {
@@ -42,8 +44,8 @@
   }
 
   .new-room {
-    width: 1210px; /* 1010px + 200px */
-    height: 559px;
+    width: 1186.25px; /* 1010px + 200px */
+    height: 100%;
     background-color: black;
     display: flex;
     align-items: center;
@@ -57,14 +59,14 @@
   }
 
   .waiting-room {
-    width: 1010px; /* 1010px + 200px */
-    height: 559px;
+    width: calc(1186.25px - 200px);
+    height: 100%;
     background: url(../assets/lava_background4.jpg) no-repeat cover;
   }
 
   .waiting-list {
     width: 200px;
-    height: 559px;
+    height: 100%;
     background-color: black;
     font-size: 20px;
   }
@@ -173,7 +175,7 @@
     .weapon-container {
       width: 110px;
       height: 110px;
-      top: 380px;
+      top: 400px;
       left: 1000px;
     }
 
@@ -200,7 +202,7 @@
       width: 240px;
       position: absolute;
       top: 20px;
-      right: 100px;
+      right: 35px;
     }
 
       .scoreboard-container h2 {
@@ -209,12 +211,12 @@
         margin-left: 17px;
       }
 
-      .scoreboard-container img {
+      .ranking img {
         height: 30px;
         margin-left: 5px;
       }
 
-      .scoreboard-container .icon {
+      .ranking .icon {
         margin-right: 10px;
       }
 
@@ -235,6 +237,42 @@
 
       .ball-holder span {
         margin-left: 3px;
+      }
+
+    .results-container {
+      width: 400px;
+      margin: auto;
+      position: absolute;
+      top: 50%;
+      height: 320px;
+      margin-top: -160px;
+      left: 0;
+      right: 0;
+    }
+
+    .results-container h1 {
+      font-size: 45px;
+      color: wheat;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .results {
+      width: 100%;
+      height: 250px;
+      box-sizing: border-box;
+    }
+
+      .results h2 {
+        font-size: 25px;
+        margin-bottom: 20px;
+      }
+
+      .results .row-header {
+        font-size: 15px;
+        margin-right: 15px;
+        display: inline-block;
+        margin-left: 20px;
       }
 
 .hidden {
