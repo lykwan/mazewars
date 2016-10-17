@@ -77,7 +77,7 @@
 	
 	var _init2 = _interopRequireDefault(_init);
 	
-	var _board = __webpack_require__(9);
+	var _board = __webpack_require__(8);
 	
 	var _board2 = _interopRequireDefault(_board);
 	
@@ -88,7 +88,7 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var gameSettings = Constants.gameSettings;
-	var AssetsObj = __webpack_require__(11);
+	var AssetsObj = __webpack_require__(10);
 	
 	var socket = io();
 	/* globals Crafty */
@@ -103,6 +103,7 @@
 	    this.board = null;
 	    this.tileBoard = this.createTileBoard();
 	    this.selfId = null;
+	    this.selfPlayerColor = null;
 	    this.ball = null;
 	    this.translateX = null;
 	    this.translateY = null;
@@ -181,7 +182,7 @@
 	      var _this2 = this;
 	
 	      (0, _init2.default)(Crafty);
-	      Crafty.background('url(../assets/lava_background6.jpg) no-repeat center center');
+	      Crafty.background('url(../assets/lava_background6.jpg)\n                        no-repeat center center');
 	      Crafty.stage.elem.style.backgroundSize = "cover";
 	
 	      this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH, mapGrid.TILE.SURFACE_HEIGHT, mapGrid.NUM_MAZE_ROWS, mapGrid.NUM_MAZE_COLS);
@@ -247,6 +248,7 @@
 	
 	      socket.on('setUpGame', function (data) {
 	        _this3.selfId = data.selfId;
+	        _this3.selfPlayerColor = data.playerColor;
 	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
 	
 	        $('.waiting-list').append('<ul class="players-list"><ul>');
@@ -279,7 +281,7 @@
 	    key: 'appendToPlayersList',
 	    value: function appendToPlayersList(playerColor, isSelfPlayer) {
 	      var selfPlayerClass = isSelfPlayer ? 'self-player' : '';
-	      var iconImgSrc = '../assets/green_char_icon.png';
+	      var iconImgSrc = '../assets/icons/' + playerColor + '_icon.png';
 	      $('.players-list').append('<li class="player-item ' + selfPlayerClass + ' ' + playerColor + '">\n          <img src=' + iconImgSrc + '></img>\n          <span>Player ' + playerColor + '</span>\n        </li>');
 	    }
 	  }, {
@@ -301,7 +303,7 @@
 	      var timerMin = Math.floor(data.timer / 60);
 	      var timerSec = data.timer % 60;
 	      $('#game').append('<div class="game-status"></div>');
-	      $('.game-status').append('<div class=\'timer-container container\'>\n                                <div class=\'timer\'>\n                                  <span class=\'time-left-text\'>TIME LEFT:</span>\n                                  <span class=\'timer-min\'>' + timerMin + '</span>\n                                  <span class=\'time-text\'>MINS</span>\n                                  <span class=\'timer-sec\'>' + timerSec + '</span>\n                                  <span class=\'time-text\'>SECS</span>\n                                </div>\n                              </div>');
+	      $('.game-status').append('<div class=\'timer-container container\'>\n                                <div class=\'timer\'>\n                                  <span class=\'time-left-text\'>TIME LEFT:</span>\n                                  <div class="timer-min-div">\n                                    <span class=\'timer-min\'>' + timerMin + '</span>\n                                    <span class=\'time-text\'>MINS</span>\n                                  </div>\n                                  <div class="timer-sec-div">\n                                    <span class=\'timer-sec\'>' + timerSec + '</span>\n                                    <span class=\'time-text\'>SECS</span>\n                                  </div>\n                                </div>\n                              </div>');
 	
 	      // putting the HP div on the screen
 	      $('.game-status').append('<div class="hp-container container">\n                                  <ul class="hp-list"><ul>\n                                </div>');
@@ -310,8 +312,6 @@
 	      $('.game-status').append('<div class="weapon-container container">\n                                <img class="no-weapon-img"\n                                      src="../assets/clear_sword5.png">\n                              </div>');
 	
 	      // putting scoreboard on the screen
-	      // <h2>Current Ball Holder</h2>
-	      // <div class="ball-holder"></div>
 	      $('.game-status').append('<div class=\'scoreboard-container container\'>\n                                <h2>Ranking</h2>\n                                <ul class=\'ranking\'></ul>\n                              </div>');
 	    }
 	  }, {
@@ -319,7 +319,7 @@
 	    value: function createPlayerEntities(data) {
 	      var _this5 = this;
 	
-	      data.players.forEach(function (playerInfo) {
+	      data.players.forEach(function (playerInfo, idx) {
 	        var _playerInfo$playerPx = _slicedToArray(playerInfo.playerPx, 2);
 	
 	        var playerX = _playerInfo$playerPx[0];
@@ -331,8 +331,10 @@
 	        var playerCol = _playerInfo$playerPos[1];
 	
 	        var player = void 0;
+	        var charSprite = playerInfo.playerColor + 'Sprite';
+	        var selfPlayerClass = void 0;
 	        if (parseInt(playerInfo.playerId) === _this5.selfId) {
-	          player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite').setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
@@ -346,8 +348,12 @@
 	          _this5.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
 	          console.log(_this5.translateX);
 	          console.log(_this5.translateY);
+	
+	          // for displaying purposes. showing the user his/her player color
+	          selfPlayerClass = 'self-player';
 	        } else {
-	          player = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite');
+	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite);
+	          selfPlayerClass = '';
 	        }
 	
 	        player.setUp(playerInfo.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
@@ -377,11 +383,11 @@
 	
 	        // putting each player's hp on the hp div
 	        var HPLevelWidth = player.HP / 100 * mapGrid.FULL_HP_BAR_WIDTH;
-	        var iconImgSrc = '../assets/green_icon.png';
-	        $('.hp-list').append('\n        <li class="' + playerInfo.playerColor + '">\n          <span>' + playerInfo.playerColor + '</span>\n          <div class="hp-bar"\n             style="width: ' + mapGrid.FULL_HP_BAR_WIDTH + 'px;">\n            <div class="hp-level"\n                 style="width: ' + HPLevelWidth + 'px;">\n            </div>\n          </div>\n        </li>');
+	        var iconImgSrc = '../assets/icons/' + playerInfo.playerColor + '_icon.png';
+	        $('.hp-list').append('\n        <li class="' + playerInfo.playerColor + ' ' + selfPlayerClass + '">\n          <span>' + playerInfo.playerColor + '</span>\n          <div class="hp-bar"\n             style="width: ' + mapGrid.FULL_HP_BAR_WIDTH + 'px;">\n            <div class="hp-level"\n                 style="width: ' + HPLevelWidth + 'px;">\n            </div>\n          </div>\n        </li>');
 	
 	        // scoreboard
-	        $('.ranking').append('<li class=\'' + playerInfo.playerColor + '\'>\n                              <img src="' + iconImgSrc + '"></img>\n                              <span>' + player.longestBallHoldingTime + '\n                              </span>\n                            </li>');
+	        $('.ranking').append('<li class=\'' + playerInfo.playerColor + '\n                                        ' + selfPlayerClass + '\'>\n                              <span>' + (idx + 1) + '</span>\n                              <img class="icon" src="' + iconImgSrc + '"></img>\n                              <span>' + player.longestBallHoldingTime + '\n                              </span>\n                            </li>');
 	
 	        _this5.players[playerInfo.playerId] = player;
 	      });
@@ -534,47 +540,46 @@
 	        var player = _this11.players[data.playerId];
 	        player.pickUpBall();
 	        // add ball next to the player with the ball
-	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/blue_ring.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
-	        // $(`.ball-holder`).html(`<img src=${ imgSrc }>
-	        //                         <span class='score'>
-	        //                           ${ data.currentBallHoldingTime }
-	        //                         </span>
-	        //                         `);
+	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/purple_ring.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this11.players[data.playerId].color('black');
+	        _this11.players[data.playerId].loseBall();
 	        $('.ball-holder').remove();
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBallRecord',
 	    value: function setUpShowBallRecord() {
-	      socket.on('showSelfScore', function (data) {
-	        $('#self-record').html('\n          <h2>Ball Duration</h2>\n          <span>\n            Longest Duration Time: ' + data.longestBallHoldingTime + '\n          </span>\n          <span>\n            Current Duration Time: ' + data.currentBallHoldingTime + '\n          </span>');
-	      });
+	      var _this12 = this;
 	
 	      socket.on('showScoreboard', function (data) {
-	        $('.ranking .' + data.playerColor + ' span').text(data.longestBallHoldingTime);
-	        $('.current-score').text(data.currentBallHoldingTime);
+	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
+	          // The ball holder has the record of current ball holding time
+	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/purple_ring.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
+	
+	          var selfPlayerClass = player.playerColor === _this12.selfPlayerColor ? "self-player" : "";
+	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
+	          return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                  <span>' + (i + 1) + '</span>\n                  <img class="icon" src="' + iconImgSrc + '"></img>\n                  <span>' + player.longestBallHoldingTime + '</span>\n                  ' + ballHolderDiv + '\n                </li>';
+	        });
+	
+	        $('.ranking').html(rankedPlayerScoreLis.join(''));
 	      });
 	    }
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this12 = this;
+	      var _this13 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this12.players[_this12.selfId].weaponType = data.type;
-	        var imgSrc = '../assets/dreadbloom_lash.png';
-	        $('.weapon-container .no-weapon-img').remove();
-	        $('.weapon-container').append('<img src=' + imgSrc + '>\n                                      <span class="weapon-type">\n                                        ' + data.type + '\n                                      </span>\n                                    ');
+	        _this13.players[_this13.selfId].weaponType = data.type;
+	        var imgSrc = '../assets/' + data.type + '_weapon_diagonal.png';
+	        $('.weapon-container').html('<img src=' + imgSrc + '>\n                                      <span class="weapon-type">\n                                        ' + data.type + '\n                                      </span>\n                                    ');
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this12.players[data.playerId].loseWeapon();
-	        $('.weapon-container').empty();
-	        $('.weapon-container').append('<img class="no-weapon-img"\n                                          src="../assets/clear_sword5.png">');
+	        _this13.players[data.playerId].loseWeapon();
+	        $('.weapon-container').html('<img class="no-weapon-img"\n                                          src="../assets/clear_sword5.png">');
 	      });
 	    }
 	  }]);
@@ -754,7 +759,7 @@
 	var NUM_COLS = 8;
 	var NUM_MAZE_ROWS = NUM_ROWS * 2 - 1;
 	var NUM_MAZE_COLS = NUM_COLS * 2 - 1;
-	var EXTRA_GAME_DIM = 80;
+	var EXTRA_GAME_DIM = 50;
 	
 	var TILE = {
 	  ORIG_WIDTH: 101,
@@ -782,14 +787,14 @@
 	};
 	
 	var BFS = {
-	  ORIG_WIDTH: 194,
-	  ORIG_HEIGHT: 204,
+	  ORIG_WIDTH: 155,
+	  ORIG_HEIGHT: 363,
 	  RATIO: 1 / 4
 	};
 	
 	var DFS = {
-	  ORIG_WIDTH: 83,
-	  ORIG_HEIGHT: 296,
+	  ORIG_WIDTH: 128,
+	  ORIG_HEIGHT: 313,
 	  RATIO: 1 / 4
 	};
 	
@@ -820,7 +825,6 @@
 	
 	var mapGrid = {
 	  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH + EXTRA_GAME_DIM,
-	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
 	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT + EXTRA_GAME_DIM,
 	  EXTRA_GAME_DIM: EXTRA_GAME_DIM,
 	  NUM_ROWS: NUM_ROWS,
@@ -848,11 +852,11 @@
 	  WEAPON_RANGE: 10,
 	  BUFFER_DAMAGE_TIME: 1000,
 	  BUFFER_SHOOTING_TIME: 1500,
-	  WEAPON_SPAWN_TIME: 3000,
+	  WEAPON_SPAWN_TIME: 5000,
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 50, // 200
+	  GAME_DURATION: 100, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
@@ -957,14 +961,6 @@
 	    },
 	
 	
-	    setUp: function setUp(playerId, playerColor) {
-	      this.playerId = playerId;
-	      if (playerColor) {
-	        this.playerColor = playerColor;
-	      }
-	      return this;
-	    },
-	
 	    setUpSocket: function setUpSocket(socket) {
 	      this.socket = socket;
 	      return this;
@@ -987,11 +983,6 @@
 	      });
 	    },
 	
-	    pickUpBall: function pickUpBall() {
-	      this.color('white');
-	      return this;
-	    },
-	
 	    shootWeapon: function shootWeapon() {
 	      this.socket.emit('shootWeapon', {
 	        playerId: this.playerId
@@ -1007,31 +998,12 @@
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
 	      this.requires('Player');
-	    },
-	
-	    setUp: function setUp(playerId, playerColor, weaponDisplayId) {
-	      this.playerId = playerId;
-	
-	      if (playerColor) {
-	        this.playerColor = playerColor;
-	      }
-	
-	      if (weaponDisplayId) {
-	        this.weaponDisplayId = weaponDisplayId;
-	      }
-	
-	      return this;
-	    },
-	
-	    pickUpBall: function pickUpBall() {
-	      this.color('white');
-	      return this;
 	    }
 	  });
 	
 	  Crafty.c('Player', {
 	    init: function init() {
-	      this.requires('Actor, Color');
+	      this.requires('Actor');
 	      this.HP = 100;
 	      this.longestBallHoldingTime = 0;
 	      this.currentBallHoldingTime = 0;
@@ -1061,6 +1033,26 @@
 	      this.reel('PlayerMovingDown', 600, 0, 1, 5);
 	      this.reel('PlayerMovingUp', 600, 0, 2, 5);
 	      this.reel('PlayerMovingLeft', 600, 0, 2, 5);
+	      return this;
+	    },
+	
+	    setUp: function setUp(playerId, playerColor) {
+	      this.playerId = playerId;
+	      if (playerColor) {
+	        this.playerColor = playerColor;
+	      }
+	      return this;
+	    },
+	
+	    pickUpBall: function pickUpBall() {
+	      this.addComponent('purpleSprite');
+	      this.removeComponent(this.playerColor + 'Sprite');
+	      return this;
+	    },
+	
+	    loseBall: function loseBall() {
+	      this.addComponent(this.playerColor + 'Sprite');
+	      this.removeComponent('purpleSprite');
 	      return this;
 	    }
 	  });
@@ -1127,8 +1119,7 @@
 	};
 
 /***/ },
-/* 8 */,
-/* 9 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1141,7 +1132,7 @@
 	
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
-	var Cell = __webpack_require__(10);
+	var Cell = __webpack_require__(9);
 	
 	var Board = function () {
 	  function Board(m, n, seedRandomStr) {
@@ -1374,7 +1365,7 @@
 	module.exports = Board;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1392,7 +1383,7 @@
 	module.exports = Cell;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1423,35 +1414,63 @@
 	        'greenActiveTileSprite': [0, 0]
 	      }
 	    },
-	    '../assets/green_char.png': {
+	    '../assets/char/green_char.png': {
 	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
 	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
 	      'map': {
 	        'greenSprite': [0, 0]
 	      }
 	    },
-	    '../assets/blue_ring.png': {
+	    '../assets/char/blue_char.png': {
+	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	      'map': {
+	        'blueSprite': [0, 0]
+	      }
+	    },
+	    '../assets/char/red_char.png': {
+	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	      'map': {
+	        'redSprite': [0, 0]
+	      }
+	    },
+	    '../assets/char/yellow_char.png': {
+	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	      'map': {
+	        'yellowSprite': [0, 0]
+	      }
+	    },
+	    '../assets/char/purple_char.png': {
+	      'tile': mapGrid.PLAYER.ORIG_WIDTH,
+	      'tileh': mapGrid.PLAYER.ORIG_HEIGHT,
+	      'map': {
+	        'purpleSprite': [0, 0]
+	      }
+	    },
+	    '../assets/purple_ring.png': {
 	      'tile': mapGrid.BALL.ORIG_WIDTH,
 	      'tileh': mapGrid.BALL.ORIG_HEIGHT,
 	      'map': {
 	        'ballSprite': [0, 0]
 	      }
 	    },
-	    '../assets/flamesword.png': {
+	    '../assets/bfs_weapon.png': {
 	      'tile': mapGrid.BFS.ORIG_WIDTH,
 	      'tileh': mapGrid.BFS.ORIG_HEIGHT,
 	      'map': {
 	        'BFSSprite': [0, 0]
 	      }
 	    },
-	    '../assets/purple_sword2.png': {
+	    '../assets/dfs_weapon.png': {
 	      'tile': mapGrid.DFS.ORIG_WIDTH,
 	      'tileh': mapGrid.DFS.ORIG_HEIGHT,
 	      'map': {
 	        'DFSSprite': [0, 0]
 	      }
 	    },
-	    '../assets/dreadbloom_lash.png': {
+	    '../assets/astar_weapon.png': {
 	      'tile': mapGrid.ASTAR.ORIG_WIDTH,
 	      'tileh': mapGrid.ASTAR.ORIG_HEIGHT,
 	      'map': {

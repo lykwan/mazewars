@@ -16,6 +16,7 @@ class Game {
     this.board = null;
     this.tileBoard = this.createTileBoard();
     this.selfId = null;
+    this.selfPlayerColor = null;
     this.ball = null;
     this.translateX = null;
     this.translateY = null;
@@ -94,9 +95,9 @@ class Game {
 
   setUpGame() {
     initGame(Crafty);
-    Crafty.background('url(../assets/lava_background6.jpg) no-repeat center center');
+    Crafty.background(`url(../assets/lava_background6.jpg)
+                        no-repeat center center`);
     Crafty.stage.elem.style.backgroundSize = "cover";
-
 
     this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH,
                                        mapGrid.TILE.SURFACE_HEIGHT,
@@ -167,6 +168,7 @@ class Game {
 
     socket.on('setUpGame', data => {
       this.selfId = data.selfId;
+      this.selfPlayerColor = data.playerColor;
       this.board = new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
                     data.seedRandomStr, Crafty);
 
@@ -196,7 +198,7 @@ class Game {
 
   appendToPlayersList(playerColor, isSelfPlayer) {
     let selfPlayerClass = isSelfPlayer ? 'self-player' : '';
-    let iconImgSrc = `../assets/green_char_icon.png`;
+    let iconImgSrc = `../assets/icons/${ playerColor }_icon.png`;
     $('.players-list').append(
       `<li class="player-item ${ selfPlayerClass } ${ playerColor }">
           <img src=${ iconImgSrc }></img>
@@ -224,10 +226,14 @@ class Game {
     $('.game-status').append(`<div class='timer-container container'>
                                 <div class='timer'>
                                   <span class='time-left-text'>TIME LEFT:</span>
-                                  <span class='timer-min'>${ timerMin }</span>
-                                  <span class='time-text'>MINS</span>
-                                  <span class='timer-sec'>${ timerSec }</span>
-                                  <span class='time-text'>SECS</span>
+                                  <div class="timer-min-div">
+                                    <span class='timer-min'>${ timerMin }</span>
+                                    <span class='time-text'>MINS</span>
+                                  </div>
+                                  <div class="timer-sec-div">
+                                    <span class='timer-sec'>${ timerSec }</span>
+                                    <span class='time-text'>SECS</span>
+                                  </div>
                                 </div>
                               </div>`);
 
@@ -243,8 +249,6 @@ class Game {
                               </div>`);
 
     // putting scoreboard on the screen
-                                // <h2>Current Ball Holder</h2>
-                                // <div class="ball-holder"></div>
     $('.game-status').append(`<div class='scoreboard-container container'>
                                 <h2>Ranking</h2>
                                 <ul class='ranking'></ul>
@@ -252,16 +256,18 @@ class Game {
   }
 
   createPlayerEntities(data) {
-    data.players.forEach(playerInfo => {
+    data.players.forEach((playerInfo, idx) => {
       let [playerX, playerY] = playerInfo.playerPx;
       let [playerRow, playerCol] = playerInfo.playerPos;
       let player;
+      let charSprite = `${ playerInfo.playerColor }Sprite`;
+      let selfPlayerClass;
       if (parseInt(playerInfo.playerId) === this.selfId) {
-        player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite')
-                        .setUpSocket(socket)
-                        .setUpSetBallTime()
-                        .bindingKeyEvents()
-                        .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+        player = Crafty.e(`SelfPlayer, SpriteAnimation, ${ charSprite }`)
+                  .setUpSocket(socket)
+                  .setUpSetBallTime()
+                  .bindingKeyEvents()
+                  .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 
         this.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 
@@ -276,8 +282,12 @@ class Game {
         ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
         console.log(this.translateX);
         console.log(this.translateY);
+
+        // for displaying purposes. showing the user his/her player color
+        selfPlayerClass = 'self-player';
       } else {
-        player = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite');
+        player = Crafty.e(`SelfPlayer, SpriteAnimation, ${ charSprite }`);
+        selfPlayerClass = '';
       }
 
       player.setUp(playerInfo.playerId, playerInfo.playerColor)
@@ -310,9 +320,9 @@ class Game {
 
       // putting each player's hp on the hp div
       const HPLevelWidth = (player.HP / 100) * mapGrid.FULL_HP_BAR_WIDTH;
-      const iconImgSrc = `../assets/green_icon.png`;
+      const iconImgSrc = `../assets/icons/${ playerInfo.playerColor}_icon.png`;
       $('.hp-list').append(`
-        <li class="${ playerInfo.playerColor }">
+        <li class="${ playerInfo.playerColor } ${ selfPlayerClass }">
           <span>${ playerInfo.playerColor }</span>
           <div class="hp-bar"
              style="width: ${ mapGrid.FULL_HP_BAR_WIDTH }px;">
@@ -323,8 +333,10 @@ class Game {
         </li>`);
 
       // scoreboard
-      $('.ranking').append(`<li class='${ playerInfo.playerColor }'>
-                              <img src="${ iconImgSrc }"></img>
+      $('.ranking').append(`<li class='${ playerInfo.playerColor }
+                                        ${ selfPlayerClass }'>
+                              <span>${ idx + 1 }</span>
+                              <img class="icon" src="${ iconImgSrc }"></img>
                               <span>${ player.longestBallHoldingTime }
                               </span>
                             </li>`);
@@ -468,50 +480,50 @@ class Game {
       // add ball next to the player with the ball
       $(`.ranking .${ data.playerColor }`).append(`
           <div class="ball-holder">
-            <img src="../assets/blue_ring.png">
+            <img src="../assets/purple_ring.png">
             <span class="current-score">${ data.currentBallHoldingTime }</span>
           </div>
         `);
-      // $(`.ball-holder`).html(`<img src=${ imgSrc }>
-      //                         <span class='score'>
-      //                           ${ data.currentBallHoldingTime }
-      //                         </span>
-      //                         `);
     });
 
     socket.on('loseBall', data => {
-      this.players[data.playerId]
-                  .color('black');
-      $(`.ball-holder`).remove();
+      this.players[data.playerId].loseBall();
+      $('.ball-holder').remove();
     });
   }
 
   setUpShowBallRecord() {
-    socket.on('showSelfScore', data => {
-      $('#self-record')
-        .html(`
-          <h2>Ball Duration</h2>
-          <span>
-            Longest Duration Time: ${ data.longestBallHoldingTime }
-          </span>
-          <span>
-            Current Duration Time: ${ data.currentBallHoldingTime }
-          </span>`);
-    });
-
     socket.on('showScoreboard', data => {
-      $(`.ranking .${ data.playerColor } span`)
-          .text(data.longestBallHoldingTime);
-      $(`.current-score`).text(data.currentBallHoldingTime);
+      const rankedPlayerScoreLis = data.rankedPlayerScores.map((player, i) => {
+        // The ball holder has the record of current ball holding time
+        const ballHolderDiv = data.playerColor === player.playerColor ?
+                                `<div class='ball-holder'>
+                                  <img src="../assets/purple_ring.png">
+                                  <span>${ data.currentBallHoldingTime }</span>
+                                </div>` :
+                                "";
+
+        const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
+                                    "self-player" :
+                                    "";
+        const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
+        return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
+                  <span>${ i + 1 }</span>
+                  <img class="icon" src="${ iconImgSrc }"></img>
+                  <span>${ player.longestBallHoldingTime }</span>
+                  ${ ballHolderDiv }
+                </li>`;
+      });
+
+      $('.ranking').html(rankedPlayerScoreLis.join(''));
     });
   }
 
   setUpHaveWeapon() {
     socket.on('pickUpWeapon', data => {
       this.players[this.selfId].weaponType = data.type;
-      let imgSrc = '../assets/dreadbloom_lash.png';
-      $('.weapon-container .no-weapon-img').remove();
-      $('.weapon-container').append(`<img src=${ imgSrc }>
+      let imgSrc = `../assets/${ data.type }_weapon_diagonal.png`;
+      $('.weapon-container').html(`<img src=${ imgSrc }>
                                       <span class="weapon-type">
                                         ${ data.type }
                                       </span>
@@ -520,8 +532,7 @@ class Game {
 
     socket.on('loseWeapon', data => {
       this.players[data.playerId].loseWeapon();
-      $('.weapon-container').empty();
-      $('.weapon-container').append(`<img class="no-weapon-img"
+      $('.weapon-container').html(`<img class="no-weapon-img"
                                           src="../assets/clear_sword5.png">`
                                     );
     });
