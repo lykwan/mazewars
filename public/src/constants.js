@@ -2,11 +2,12 @@ const NUM_ROWS = 8;
 const NUM_COLS = 8;
 const NUM_MAZE_ROWS =  NUM_ROWS * 2 - 1;
 const NUM_MAZE_COLS = NUM_COLS * 2 - 1;
+const EXTRA_GAME_DIM = 80;
 
 const TILE = {
   ORIG_WIDTH: 101,
   ORIG_HEIGHT: 122,
-  RATIO: 2 / 3,
+  RATIO: 3 / 4,
   Z: 0
 };
 
@@ -65,29 +66,12 @@ actors.slice(1).forEach(actor => {
   //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
   // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
 });
-  console.log(PLAYER.Z);
-  console.log(BALL.Z);
-  console.log(BFS.Z);
-
-// const TILE_ORIG_WIDTH = 101;
-// const TILE_ORIG_HEIGHT = 122;
-// const TILE_RATIO = (1 / 2);
-// const TILE_WIDTH = TILE_ORIG_WIDTH * TILE_RATIO;
-// const TILE_HEIGHT = TILE_ORIG_HEIGHT * TILE_RATIO;
-// const TILE_SURFACE_HEIGHT = TILE_WIDTH / 2;
-
-// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [40, 54];
-// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [101, 122];
-// const PLAYER_RATIO = (1 / 2);
-// const PLAYER_WIDTH = PLAYER_ORIG_WIDTH * PLAYER_RATIO;
-// const PLAYER_HEIGHT = PLAYER_ORIG_HEIGHT * PLAYER_RATIO;
-// const PLAYER_SURFACE_HEIGHT = PLAYER_WIDTH / 2;
-// the z layer if it was the same height as the tile
 
 const mapGrid = {
-  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH,
+  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH + EXTRA_GAME_DIM,
   // CHANGE TILE HEIGHT TO CHAR HEIGHT
-  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT,
+  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT + EXTRA_GAME_DIM,
+  EXTRA_GAME_DIM: EXTRA_GAME_DIM,
   NUM_ROWS: NUM_ROWS,
   NUM_COLS: NUM_COLS,
   NUM_MAZE_ROWS: NUM_MAZE_ROWS,
@@ -99,7 +83,8 @@ const mapGrid = {
   BFS: BFS,
   DFS: DFS,
   ASTAR: ASTAR,
-  CHAR_STEP: 20 // how many steps it needs from one tile to another
+  CHAR_STEP: 20, // how many steps it needs from one tile to another
+  FULL_HP_BAR_WIDTH: 130
 };
 
 const weaponTypes = {
