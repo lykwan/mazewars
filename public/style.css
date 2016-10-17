@@ -74,7 +74,7 @@
     }
 
     .self-player {
-      color: yellow;
+      color: #F4D03F;
     }
 
   .error-msg {
@@ -90,6 +90,7 @@
     bottom: 0;
     z-index: 100;
     font-family: 'Bungee Inline', cursive;
+    color: #a59c9d;
   }
 
     .container {
@@ -100,7 +101,7 @@
     }
 
     .timer-container {
-      width: 270px;
+      width: 280px;
       margin: auto;
       margin-top: 10px;
     }
@@ -109,14 +110,24 @@
         margin: auto;
       }
 
+      .timer-min-div {
+        width: 94px;
+        display: inline-block;
+        position: relative;
+      }
+
+      .timer-sec-div {
+        width: 94px;
+        display: inline-block;
+        position: relative;
+      }
+
       .timer-min {
         font-size: 40px;
-        color: white;
       }
 
       .timer-sec {
         font-size: 40px;
-        color: white;
       }
 
       .timer .time-left-text {
@@ -129,7 +140,9 @@
       .timer .time-text {
         font-size: 10px;
         margin-right: 10px;
-        margin-left: 10px;
+        position: absolute;
+        bottom: 5px;
+        right: 0px;
       }
 
     .hp-container {
@@ -179,8 +192,12 @@
         margin: auto;
       }
 
+      .weapon-container .no-weapon-img {
+        opacity: 0.6;
+      }
+
     .scoreboard-container {
-      width: 220px;
+      width: 240px;
       position: absolute;
       top: 20px;
       right: 100px;
@@ -188,11 +205,17 @@
 
       .scoreboard-container h2 {
         font-size: 20px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
+        margin-left: 17px;
       }
 
       .scoreboard-container img {
         height: 30px;
+        margin-left: 5px;
+      }
+
+      .scoreboard-container .icon {
+        margin-right: 10px;
       }
 
       .ranking li {
@@ -202,13 +225,16 @@
         margin-bottom: 5px;
       }
 
-      .ranking li span {
-        margin-left: 10px;
+      .ball-holder {
+        width: 70px;
+        display: flex;
+        align-items: center;
+        position: absolute;
+        right: 24px;
       }
 
-      .ball-holder {
-        display: inline-block;
-        margin-left: 25px;
+      .ball-holder span {
+        margin-left: 3px;
       }
 
 .hidden {

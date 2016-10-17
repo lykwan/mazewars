@@ -196,6 +196,7 @@ class GameState {
       if (!this.ballHolder ||
           player.playerId !== this.ballHolder.playerId) {
         clearInterval(this.setScoreIntervalId);
+        return;
       }
 
       player.currentBallHoldingTime++;
@@ -210,11 +211,31 @@ class GameState {
   }
 
   showScoreboard(player) {
+    const rankedPlayerScores = this.getRankedPlayerScores();
+
     this.io.to(this.roomId).emit('showScoreboard', {
       playerColor: player.playerColor,
-      longestBallHoldingTime: player.longestBallHoldingTime,
-      currentBallHoldingTime: player.currentBallHoldingTime
+      currentBallHoldingTime: player.currentBallHoldingTime,
+      rankedPlayerScores: rankedPlayerScores
     });
+  }
+
+  // sorting from the highest score to the lowest
+  getRankedPlayerScores() {
+    const allPlayerScores = Object.keys(this.players).filter(id => {
+      return this.players[id] !== null;
+    }).map(id => {
+      return {
+        playerColor: this.players[id].playerColor,
+        longestBallHoldingTime: this.players[id].longestBallHoldingTime
+      };
+    });
+
+    const scoreFromHighToLow = function(player1, player2) {
+      return player2.longestBallHoldingTime - player1.longestBallHoldingTime;
+    };
+
+    return allPlayerScores.sort(scoreFromHighToLow);
   }
 
   addTimer() {
@@ -289,7 +310,7 @@ class GameState {
     });
 
     this.Crafty('Damage').each(function(i) {
-      // clearInterval(this.checkCollisionInterval);
+      clearInterval(this.checkCollisionInterval);
       this.destroy();
     });
 
@@ -709,7 +730,8 @@ class GameState {
   }
 
   loseBall(player) {
-    this.addBall(player.getMazeCol(), player.getMazeRow());
+    let [row, col] = player.getTopLeftRowCol();
+    this.addBall(row, col);
     this.ballHolder = null;
 
     this.io.to(this.roomId).emit('loseBall', {

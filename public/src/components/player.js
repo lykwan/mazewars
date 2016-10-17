@@ -87,14 +87,6 @@ module.exports = function(Crafty) {
       this.y += (h / this.charStep) * dirY;
     },
 
-    setUp: function(playerId, playerColor) {
-      this.playerId = playerId;
-      if (playerColor) {
-        this.playerColor = playerColor;
-      }
-      return this;
-    },
-
     setUpSocket: function(socket) {
       this.socket = socket;
       return this;
@@ -115,11 +107,6 @@ module.exports = function(Crafty) {
       });
     },
 
-    pickUpBall: function() {
-      this.color('white');
-      return this;
-    },
-
     shootWeapon: function() {
       this.socket.emit('shootWeapon', {
         playerId: this.playerId
@@ -135,31 +122,12 @@ module.exports = function(Crafty) {
   Crafty.c('OtherPlayer', {
     init: function() {
       this.requires('Player');
-    },
-
-    setUp: function(playerId, playerColor, weaponDisplayId) {
-      this.playerId = playerId;
-
-      if (playerColor) {
-        this.playerColor = playerColor;
-      }
-
-      if (weaponDisplayId) {
-        this.weaponDisplayId = weaponDisplayId;
-      }
-
-      return this;
-    },
-
-    pickUpBall: function() {
-      this.color('white');
-      return this;
     }
   });
 
   Crafty.c('Player', {
     init: function() {
-      this.requires('Actor, Color');
+      this.requires('Actor');
       this.HP = 100;
       this.longestBallHoldingTime = 0;
       this.currentBallHoldingTime = 0;
@@ -193,6 +161,26 @@ module.exports = function(Crafty) {
       this.reel('PlayerMovingDown', 600, 0, 1, 5);
       this.reel('PlayerMovingUp', 600, 0, 2, 5);
       this.reel('PlayerMovingLeft', 600, 0, 2, 5);
+      return this;
+    },
+
+    setUp: function(playerId, playerColor) {
+      this.playerId = playerId;
+      if (playerColor) {
+        this.playerColor = playerColor;
+      }
+      return this;
+    },
+
+    pickUpBall: function() {
+      this.addComponent('purpleSprite');
+      this.removeComponent(`${ this.playerColor }Sprite`);
+      return this;
+    },
+
+    loseBall: function() {
+      this.addComponent(`${ this.playerColor }Sprite`);
+      this.removeComponent('purpleSprite');
       return this;
     }
   });
