@@ -130,23 +130,48 @@ class Game {
 
     // set up game over scene
     Crafty.scene('GameOver', (data) => {
-      Crafty.e('2D, DOM, Text')
-            .attr({ x: 0, y: 0, w: 300 })
-            .text('Game Over')
-            .textColor('white');
+      // Crafty.e('2D, DOM, Text')
+      //       .attr({ x: 0, y: 0, w: 300 })
+      //       .text('Game Over')
+      //       .textColor('white');
+      //
+      // let winnerText;
+      // if (data.winnerId !== undefined) {
+      //   winnerText = `player ${ data.winnerId } has
+      //           won with ${ data.winnerScore } secs`;
+      // } else {
+      //   winnerText = 'No one won!';
+      // }
 
-      let winnerText;
-      if (data.winnerId !== undefined) {
-        winnerText = `player ${ data.winnerId } has
-                won with ${ data.winnerScore } secs`;
-      } else {
-        winnerText = 'No one won!';
-      }
+      // Crafty.e('2D, DOM, Text')
+      //   .attr({ x: 50, y: 50, w: 400})
+      //   .text(winnerText)
+      //   .textColor('white');
+      const rankedPlayerScoreLis = data.rankedPlayerScores.map((player, i) => {
+        const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
+                                  "self-player" :
+                                  "";
+        const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
+        return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
+                  <span>${ i + 1 }</span>
+                  <img class="icon" src="${ iconImgSrc }"></img>
+                  <span>${ player.longestBallHoldingTime }</span>
+                </li>`;
+      });
 
-      Crafty.e('2D, DOM, Text')
-        .attr({ x: 50, y: 50, w: 400})
-        .text(winnerText)
-        .textColor('white');
+      $(".game-status").html(`
+        <div class="results-container">
+          <h1>GAME OVER</h1>
+          <div class="results container">
+            <h2>SCORE</h2>
+            <h3 class="row-header">PLAYER</h3>
+            <h3 class="row-header">TIME RECORD</h3>
+            <ul class="ranking">
+              ${ rankedPlayerScoreLis.join("") }
+            </ul>
+          </div>
+        </div>
+      `);
     });
 
     // start loading scene
