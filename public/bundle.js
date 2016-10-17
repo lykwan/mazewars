@@ -77,10 +77,6 @@
 	
 	var _init2 = _interopRequireDefault(_init);
 	
-	var _client_model = __webpack_require__(8);
-	
-	var _client_model2 = _interopRequireDefault(_client_model);
-	
 	var _board = __webpack_require__(9);
 	
 	var _board2 = _interopRequireDefault(_board);
@@ -108,8 +104,8 @@
 	    this.tileBoard = this.createTileBoard();
 	    this.selfId = null;
 	    this.ball = null;
-	    this.translateX = 0;
-	    this.translateY = 0;
+	    this.translateX = null;
+	    this.translateY = null;
 	  }
 	
 	  _createClass(Game, [{
@@ -152,7 +148,7 @@
 	
 	        // load room content
 	        // TODO: change link
-	        $('.game-status').removeClass('hidden');
+	        $('.waiting-list').removeClass('hidden');
 	        $('.waiting-room').removeClass('hidden');
 	        $('.waiting-room').append('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n        </div>');
 	
@@ -185,7 +181,8 @@
 	      var _this2 = this;
 	
 	      (0, _init2.default)(Crafty);
-	      Crafty.background('url(../assets/free-space-background-7.png) repeat');
+	      Crafty.background('url(../assets/lava_background6.jpg) no-repeat center center');
+	      Crafty.stage.elem.style.backgroundSize = "cover";
 	
 	      this.iso = Crafty.diamondIso.init(mapGrid.TILE.WIDTH, mapGrid.TILE.SURFACE_HEIGHT, mapGrid.NUM_MAZE_ROWS, mapGrid.NUM_MAZE_COLS);
 	
@@ -252,7 +249,7 @@
 	        _this3.selfId = data.selfId;
 	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
 	
-	        $('.game-status').append('<ul class="players-list"><ul>');
+	        $('.waiting-list').append('<ul class="players-list"><ul>');
 	        _this3.appendToPlayersList(data.playerColor, true);
 	      });
 	
@@ -288,17 +285,40 @@
 	  }, {
 	    key: 'setUpNewGame',
 	    value: function setUpNewGame(data) {
-	      var _this5 = this;
-	
+	      this.setUpGameStatus(data);
+	      this.createPlayerEntities(data);
+	      this.createMapEntities();
+	    }
+	  }, {
+	    key: 'setUpGameStatus',
+	    value: function setUpGameStatus(data) {
 	      // add the game stage div in and remove the loading scene
 	      $('.stage-container').removeClass('hidden');
 	      $('.waiting-room').remove();
+	      $('.waiting-list').remove();
 	
-	      $('#game-status').append('<div id=\'hp\'>\n                              <h2>HP</h2>\n                             </div>');
-	      $('#game-status').append('<div id=\'timer\'>\n                              <h2>Timer</h2>\n                              <span id=\'timer-countdown\'>\n                                ' + data.timer + '\n                              </span>\n                             </div>');
-	      $('#game-status').append('<div id=\'self-record\'>\n                                <h2>Ball Duration</h2>\n                                Longest Duration Time: 0\n                                Current Duration Time: 0\n                             </div>');
-	      $('#game-status').append('<div id=\'scoreboard\'>\n                              <h2>Scoreboard</h2>\n                             </div>');
-	      $('#game-status').append('<div id="weapon">\n                                <h2>Weapon</h2>\n                                <div id=\'weapon-img\'></div>\n                                <div id=\'weapon-type\'></div>\n                             </div>');
+	      // putting the timer on the screen
+	      var timerMin = Math.floor(data.timer / 60);
+	      var timerSec = data.timer % 60;
+	      $('#game').append('<div class="game-status"></div>');
+	      $('.game-status').append('<div class=\'timer-container container\'>\n                                <div class=\'timer\'>\n                                  <span class=\'time-left-text\'>TIME LEFT:</span>\n                                  <span class=\'timer-min\'>' + timerMin + '</span>\n                                  <span class=\'time-text\'>MINS</span>\n                                  <span class=\'timer-sec\'>' + timerSec + '</span>\n                                  <span class=\'time-text\'>SECS</span>\n                                </div>\n                              </div>');
+	
+	      // putting the HP div on the screen
+	      $('.game-status').append('<div class="hp-container container">\n                                  <ul class="hp-list"><ul>\n                                </div>');
+	
+	      // putting the weapon display on the screen
+	      $('.game-status').append('<div class="weapon-container container">\n                                <img class="no-weapon-img"\n                                      src="../assets/clear_sword5.png">\n                              </div>');
+	
+	      // putting scoreboard on the screen
+	      // <h2>Current Ball Holder</h2>
+	      // <div class="ball-holder"></div>
+	      $('.game-status').append('<div class=\'scoreboard-container container\'>\n                                <h2>Ranking</h2>\n                                <ul class=\'ranking\'></ul>\n                              </div>');
+	    }
+	  }, {
+	    key: 'createPlayerEntities',
+	    value: function createPlayerEntities(data) {
+	      var _this5 = this;
+	
 	      data.players.forEach(function (playerInfo) {
 	        var _playerInfo$playerPx = _slicedToArray(playerInfo.playerPx, 2);
 	
@@ -310,15 +330,12 @@
 	        var playerRow = _playerInfo$playerPos[0];
 	        var playerCol = _playerInfo$playerPos[1];
 	
+	        var player = void 0;
 	        if (parseInt(playerInfo.playerId) === _this5.selfId) {
-	          var player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite').setUp(playerInfo.playerId, playerInfo.playerColor).setUpSocket(socket).setUpSetBallTime().setUpAnimation().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+	          player = Crafty.e('SelfPlayer, SpriteAnimation, greenSprite').setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
-	          // place it on isometric map
-	          // this.iso.place(player, playerRow, playerCol, mapGrid.ACTOR_Z);
 	          _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
-	          // after placing it on isometric map, figure out the translation of px
-	          // from the server side to client side rendering
 	          _this5.translateX = player.x - playerX;
 	          _this5.translateY = player.y - playerY;
 	
@@ -327,33 +344,47 @@
 	          // render the player block in the top left corner instead
 	          _this5.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
 	          _this5.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
-	
-	          // translate the player px in the initial rendering as well
-	          player.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
-	          player.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
-	
-	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                                  Player ' + playerInfo.playerId + ': ' + player.HP + '\n                                 </span>');
-	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n              Player ' + playerInfo.playerId + ': ' + player.longestBallHoldingTime + '\n                                 </span>');
-	
-	          _this5.players[playerInfo.playerId] = player;
+	          console.log(_this5.translateX);
+	          console.log(_this5.translateY);
 	        } else {
-	          var otherPlayer = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite').setUp(data.players.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
-	
-	          // place it on isometric map
-	          _this5.iso.place(otherPlayer, playerRow, playerCol, mapGrid.PLAYER.Z);
-	
-	          // translate the player px in the initial rendering as well
-	          otherPlayer.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
-	          otherPlayer.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
-	
-	          $('#hp').append('<span class=\'player-' + playerInfo.playerId + '\'>\n                            Player ' + playerInfo.playerId + ': ' + otherPlayer.HP + '\n                           </span>');
-	          $('#scoreboard').append('<span class=\'player-' + playerInfo.playerId + '\'>\n          Player ' + playerInfo.playerId + ': 0\n                                 </span>');
-	
-	          _this5.players[playerInfo.playerId] = otherPlayer;
+	          player = Crafty.e('OtherPlayer, SpriteAnimation, greenSprite');
 	        }
-	      });
 	
-	      this.createMapEntities();
+	        player.setUp(playerInfo.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+	
+	        // place it on isometric map
+	        _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
+	
+	        // after placing it on isometric map, figure out the translation of px
+	        // from the server side to client side rendering
+	        if (playerInfo.playerId === _this5.selfId) {}
+	        // this.translateX = player.x - playerX;
+	        // this.translateY = player.y - playerY;
+	        //
+	        // // since the player block always starts at bottom left corner
+	        // // when rendering, we need to account for the translation so we can
+	        // // render the player block in the top left corner instead
+	        // this.translateX += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
+	        // this.translateY -=
+	        // ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
+	        // console.log(this.translateX);
+	        // console.log(this.translateY);
+	
+	
+	        // translate the player px in the initial rendering as well
+	        player.x += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	        player.y -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
+	
+	        // putting each player's hp on the hp div
+	        var HPLevelWidth = player.HP / 100 * mapGrid.FULL_HP_BAR_WIDTH;
+	        var iconImgSrc = '../assets/green_icon.png';
+	        $('.hp-list').append('\n        <li class="' + playerInfo.playerColor + '">\n          <span>' + playerInfo.playerColor + '</span>\n          <div class="hp-bar"\n             style="width: ' + mapGrid.FULL_HP_BAR_WIDTH + 'px;">\n            <div class="hp-level"\n                 style="width: ' + HPLevelWidth + 'px;">\n            </div>\n          </div>\n        </li>');
+	
+	        // scoreboard
+	        $('.ranking').append('<li class=\'' + playerInfo.playerColor + '\'>\n                              <img src="' + iconImgSrc + '"></img>\n                              <span>' + player.longestBallHoldingTime + '\n                              </span>\n                            </li>');
+	
+	        _this5.players[playerInfo.playerId] = player;
+	      });
 	    }
 	  }, {
 	    key: 'createMapEntities',
@@ -373,7 +404,7 @@
 	      }
 	
 	      Crafty.viewport.x = mapGrid.GAME_WIDTH / 2;
-	      Crafty.viewport.y = 0 + mapGrid.PLAYER.HEIGHT;
+	      Crafty.viewport.y = mapGrid.EXTRA_GAME_DIM / 2 + mapGrid.PLAYER.HEIGHT;
 	    }
 	  }, {
 	    key: 'setUpPlayersMovement',
@@ -398,19 +429,15 @@
 	        if (player) {
 	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
 	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-	            // this.charMove.right = false;
 	          }
 	          if (data.keyCode === Crafty.keys.LEFT_ARROW) {
 	            if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-	            // this.charMove.left = false;
 	          }
 	          if (data.keyCode === Crafty.keys.UP_ARROW) {
 	            if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-	            // this.charMove.up = false;
 	          }
 	          if (data.keyCode === Crafty.keys.DOWN_ARROW) {
 	            if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-	            // this.charMove.down = false;
 	          }
 	        }
 	      });
@@ -424,11 +451,6 @@
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
 	
 	        var sprite = data.type + 'Sprite';
-	        // if (data.type === 'BFS') {
-	        //   weapon.addComponent('BFSSprite');
-	        // } else if (data.type === 'DFS') {
-	        //   weapon.addComponent('DFSSprite');
-	        // }
 	
 	        weapon.addComponent(sprite);
 	        weapon.attr({
@@ -468,7 +490,8 @@
 	        var player = _this9.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
-	          $('#hp .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.playerHP);
+	          var HPLevelWidth = player.HP / 100 * mapGrid.FULL_HP_BAR_WIDTH;
+	          $('.hp-list .' + player.playerColor + ' .hp-level').css("width", HPLevelWidth);
 	        }
 	      });
 	    }
@@ -476,7 +499,11 @@
 	    key: 'setUpTimer',
 	    value: function setUpTimer() {
 	      socket.on('countDown', function (data) {
-	        $('#timer-countdown').text(data.timer);
+	        var timerMin = Math.floor(data.timer / 60);
+	        var timerSec = data.timer % 60;
+	
+	        $('.timer-min').text(timerMin);
+	        $('.timer-sec').text(timerSec);
 	      });
 	    }
 	  }, {
@@ -504,11 +531,20 @@
 	
 	      socket.on('showBall', function (data) {
 	        _this11.ball.destroy();
-	        _this11.players[data.playerId].pickUpBall();
+	        var player = _this11.players[data.playerId];
+	        player.pickUpBall();
+	        // add ball next to the player with the ball
+	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/blue_ring.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
+	        // $(`.ball-holder`).html(`<img src=${ imgSrc }>
+	        //                         <span class='score'>
+	        //                           ${ data.currentBallHoldingTime }
+	        //                         </span>
+	        //                         `);
 	      });
 	
 	      socket.on('loseBall', function (data) {
 	        _this11.players[data.playerId].color('black');
+	        $('.ball-holder').remove();
 	      });
 	    }
 	  }, {
@@ -519,7 +555,8 @@
 	      });
 	
 	      socket.on('showScoreboard', function (data) {
-	        $('#scoreboard .player-' + data.playerId).text('Player ' + data.playerId + ': ' + data.score);
+	        $('.ranking .' + data.playerColor + ' span').text(data.longestBallHoldingTime);
+	        $('.current-score').text(data.currentBallHoldingTime);
 	      });
 	    }
 	  }, {
@@ -529,18 +566,15 @@
 	
 	      socket.on('pickUpWeapon', function (data) {
 	        _this12.players[_this12.selfId].weaponType = data.type;
-	        $('#weapon-type').text(data.type);
-	        if (data.type === 'BFS') {
-	          $('#weapon-img').html('<img src=\'../assets/bfs_weapon.png\'\n                                      height=\'50\'></img>');
-	        } else if (data.type === 'DFS') {
-	          $('#weapon-img').html('<img src=\'../assets/dfs_weapon.png\'\n                                      height=\'50\'></img>');
-	        }
+	        var imgSrc = '../assets/dreadbloom_lash.png';
+	        $('.weapon-container .no-weapon-img').remove();
+	        $('.weapon-container').append('<img src=' + imgSrc + '>\n                                      <span class="weapon-type">\n                                        ' + data.type + '\n                                      </span>\n                                    ');
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
 	        _this12.players[data.playerId].loseWeapon();
-	        $('#weapon-type').empty();
-	        $('#weapon-img').empty();
+	        $('.weapon-container').empty();
+	        $('.weapon-container').append('<img class="no-weapon-img"\n                                          src="../assets/clear_sword5.png">');
 	      });
 	    }
 	  }]);
@@ -720,11 +754,12 @@
 	var NUM_COLS = 8;
 	var NUM_MAZE_ROWS = NUM_ROWS * 2 - 1;
 	var NUM_MAZE_COLS = NUM_COLS * 2 - 1;
+	var EXTRA_GAME_DIM = 80;
 	
 	var TILE = {
 	  ORIG_WIDTH: 101,
 	  ORIG_HEIGHT: 122,
-	  RATIO: 2 / 3,
+	  RATIO: 3 / 4,
 	  Z: 0
 	};
 	
@@ -782,29 +817,12 @@
 	  //           ((TILE.HEIGHT - TILE.SURFACE_HEIGHT) / ACTOR_Z)) + 1;
 	  // actor.Z = (((PLAYER_HEIGHT / TILE.SURFACE_HEIGHT) - 2) * TILE.SURFACE_HEIGHT
 	});
-	console.log(PLAYER.Z);
-	console.log(BALL.Z);
-	console.log(BFS.Z);
-	
-	// const TILE_ORIG_WIDTH = 101;
-	// const TILE_ORIG_HEIGHT = 122;
-	// const TILE_RATIO = (1 / 2);
-	// const TILE_WIDTH = TILE_ORIG_WIDTH * TILE_RATIO;
-	// const TILE_HEIGHT = TILE_ORIG_HEIGHT * TILE_RATIO;
-	// const TILE_SURFACE_HEIGHT = TILE_WIDTH / 2;
-	
-	// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [40, 54];
-	// const [PLAYER_ORIG_WIDTH, PLAYER_ORIG_HEIGHT] = [101, 122];
-	// const PLAYER_RATIO = (1 / 2);
-	// const PLAYER_WIDTH = PLAYER_ORIG_WIDTH * PLAYER_RATIO;
-	// const PLAYER_HEIGHT = PLAYER_ORIG_HEIGHT * PLAYER_RATIO;
-	// const PLAYER_SURFACE_HEIGHT = PLAYER_WIDTH / 2;
-	// the z layer if it was the same height as the tile
 	
 	var mapGrid = {
-	  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH,
+	  GAME_WIDTH: NUM_MAZE_ROWS * TILE.WIDTH + EXTRA_GAME_DIM,
 	  // CHANGE TILE HEIGHT TO CHAR HEIGHT
-	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT,
+	  GAME_HEIGHT: NUM_MAZE_COLS * TILE.SURFACE_HEIGHT + PLAYER.HEIGHT + EXTRA_GAME_DIM,
+	  EXTRA_GAME_DIM: EXTRA_GAME_DIM,
 	  NUM_ROWS: NUM_ROWS,
 	  NUM_COLS: NUM_COLS,
 	  NUM_MAZE_ROWS: NUM_MAZE_ROWS,
@@ -816,7 +834,8 @@
 	  BFS: BFS,
 	  DFS: DFS,
 	  ASTAR: ASTAR,
-	  CHAR_STEP: 20 // how many steps it needs from one tile to another
+	  CHAR_STEP: 20, // how many steps it needs from one tile to another
+	  FULL_HP_BAR_WIDTH: 130
 	};
 	
 	var weaponTypes = {
@@ -861,8 +880,6 @@
 	      this.requires('Player');
 	      this.charStep = mapGrid.CHAR_STEP;
 	      this.hasTakenDamage = false;
-	      this.longestBallHoldingTime = 0;
-	      this.currentBallHoldingTime = 0;
 	      this.weaponType = null;
 	      this.weaponCoolingdown = false;
 	      this.z = 9;
@@ -1016,6 +1033,8 @@
 	    init: function init() {
 	      this.requires('Actor, Color');
 	      this.HP = 100;
+	      this.longestBallHoldingTime = 0;
+	      this.currentBallHoldingTime = 0;
 	    },
 	
 	    displayAnimation: function displayAnimation(charMove) {
@@ -1108,22 +1127,7 @@
 	};
 
 /***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	var ClientModel = {
-	  receiver: 'CLIENT',
-	  wallInit: function wallInit() {
-	    this.requires('2D, Canvas, Solid, Color, Collision');
-	  },
-	  playerMoveInDirections: function playerMoveInDirections(speed) {}
-	};
-	
-	module.exports = ClientModel;
-
-/***/ },
+/* 8 */,
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 

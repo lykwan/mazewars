@@ -9,8 +9,6 @@ module.exports = function(Crafty) {
       this.requires('Player');
       this.charStep = mapGrid.CHAR_STEP;
       this.hasTakenDamage = false;
-      this.longestBallHoldingTime = 0;
-      this.currentBallHoldingTime = 0;
       this.weaponType = null;
       this.weaponCoolingdown = false;
       this.z = 9;
@@ -163,6 +161,8 @@ module.exports = function(Crafty) {
     init: function() {
       this.requires('Actor, Color');
       this.HP = 100;
+      this.longestBallHoldingTime = 0;
+      this.currentBallHoldingTime = 0;
     },
 
     displayAnimation: function(charMove) {
@@ -189,9 +189,9 @@ module.exports = function(Crafty) {
     },
 
     setUpAnimation: function() {
-      this.reel('PlayerMovingRight', 600, 0, 1, 5)
-      this.reel('PlayerMovingDown', 600, 0, 1, 5)
-      this.reel('PlayerMovingUp', 600, 0, 2, 5)
+      this.reel('PlayerMovingRight', 600, 0, 1, 5);
+      this.reel('PlayerMovingDown', 600, 0, 1, 5);
+      this.reel('PlayerMovingUp', 600, 0, 2, 5);
       this.reel('PlayerMovingLeft', 600, 0, 2, 5);
       return this;
     }

@@ -201,8 +201,9 @@ class GameState {
       player.currentBallHoldingTime++;
       if (player.currentBallHoldingTime > player.longestBallHoldingTime) {
         player.longestBallHoldingTime = player.currentBallHoldingTime;
-        this.showScoreboard(player);
       }
+
+      this.showScoreboard(player);
 
       // this.showSelfScore(player);
     }, 1000);
@@ -210,8 +211,9 @@ class GameState {
 
   showScoreboard(player) {
     this.io.to(this.roomId).emit('showScoreboard', {
-      playerId: player.playerId,
-      score: player.longestBallHoldingTime
+      playerColor: player.playerColor,
+      longestBallHoldingTime: player.longestBallHoldingTime,
+      currentBallHoldingTime: player.currentBallHoldingTime
     });
   }
 
@@ -287,6 +289,7 @@ class GameState {
     });
 
     this.Crafty('Damage').each(function(i) {
+      // clearInterval(this.checkCollisionInterval);
       this.destroy();
     });
 
@@ -351,7 +354,9 @@ class GameState {
     this.setBallTime(player);
 
     this.io.to(this.roomId).emit('showBall', {
-      playerId: player.playerId
+      playerId: player.playerId,
+      playerColor: player.playerColor,
+      currentBallHoldingTime: 0
     });
   }
 
@@ -394,8 +399,7 @@ class GameState {
 
       const randomIdx =
         Math.floor(Math.random() * Object.keys(weaponTypes).length);
-      // const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
-      const type = 'ASTAR';
+      const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
       const weapon = this.Crafty.e('Weapon')
                                .at(row, col)
                                .setUpStaticPos(row, col)
@@ -456,8 +460,6 @@ class GameState {
         } else if (player.weaponType === weaponTypes.ASTAR) {
           damageCells = this.shootASTARWeapon(player);
         }
-
-        console.log('dmg', damageCells);
 
         this.bufferShootingTime(player);
 
