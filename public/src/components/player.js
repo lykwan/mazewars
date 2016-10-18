@@ -12,11 +12,14 @@ module.exports = function(Crafty) {
       this.hasTakenDamage = false;
       this.weaponType = null;
       this.weaponCoolingdown = false;
+      this.z = 9;
+    },
+
+    setUpMovesQueue() {
       this.pendingMoves = new Queue();
       // each movement has a number to it, to help client side prediction
-      this.movementIdx = 0;
-
-      this.z = 9;
+      this.moveIdx = 0;
+      return this;
     },
 
     bindingKeyEvents() {
@@ -87,6 +90,37 @@ module.exports = function(Crafty) {
       });
 
       return this;
+    },
+
+    getDir(charMove) {
+      let dirX, dirY;
+      if (charMove.left) {
+        dirX = -1;
+        dirY = -1;
+      } else if (charMove.right) {
+        dirX = 1;
+        dirY = 1;
+      } else if (charMove.up) {
+        dirX = 1;
+        dirY = -1;
+      } else if (charMove.down) {
+        dirX = -1;
+        dirY = 1;
+      }
+
+      return [dirX, dirY];
+    },
+
+    performMovement(charMove) {
+      let [dirX, dirY] = this.getDir(charMove);
+      this.moveDir(dirX, dirY);
+    },
+
+    undoMovement(charMove) {
+      let [dirX, dirY] = this.getDir(charMove);
+      let undoDirX = dirX === -1 ? 1 : -1;
+      let undoDirY = dirY === -1 ? 1 : -1;
+      this.moveDir(undoDirX, undoDirY);
     },
 
     moveDir(dirX, dirY) {

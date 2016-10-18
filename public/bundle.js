@@ -397,7 +397,7 @@
 	        var charSprite = playerInfo.playerColor + 'Sprite';
 	        var selfPlayerClass = void 0;
 	        if (parseInt(playerInfo.playerId) === _this7.selfId) {
-	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
+	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().setUpMovesQueue().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	          _this7.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
@@ -936,6 +936,8 @@
 
 	'use strict';
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	/* globals Crafty */
 	/* globals Queue */
 	var Constants = __webpack_require__(4);
@@ -950,13 +952,15 @@
 	      this.hasTakenDamage = false;
 	      this.weaponType = null;
 	      this.weaponCoolingdown = false;
-	      this.pendingMoves = new Queue();
-	      // each movement has a number to it, to help client side prediction
-	      this.movementIdx = 0;
-	
 	      this.z = 9;
 	    },
 	
+	    setUpMovesQueue: function setUpMovesQueue() {
+	      this.pendingMoves = new Queue();
+	      // each movement has a number to it, to help client side prediction
+	      this.moveIdx = 0;
+	      return this;
+	    },
 	    bindingKeyEvents: function bindingKeyEvents() {
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	
@@ -1024,6 +1028,47 @@
 	      });
 	
 	      return this;
+	    },
+	    getDir: function getDir(charMove) {
+	      var dirX = void 0,
+	          dirY = void 0;
+	      if (charMove.left) {
+	        dirX = -1;
+	        dirY = -1;
+	      } else if (charMove.right) {
+	        dirX = 1;
+	        dirY = 1;
+	      } else if (charMove.up) {
+	        dirX = 1;
+	        dirY = -1;
+	      } else if (charMove.down) {
+	        dirX = -1;
+	        dirY = 1;
+	      }
+	
+	      return [dirX, dirY];
+	    },
+	    performMovement: function performMovement(charMove) {
+	      var _getDir = this.getDir(charMove);
+	
+	      var _getDir2 = _slicedToArray(_getDir, 2);
+	
+	      var dirX = _getDir2[0];
+	      var dirY = _getDir2[1];
+	
+	      this.moveDir(dirX, dirY);
+	    },
+	    undoMovement: function undoMovement(charMove) {
+	      var _getDir3 = this.getDir(charMove);
+	
+	      var _getDir4 = _slicedToArray(_getDir3, 2);
+	
+	      var dirX = _getDir4[0];
+	      var dirY = _getDir4[1];
+	
+	      var undoDirX = dirX === -1 ? 1 : -1;
+	      var undoDirY = dirY === -1 ? 1 : -1;
+	      this.moveDir(undoDirX, undoDirY);
 	    },
 	    moveDir: function moveDir(dirX, dirY) {
 	      // the offset it needs to move to the neighbor blocks
@@ -1430,6 +1475,30 @@
 	        this.breakWall(row, col, neighRow, neighCol);
 	        this.expandMaze(row, col);
 	      }
+	    }
+	
+	    // checking if player's current position is colliding with a wall or
+	    // if it is out of the grid
+	
+	  }, {
+	    key: 'collideWithWall',
+	    value: function collideWithWall(player) {
+	      var _player$getRowsCols = player.getRowsCols();
+	
+	      var _player$getRowsCols2 = _slicedToArray(_player$getRowsCols, 2);
+	
+	      var rows = _player$getRowsCols2[0];
+	      var cols = _player$getRowsCols2[1];
+	
+	      for (var i = 0; i < rows.length; i++) {
+	        for (var j = 0; j < cols.length; j++) {
+	          if (!this.isInGrid(rows[i], cols[j]) || this.maze[rows[i]][cols[j]].isWall) {
+	            return true;
+	          }
+	        }
+	      }
+	
+	      return false;
 	    }
 	  }]);
 	

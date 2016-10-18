@@ -364,6 +364,7 @@ class Game {
                   .setUpSocket(socket)
                   .setUpSetBallTime()
                   .bindingKeyEvents()
+                  .setUpMovesQueue()
                   .attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 
         this.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);

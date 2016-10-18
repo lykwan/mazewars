@@ -152,6 +152,23 @@ class Board {
       this.expandMaze(row, col);
     }
   }
+
+  // checking if player's current position is colliding with a wall or
+  // if it is out of the grid
+  collideWithWall(player) {
+    let [rows, cols] = player.getRowsCols();
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < cols.length; j++) {
+        if (!this.isInGrid(rows[i], cols[j]) ||
+        this.maze[rows[i]][cols[j]].isWall) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
 }
 
 module.exports = Board;
