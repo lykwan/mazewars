@@ -479,7 +479,7 @@ class Game {
 
   setUpCreateDamage() {
     socket.on('createDamage', data => {
-      let activeComponent = 'greenActiveTileSprite';
+      let activeComponent = `${ data.playerColor}ActiveTileSprite`;
       this.tileBoard[data.row][data.col].removeComponent('tileSprite');
       this.tileBoard[data.row][data.col].addComponent(activeComponent)
                     .attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });

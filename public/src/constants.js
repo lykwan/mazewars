@@ -101,7 +101,7 @@ const gameSettings = {
   DAMAGE_ANIMATION_TIME: 100,
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
-  GAME_DURATION: 20, // 200
+  GAME_DURATION: 200, // 200
   CHECK_COLLISION_INTERVAL: 200,
   COLORS: ['blue', 'red', 'yellow', 'green']
 };

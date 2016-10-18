@@ -495,7 +495,7 @@
 	      var _this8 = this;
 	
 	      socket.on('createDamage', function (data) {
-	        var activeComponent = 'greenActiveTileSprite';
+	        var activeComponent = data.playerColor + 'ActiveTileSprite';
 	        _this8.tileBoard[data.row][data.col].removeComponent('tileSprite');
 	        _this8.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
 	        _this8.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
@@ -870,7 +870,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 20, // 200
+	  GAME_DURATION: 200, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
@@ -1407,25 +1407,17 @@
 	
 	var assetsObj = {
 	  'sprites': {
-	    '../assets/tile.png': {
+	    '../assets/tiles.png': {
 	      'tile': mapGrid.TILE.ORIG_WIDTH,
 	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
 	      'map': {
-	        'tileSprite': [0, 0]
-	      }
-	    },
-	    '../assets/lava_tile.png': {
-	      'tile': mapGrid.TILE.ORIG_WIDTH,
-	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
-	      'map': {
-	        'wallSprite': [0, 0]
-	      }
-	    },
-	    '../assets/lava_crack.png': {
-	      'tile': mapGrid.TILE.ORIG_WIDTH,
-	      'tileh': mapGrid.TILE.ORIG_HEIGHT,
-	      'map': {
-	        'greenActiveTileSprite': [0, 0]
+	        'tileSprite': [0, 0],
+	        'blueActiveTileSprite': [1, 0],
+	        'redActiveTileSprite': [2, 0],
+	        'yellowActiveTileSprite': [3, 0],
+	        'greenActiveTileSprite': [4, 0],
+	        'purpleActiveTileSprite': [5, 0],
+	        'wallSprite': [6, 0]
 	      }
 	    },
 	    '../assets/char/green_char.png': {
