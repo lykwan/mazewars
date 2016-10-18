@@ -59,11 +59,12 @@ const assetsObj = {
         'purpleSprite': [0, 0]
       }
     },
-    '../assets/purple_ring.png': {
+    '../assets/astar_weapon.png': {
       'tile': mapGrid.BALL.ORIG_WIDTH,
       'tileh': mapGrid.BALL.ORIG_HEIGHT,
       'map': {
-        'ballSprite': [0, 0]
+        'ballSprite': [0, 0],
+        'ASTARSprite': [0, 0]
       }
     },
     '../assets/bfs_weapon.png': {
@@ -79,15 +80,7 @@ const assetsObj = {
       'map': {
         'DFSSprite': [0, 0]
       }
-    },
-    '../assets/astar_weapon.png': {
-      'tile': mapGrid.ASTAR.ORIG_WIDTH,
-      'tileh': mapGrid.ASTAR.ORIG_HEIGHT,
-      'map': {
-        'ASTARSprite': [0, 0]
-      }
     }
-
   }
 };
 

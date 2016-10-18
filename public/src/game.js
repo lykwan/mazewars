@@ -532,7 +532,7 @@ class Game {
       // add ball next to the player with the ball
       $(`.ranking .${ data.playerColor }`).append(`
           <div class="ball-holder">
-            <img src="../assets/purple_ring.png">
+            <img src="../assets/astar_weapon.png">
             <span class="current-score">${ data.currentBallHoldingTime }</span>
           </div>
         `);
@@ -550,7 +550,7 @@ class Game {
         // The ball holder has the record of current ball holding time
         const ballHolderDiv = data.playerColor === player.playerColor ?
                                 `<div class='ball-holder'>
-                                  <img src="../assets/purple_ring.png">
+                                  <img src="../assets/astar_weapon.png">
                                   <span>${ data.currentBallHoldingTime }</span>
                                 </div>` :
                                 "";

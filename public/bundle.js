@@ -554,7 +554,7 @@
 	        var player = _this11.players[data.playerId];
 	        player.pickUpBall();
 	        // add ball next to the player with the ball
-	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/purple_ring.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
+	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/astar_weapon.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
 	      });
 	
 	      socket.on('loseBall', function (data) {
@@ -570,7 +570,7 @@
 	      socket.on('showScoreboard', function (data) {
 	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
 	          // The ball holder has the record of current ball holding time
-	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/purple_ring.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
+	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/astar_weapon.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
 	
 	          var selfPlayerClass = player.playerColor === _this12.selfPlayerColor ? "self-player" : "";
 	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
@@ -813,9 +813,9 @@
 	};
 	
 	var ASTAR = {
-	  ORIG_WIDTH: 233,
-	  ORIG_HEIGHT: 269,
-	  RATIO: 1 / 5
+	  ORIG_WIDTH: 128,
+	  ORIG_HEIGHT: 128,
+	  RATIO: 2 / 5
 	};
 	
 	var actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS, ASTAR];
@@ -870,7 +870,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 60, // 200
+	  GAME_DURATION: 20, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
@@ -1463,11 +1463,12 @@
 	        'purpleSprite': [0, 0]
 	      }
 	    },
-	    '../assets/purple_ring.png': {
+	    '../assets/astar_weapon.png': {
 	      'tile': mapGrid.BALL.ORIG_WIDTH,
 	      'tileh': mapGrid.BALL.ORIG_HEIGHT,
 	      'map': {
-	        'ballSprite': [0, 0]
+	        'ballSprite': [0, 0],
+	        'ASTARSprite': [0, 0]
 	      }
 	    },
 	    '../assets/bfs_weapon.png': {
@@ -1483,15 +1484,7 @@
 	      'map': {
 	        'DFSSprite': [0, 0]
 	      }
-	    },
-	    '../assets/astar_weapon.png': {
-	      'tile': mapGrid.ASTAR.ORIG_WIDTH,
-	      'tileh': mapGrid.ASTAR.ORIG_HEIGHT,
-	      'map': {
-	        'ASTARSprite': [0, 0]
-	      }
 	    }
-	
 	  }
 	};
 	

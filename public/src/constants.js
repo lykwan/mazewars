@@ -42,9 +42,9 @@ const DFS = {
 };
 
 const ASTAR = {
-  ORIG_WIDTH: 233,
-  ORIG_HEIGHT: 269,
-  RATIO: 1 / 5
+  ORIG_WIDTH: 128,
+  ORIG_HEIGHT: 128,
+  RATIO: 2 / 5
 };
 
 const actors = [TILE, PLAYER, PLAYER_ATTACKING, BALL, BFS, DFS, ASTAR];
@@ -101,7 +101,7 @@ const gameSettings = {
   DAMAGE_ANIMATION_TIME: 100,
   DAMAGE_DISAPPEAR_TIME: 1000,
   HP_DAMAGE: 10,
-  GAME_DURATION: 60, // 200
+  GAME_DURATION: 20, // 200
   CHECK_COLLISION_INTERVAL: 200,
   COLORS: ['blue', 'red', 'yellow', 'green']
 };

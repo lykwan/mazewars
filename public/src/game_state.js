@@ -12,7 +12,6 @@ const gameSettings = Constants.gameSettings;
 class GameState {
   constructor(io, socket, roomId) {
     this.sockets = {};
-    this.socketToPlayers = {};
     this.roomId = roomId;
     this.players = {
       1: null,
@@ -35,6 +34,7 @@ class GameState {
 
     this.addSocket(socket);
     this.Crafty = Craftyjs();
+    this.isGameOver = false;
     initGame(this.Crafty);
   }
 
@@ -177,10 +177,13 @@ class GameState {
     return playerPos;
   }
 
-  addBall() {
-    const col = Math.floor(this.board.numGridCols / 2);
-    const row = Math.floor(this.board.numGridRows / 2);
-    const [mazeRow, mazeCol] = this.board.gridToMazePos(row, col);
+  addBall(mazeRow, mazeCol) {
+    if (mazeRow === undefined) {
+      const col = Math.floor(this.board.numGridCols / 2);
+      const row = Math.floor(this.board.numGridRows / 2);
+      [mazeRow, mazeCol] = this.board.gridToMazePos(row, col);
+    }
+
     this.ball =
       this.Crafty.e('Ball')
                   .at(mazeRow, mazeCol)
@@ -258,25 +261,8 @@ class GameState {
   gameOver() {
     clearInterval(this.addWeaponIntervalId);
     clearInterval(this.setScoreIntervalId);
-    // let winner = null;
-    // let winnerScore = 0;
-    // let playerIds = Object.keys(this.players);
-    // for (let i = 0; i < playerIds.length; i++) {
-    //   let player = this.players[playerIds[i]];
-    //   if (player) {
-    //     let playerScore = player.longestBallHoldingTime;
-    //     if (playerScore > winnerScore) {
-    //       winner = player;
-    //       winnerScore = playerScore;
-    //     }
-    //   }
-    // }
+    this.isGameOver = true;
 
-    // let winnerId;
-    // if (winner !== null) {
-    //   winnerId = winner.playerId;
-    // }
-    //
     this.io.to(this.roomId).emit('gameOver', {
       rankedPlayerScores: this.getRankedPlayerScores()
     });
@@ -324,6 +310,10 @@ class GameState {
 
   setUpUpdateMovement(socket) {
     socket.on('updatePos', data => {
+      if (this.isGameOver) {
+        return;
+      }
+
       let movingPlayer = this.players[data.playerId];
       let dirX, dirY;
       if (data.charMove.left) {
@@ -348,7 +338,7 @@ class GameState {
       }
 
       if (this.ball && this.collideWithItem(movingPlayer, this.ball)) {
-        this.pickUpBall(movingPlayer);
+        this.pickUpBall(socket, movingPlayer);
       }
 
       this.io.to(this.roomId).emit('updatePos', {
@@ -367,11 +357,17 @@ class GameState {
     });
   }
 
-  pickUpBall(player) {
+  pickUpBall(socket, player) {
     this.ball.destroy();
     this.ball = null;
     this.ballHolder = player;
     this.setBallTime(player);
+
+    // player get to pick up astar weapon
+    player.weaponType = weaponTypes.ASTAR;
+    socket.emit('pickUpWeapon', {
+      type: weaponTypes.ASTAR
+    });
 
     this.io.to(this.roomId).emit('showBall', {
       playerId: player.playerId,
@@ -417,9 +413,9 @@ class GameState {
         [row, col] = this.board.getRandomCell();
       }
 
-      const randomIdx =
-        Math.floor(Math.random() * Object.keys(weaponTypes).length);
-      const type = weaponTypes[Object.keys(weaponTypes)[randomIdx]];
+      const pickables = [weaponTypes.BFS, weaponTypes.DFS];
+      const randomIdx = Math.floor(Math.random() * pickables.length);
+      const type = pickables[randomIdx];
       const weapon = this.Crafty.e('Weapon')
                                .at(row, col)
                                .setUpStaticPos(row, col)
@@ -437,6 +433,10 @@ class GameState {
 
   setUpPickUpWeapon(socket) {
     socket.on('pickUpWeapon', data => {
+      if (this.isGameOver) {
+        return;
+      }
+
       const player = this.players[data.playerId];
       const collidedWeapon = this.collidedWeapon(player);
       if (collidedWeapon !== null) {
@@ -470,6 +470,10 @@ class GameState {
 
   setUpShootWeapon(socket) {
     socket.on('shootWeapon', data => {
+      if (this.isGameOver) {
+        return;
+      }
+
       const player = this.players[data.playerId];
       if (!player.weaponCoolingDown) {
         let damageCells = [];
@@ -485,6 +489,11 @@ class GameState {
 
         let idx = 0;
         let intervalId = setInterval(() => {
+          if (this.isGameOver) {
+            clearInterval(intervalId);
+            return;
+          }
+
           const [row, col] = damageCells[idx];
           const damage = this.Crafty.e('Damage')
                         .at(row, col)
@@ -502,8 +511,7 @@ class GameState {
           });
 
           idx++;
-
-          if (idx === damageCells.length) {
+          if (idx >= damageCells.length) {
             clearInterval(intervalId);
           }
 
@@ -710,6 +718,9 @@ class GameState {
         player.playerId === this.ballHolder.playerId) {
       this.loseBall(player);
     }
+
+    console.log('respawning');
+    console.log(player);
 
     player.weaponType = null;
     this.io.to(this.roomId).emit('loseWeapon', {
