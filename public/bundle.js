@@ -151,7 +151,7 @@
 	        // TODO: change link
 	        $('.waiting-list').removeClass('hidden');
 	        $('.waiting-room').removeClass('hidden');
-	        $('.waiting-room').append('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n        </div>');
+	        $('.waiting-room').prepend('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n          </span>\n          <ul class="keyboard-instructions">\n            <h3>Instructions</h3>\n            <li>\n              <img src="../assets/keyboard_z.png">\n              <span>PICK UP WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_x.png">\n              <span>SHOOT WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_arrows.png">\n              <span>MOVE AROUND</span>\n            </li>\n          </ul>\n          <span class="start-game-instructions">\n            Press SPACE to start game (Needs 2 or more people to start)\n          </span>\n          <div class="help">\n            <span>?</span>\n            <div class="help-text container">\n              <span>The goal of the game is to hold onto the ball for the longest duration of time. You can pick up weapons to kill people, and if the ball holder dies, he releases the ball.</span>\n            </div>\n          </div>\n        </div>');
 	
 	        _this.setUpGame();
 	      });
@@ -265,7 +265,7 @@
 	        _this3.selfPlayerColor = data.playerColor;
 	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
 	
-	        $('.waiting-list').append('<ul class="players-list"><ul>');
+	        $('.waiting-list').append('<ul class="players-list">\n                                    <h2>Player List</h2>\n                                  <ul>');
 	        _this3.appendToPlayersList(data.playerColor, true);
 	      });
 	

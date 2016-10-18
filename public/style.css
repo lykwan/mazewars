@@ -5,6 +5,7 @@
   position: relative;
   height: 672.125px;
   width: 1186.25px;
+  font-family: 'Bungee Inline', cursive;
 }
 
   #stage {
@@ -23,24 +24,87 @@
   .content {
     color: white;
     margin: auto;
-    width: 400px;
+    width: 700px;
     text-align: center;
   }
 
   .content h1 {
-    font-size: 40px;
+    font-size: 70px;
     display: block;
     margin-bottom: 30px;
+    color: wheat;
   }
 
-  .content span {
+  .content > span {
+    font-size: 15px;
+    font-family: 'Open Sans', sans-serif;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .content .keyboard-instructions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 50px 0;
+  }
+
+  .content .keyboard-instructions h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .content .keyboard-instructions li {
+    font-family: 'Open Sans', sans-serif;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 200px;
+    margin-bottom: 5px;
     font-size: 15px;
   }
 
+  .content .keyboard-instructions img {
+    height: 100%;
+  }
+
+  .content .start-game-instructions {
+    font-size: 20px;
+    color: wheat;
+  }
+
+    .help {
+      position: absolute;
+      right: 280px;
+      bottom: 0;
+      font-size: 40px;
+      margin-bottom: 20px;
+      margin-right: 20px;
+    }
+
+    .help .help-text {
+      text-align: left;
+      width: 250px;
+      position: absolute;
+      right: 0;
+      bottom: 40px;
+      font-size: 15px;
+      font-family: 'Open Sans', sans-serif;
+      display: none;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .help:hover .help-text {
+      display: block;
+    }
+
   .page {
-    background-color: black;
+    background: url("./assets/start_page.jpeg");
+    background-size: cover;
     display: flex;
     align-items: center;
+    position: relative;
   }
 
   .new-room {
@@ -53,26 +117,48 @@
 
   .new-room .content button {
     font-size: 20px;
-    color: white;
+    color: wheat;
     background: black;
-    border: 1px solid white;
+    font-family: 'Bungee Inline', cursive;
+    border: 1px solid wheat;
+    cursor: pointer;
+    padding: 10px;
   }
 
   .waiting-room {
-    width: calc(1186.25px - 200px);
+    width: 100%;
     height: 100%;
-    background: url(../assets/lava_background4.jpg) no-repeat cover;
   }
 
   .waiting-list {
-    width: 200px;
+    width: 280px;
     height: 100%;
-    background-color: black;
-    font-size: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    font-size: 15px;
+    padding: 15px;
+    box-sizing: border-box;
   }
 
     .players-list {
       color: white;
+    }
+
+    .players-list h2 {
+      font-size: 25px;
+      margin-bottom: 15px;
+    }
+
+    .players-list li {
+      margin-bottom: 5px;
+    }
+
+    .players-list img {
+      height: 30px;
+    }
+
+    .players-list span {
+      float: right;
+      margin-right: 3px;
     }
 
     .self-player {
@@ -91,19 +177,20 @@
     top: 0;
     bottom: 0;
     z-index: 100;
-    font-family: 'Bungee Inline', cursive;
     color: #a59c9d;
   }
 
     .container {
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.6);
       padding: 10px 20px;
-      position: relative;
+      position: absolute;
       border-radius: 7px;
     }
 
     .timer-container {
       width: 280px;
+      left: 0;
+      right: 0;
       margin: auto;
       margin-top: 10px;
     }
@@ -149,8 +236,8 @@
 
     .hp-container {
       width: 200px;
-      top: -45px;
-      left: 30px;
+      top: 20px;
+      left: 20px;
     }
 
       .hp-list img {
@@ -175,8 +262,8 @@
     .weapon-container {
       width: 110px;
       height: 110px;
-      top: 400px;
-      left: 1000px;
+      bottom: 20px;
+      right: 20px;
     }
 
       .weapon-container .weapon-type {
@@ -200,9 +287,8 @@
 
     .scoreboard-container {
       width: 240px;
-      position: absolute;
       top: 20px;
-      right: 35px;
+      right: 20px;
     }
 
       .scoreboard-container h2 {
@@ -261,6 +347,7 @@
       width: 100%;
       height: 250px;
       box-sizing: border-box;
+      background-color: rgba(0, 0, 0, 0.7);
     }
 
       .results h2 {
