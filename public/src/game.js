@@ -59,10 +59,35 @@ class Game {
       // TODO: change link
       $('.waiting-list').removeClass('hidden');
       $('.waiting-room').removeClass('hidden');
-      $('.waiting-room').append(
+      $('.waiting-room').prepend(
         `<div class="content">
           <h1>Maze Wars</h1>
           <span>Room Link: amazeball.lilykwan.me/${ param }</span>
+          </span>
+          <ul class="keyboard-instructions">
+            <h3>Instructions</h3>
+            <li>
+              <img src="../assets/keyboard_z.png">
+              <span>PICK UP WEAPON</span>
+            </li>
+            <li>
+              <img src="../assets/keyboard_x.png">
+              <span>SHOOT WEAPON</span>
+            </li>
+            <li>
+              <img src="../assets/keyboard_arrows.png">
+              <span>MOVE AROUND</span>
+            </li>
+          </ul>
+          <span class="start-game-instructions">
+            Press SPACE to start game (Needs 2 or more people to start)
+          </span>
+          <div class="help">
+            <span>?</span>
+            <div class="help-text container">
+              <span>The goal of the game is to hold onto the ball for the longest duration of time. You can pick up weapons to kill people, and if the ball holder dies, he releases the ball.</span>
+            </div>
+          </div>
         </div>`
       );
 
@@ -197,7 +222,9 @@ class Game {
       this.board = new Board(mapGrid.NUM_COLS, mapGrid.NUM_ROWS,
                     data.seedRandomStr, Crafty);
 
-      $('.waiting-list').append(`<ul class="players-list"><ul>`);
+      $('.waiting-list').append(`<ul class="players-list">
+                                    <h2>Player List</h2>
+                                  <ul>`);
       this.appendToPlayersList(data.playerColor, true);
     });
 
