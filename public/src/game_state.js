@@ -506,8 +506,9 @@ class GameState {
           this.io.to(this.roomId).emit('createDamage', {
             row: row,
             col: col,
-            creatorId: data.playerId,
-            disappearTime: gameSettings.DAMAGE_DISAPPEAR_TIME
+            playerColor: this.players[data.playerId].playerColor
+            // creatorId: data.playerId,
+            // disappearTime: gameSettings.DAMAGE_DISAPPEAR_TIME
           });
 
           idx++;
@@ -719,12 +720,9 @@ class GameState {
       this.loseBall(player);
     }
 
-    console.log('respawning');
-    console.log(player);
-
     player.weaponType = null;
     this.io.to(this.roomId).emit('loseWeapon', {
-      playerId: player.id
+      playerId: player.playerId
     });
 
     const initPlayerPos = this.getPlayerInitPos();

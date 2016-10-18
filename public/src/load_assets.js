@@ -3,25 +3,17 @@ const mapGrid = Constants.mapGrid;
 
 const assetsObj = {
   'sprites': {
-    '../assets/tile.png': {
+    '../assets/tiles.png': {
       'tile': mapGrid.TILE.ORIG_WIDTH,
       'tileh': mapGrid.TILE.ORIG_HEIGHT,
       'map': {
-        'tileSprite': [0, 0]
-      }
-    },
-    '../assets/lava_tile.png': {
-      'tile': mapGrid.TILE.ORIG_WIDTH,
-      'tileh': mapGrid.TILE.ORIG_HEIGHT,
-      'map': {
-        'wallSprite': [0, 0]
-      }
-    },
-    '../assets/lava_crack.png': {
-      'tile': mapGrid.TILE.ORIG_WIDTH,
-      'tileh': mapGrid.TILE.ORIG_HEIGHT,
-      'map': {
-        'greenActiveTileSprite': [0, 0]
+        'tileSprite': [0, 0],
+        'blueActiveTileSprite': [1, 0],
+        'redActiveTileSprite': [2, 0],
+        'yellowActiveTileSprite': [3, 0],
+        'greenActiveTileSprite': [4, 0],
+        'purpleActiveTileSprite': [5, 0],
+        'wallSprite': [6, 0],
       }
     },
     '../assets/char/green_char.png': {
