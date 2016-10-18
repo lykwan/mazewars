@@ -20,6 +20,7 @@ class Game {
     this.ball = null;
     this.translateX = null;
     this.translateY = null;
+    this.playersReady = {};
   }
 
   run() {
@@ -57,6 +58,9 @@ class Game {
 
       // load room content
       // TODO: change link
+          // <span class="start-game-instructions">
+          //   Press SPACE to  (Needs 2 or more people to start)
+          // </span>
       $('.waiting-list').removeClass('hidden');
       $('.waiting-room').removeClass('hidden');
       $('.waiting-room').prepend(
@@ -79,9 +83,11 @@ class Game {
               <span>MOVE AROUND</span>
             </li>
           </ul>
-          <span class="start-game-instructions">
-            Press SPACE to start game (Needs 2 or more people to start)
-          </span>
+          <div class="ready-form">
+            <button class="ready">
+              READY
+            </button>
+          </div>
           <div class="help">
             <span>?</span>
             <div class="help-text container">
@@ -91,8 +97,20 @@ class Game {
         </div>`
       );
 
+      this.handleDisableReadyButton();
+
       this.setUpGame();
     });
+  }
+
+  handleDisableReadyButton(playerCount) {
+    if (playerCount === undefined || playerCount <= 1) {
+      console.log('disabling');
+      $('.ready-form button').prop('disabled', true);
+    } else {
+      console.log(' notdisabling');
+      $('.ready-form button').prop('disabled', false);
+    }
   }
 
   loadNewRoomButton() {
@@ -155,61 +173,69 @@ class Game {
 
     // set up game over scene
     Crafty.scene('GameOver', (data) => {
-      // Crafty.e('2D, DOM, Text')
-      //       .attr({ x: 0, y: 0, w: 300 })
-      //       .text('Game Over')
-      //       .textColor('white');
-      //
-      // let winnerText;
-      // if (data.winnerId !== undefined) {
-      //   winnerText = `player ${ data.winnerId } has
-      //           won with ${ data.winnerScore } secs`;
-      // } else {
-      //   winnerText = 'No one won!';
-      // }
-
-      // Crafty.e('2D, DOM, Text')
-      //   .attr({ x: 50, y: 50, w: 400})
-      //   .text(winnerText)
-      //   .textColor('white');
-      const rankedPlayerScoreLis = data.rankedPlayerScores.map((player, i) => {
-        const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
-                                  "self-player" :
-                                  "";
-        const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
-        return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
-                  <span>${ i + 1 }</span>
-                  <img class="icon" src="${ iconImgSrc }"></img>
-                  <span>${ player.longestBallHoldingTime }</span>
-                </li>`;
-      });
-
-      $(".game-status").html(`
-        <div class="results-container">
-          <h1>GAME OVER</h1>
-          <div class="results container">
-            <h2>SCORE</h2>
-            <h3 class="row-header">PLAYER</h3>
-            <h3 class="row-header">TIME RECORD</h3>
-            <ul class="ranking">
-              ${ rankedPlayerScoreLis.join("") }
-            </ul>
-          </div>
-        </div>
-      `);
+      this.setUpGameOver(data);
     });
 
     // start loading scene
     Crafty.scene('Loading');
   }
 
+  setUpGameOver(data) {
+    const rankedPlayerScoreLis = data.rankedPlayerScores.map((player, i) => {
+    const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
+                              "self-player" :
+                              "";
+    const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
+    return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
+              <span>${ i + 1 }</span>
+              <img class="icon" src="${ iconImgSrc }"></img>
+              <span>${ player.longestBallHoldingTime }</span>
+            </li>`;
+    });
+
+    $(".game-status").html(`
+      <div class="results-container">
+        <h1>GAME OVER</h1>
+        <div class="results container">
+          <h2>SCORE</h2>
+          <h3 class="row-header">PLAYER</h3>
+          <h3 class="row-header">TIME RECORD</h3>
+          <ul class="ranking">
+            ${ rankedPlayerScoreLis.join("") }
+          </ul>
+        </div>
+      </div>
+    `);
+  }
+
   installStartGameListener() {
-    $(document).on('keydown', e => {
-      let spaceBarKeyCode = 32;
-      if (e.keyCode === spaceBarKeyCode) {
-        $(document).off('keydown');
-        socket.emit('startNewGame');
-      }
+    // $(document).on('keydown', e => {
+    //   let spaceBarKeyCode = 32;
+    //   if (e.keyCode === spaceBarKeyCode) {
+    //     $(document).off('keydown');
+    //     socket.emit('startNewGame');
+    //   }
+    // });
+    $('.ready-form').on('click', '.ready', e => {
+      e.preventDefault();
+      socket.emit('clickReady', { playerId: this.selfId });
+      $('.ready-form button').prop('disabled', true);
+    });
+
+    $('.ready-form').on('click', '.cancel', e => {
+      e.preventDefault();
+      socket.emit('clickCancel', { playerId: this.selfId });
+      $('.ready-form button').prop('disabled', true);
+    });
+
+    socket.on('clickReady', () => {
+      $('.ready-form').html('<button class="cancel">CANCEL</button>');
+      $('.ready-form button').prop('disabled', false);
+    });
+
+    socket.on('clickCancel', () => {
+      $('.ready-form').html('<button class="ready">READY</button>');
+      $('.ready-form button').prop('disabled', false);
     });
   }
 
@@ -224,17 +250,33 @@ class Game {
 
       $('.waiting-list').append(`<ul class="players-list">
                                     <h2>Player List</h2>
-                                  <ul>`);
+                                  </ul>`);
       this.appendToPlayersList(data.playerColor, true);
     });
 
     socket.on('addNewPlayer', data => {
       this.appendToPlayersList(data.playerColor, false);
+      this.showPlayerReady(data.playerColor, data.playerReady);
+      this.handleDisableReadyButton(data.playerCount);
+    });
+
+    socket.on('othersClickReady', data => {
+      console.log('telling others!');
+      this.showPlayerReady(data.playerColor, data.playerReady);
     });
 
     socket.on('startNewGame', (data) => {
       Crafty.scene('Game', data);
     });
+  }
+
+  showPlayerReady(playerColor, playerReady) {
+    console.log(playerColor, playerReady);
+    if (playerReady) {
+      $(`.player-item.${ playerColor } .ready-text`).removeClass('hidden');
+    } else {
+      $(`.player-item.${ playerColor } .ready-text`).addClass('hidden');
+    }
   }
 
   setUpDisconnect() {
@@ -245,6 +287,8 @@ class Game {
       }
 
       $(`.player-item.${ data.playerColor }`).remove();
+
+      this.handleDisableReadyButton(data.playerCount);
     });
   }
 
@@ -254,7 +298,8 @@ class Game {
     $('.players-list').append(
       `<li class="player-item ${ selfPlayerClass } ${ playerColor }">
           <img src=${ iconImgSrc }></img>
-          <span>Player ${ playerColor }</span>
+          <span class="player-name">Player ${ playerColor }</span>
+          <span class="ready-text hidden">READY</span>
         </li>`
     );
   }
@@ -291,7 +336,7 @@ class Game {
 
     // putting the HP div on the screen
     $('.game-status').append(`<div class="hp-container container">
-                                  <ul class="hp-list"><ul>
+                                  <ul class="hp-list"></ul>
                                 </div>`);
 
     // putting the weapon display on the screen
@@ -532,7 +577,7 @@ class Game {
       // add ball next to the player with the ball
       $(`.ranking .${ data.playerColor }`).append(`
           <div class="ball-holder">
-            <img src="../assets/astar_weapon.png">
+            <img src="../assets/weapons/ASTAR_weapon.png">
             <span class="current-score">${ data.currentBallHoldingTime }</span>
           </div>
         `);
@@ -550,7 +595,7 @@ class Game {
         // The ball holder has the record of current ball holding time
         const ballHolderDiv = data.playerColor === player.playerColor ?
                                 `<div class='ball-holder'>
-                                  <img src="../assets/astar_weapon.png">
+                                  <img src="../assets/weapons/ASTAR_weapon.png">
                                   <span>${ data.currentBallHoldingTime }</span>
                                 </div>` :
                                 "";
@@ -574,7 +619,7 @@ class Game {
   setUpHaveWeapon() {
     socket.on('pickUpWeapon', data => {
       this.players[this.selfId].weaponType = data.type;
-      let imgSrc = `../assets/${ data.type }_weapon_diagonal.png`;
+      let imgSrc = `../assets/weapons/${ data.type }_weapon_diagonal.png`;
       $('.weapon-container').html(`<img src=${ imgSrc }>
                                       <span class="weapon-type">
                                         ${ data.type }

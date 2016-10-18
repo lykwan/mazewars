@@ -1,4 +1,5 @@
 /* globals Crafty */
+/* globals Queue */
 const Constants = require('../constants.js');
 const mapGrid = Constants.mapGrid;
 const wallDirection = Constants.wallDirection;
@@ -11,6 +12,10 @@ module.exports = function(Crafty) {
       this.hasTakenDamage = false;
       this.weaponType = null;
       this.weaponCoolingdown = false;
+      this.pendingMoves = new Queue();
+      // each movement has a number to it, to help client side prediction
+      this.movementIdx = 0;
+
       this.z = 9;
     },
 
@@ -29,6 +34,16 @@ module.exports = function(Crafty) {
 
       this.bind('KeyDown', function(e) {
         e.originalEvent.preventDefault();
+        if (e.keyCode === Crafty.keys.Z) {
+          this.pickUpWeapon();
+          return;
+        }
+
+        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
+          this.shootWeapon();
+          return;
+        }
+
         this.charMove.left = false;
         this.charMove.right = false;
         this.charMove.down = false;
@@ -46,27 +61,23 @@ module.exports = function(Crafty) {
         if (e.keyCode === Crafty.keys.DOWN_ARROW) {
           this.charMove.down = true;
         }
-
-        if (e.keyCode === Crafty.keys.Z) {
-          this.pickUpWeapon();
-        }
-
-        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
-          this.shootWeapon();
-        }
       });
 
       this.bind('KeyUp', function(e) {
         if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+          console.log('releasing key');
           this.charMove.right = false;
         }
         if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+          console.log('releasing key');
           this.charMove.left = false;
         }
         if (e.keyCode === Crafty.keys.UP_ARROW) {
+          console.log('releasing key');
           this.charMove.up = false;
         }
         if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+          console.log('releasing key');
           this.charMove.down = false;
         }
         this.socket.emit('stopMovement', {

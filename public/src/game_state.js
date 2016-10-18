@@ -19,6 +19,7 @@ class GameState {
       3: null,
       4: null
     };
+    this.playersReady = {};
     this.weapons = {};
     this.ball = null;
     this.seedRandomStr = "randomStr" +
@@ -35,11 +36,12 @@ class GameState {
     this.addSocket(socket);
     this.Crafty = Craftyjs();
     this.isGameOver = false;
+    this.isGameStarted = false;
     initGame(this.Crafty);
   }
 
   addSocket(socket) {
-    if (Object.keys(this.sockets).length < 4) {
+    if (Object.keys(this.sockets).length < 4 && !this.isGameStarted) {
       this.sockets[socket.id] = socket;
       socket.join(this.roomId);  // join that socket to the game room
 
@@ -48,7 +50,7 @@ class GameState {
       });
       return true;
     } else {
-      return false; // room is full
+      return false; // room is full or game has started
     }
   }
 
@@ -62,6 +64,8 @@ class GameState {
       }
     }
 
+    this.playersReady[playerId] = false;
+
     socket.emit('setUpGame', {
       selfId: playerId,
       seedRandomStr: this.seedRandomStr,
@@ -73,7 +77,9 @@ class GameState {
        if (this.players[id] !== null) {
          socket.emit('addNewPlayer', {
            playerId: id,
-           playerColor: gameSettings.COLORS[id - 1]
+           playerColor: gameSettings.COLORS[id - 1],
+           playerReady: this.playersReady[id],
+           playerCount: Object.keys(this.playersReady).length
          });
        }
     });
@@ -99,11 +105,13 @@ class GameState {
         this.players[playerId].destroy();
       }
       this.players[playerId] = null;
+      delete this.playersReady[playerId];
 
       // notify other people that this player disconnected
       this.io.to(this.roomId).emit('othersDisconnected', {
         playerId: playerId,
-        playerColor: gameSettings.COLORS[playerId - 1]
+        playerColor: gameSettings.COLORS[playerId - 1],
+        playerCount: Object.keys(this.playersReady).length
       });
     });
   }
@@ -112,17 +120,32 @@ class GameState {
   setUpAddNewPlayer(socket, playerId, color) {
     socket.broadcast.to(this.roomId).emit('addNewPlayer', {
       playerId: playerId,
-      playerColor: color
+      playerColor: color,
+      playerReady: this.playersReady[playerId],
+      playerCount: Object.keys(this.playersReady).length
     });
   }
 
   setUpStartGame(socket) {
     const allPlayerPos = this.getPlayerInitPos();
-    socket.on('startNewGame', data => {
+    socket.on('clickReady', data => {
       // start the game when there are two or more players
       if (Object.keys(this.sockets).length < 2) {
         return;
       }
+
+      // check if everyone's ready. if not everyone's ready, we can't start game
+      this.playersReady[data.playerId] = true;
+      const isEverybodyReady = Object.keys(this.playersReady).every(id => {
+        return this.playersReady[id] === true;
+      });
+      if (!isEverybodyReady) {
+        socket.emit('clickReady');
+        this.tellOthersReadyStatus(socket, data);
+        return;
+      }
+
+      this.isGameStarted = true;
 
       // creating the player characters
       this.createPlayerEntities(allPlayerPos);
@@ -149,6 +172,20 @@ class GameState {
       this.addBall();
       this.addWeapon();
       this.addTimer();
+    });
+
+    socket.on('clickCancel', data => {
+      this.playersReady[data.playerId] = false;
+      socket.emit('clickCancel');
+      this.tellOthersReadyStatus(socket, data);
+    });
+  }
+
+  tellOthersReadyStatus(socket, data) {
+    this.io.to(this.roomId).emit('othersClickReady', {
+      playerId: data.playerId,
+      playerColor: gameSettings.COLORS[data.playerId - 1],
+      playerReady: this.playersReady[data.playerId]
     });
   }
 

@@ -2,10 +2,15 @@
   display: flex;
   color: white;
   font-size: 0;
-  position: relative;
+  position: absolute;
   height: 672.125px;
   width: 1186.25px;
   font-family: 'Bungee Inline', cursive;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 
   #stage {
@@ -74,10 +79,31 @@
     height: 100%;
   }
 
-  .content .start-game-instructions {
-    font-size: 20px;
-    color: wheat;
+  .ready-form button {
+    cursor: pointer;
+    font-family: 'Bungee Inline';
+    border-radius: 5px;
+    border: 2px solid white;
+    color: black;
+    font-size: 27px;
+    padding: 10px 20px;
+    border-radius: 5px;
   }
+
+  .ready-form button:disabled {
+    background: #DCDCDC;
+    color: #A0A0A0;
+    border-color: #F1F1F1;
+  }
+
+  .ready-form .ready {
+    background: #F9BF3B;
+  }
+
+  .ready-form .cancel {
+    background: #66CC99;
+  }
+
 
     .help {
       position: absolute;
@@ -161,9 +187,21 @@
       height: 30px;
     }
 
-    .players-list span {
-      float: right;
-      margin-right: 3px;
+    .player-item {
+      position: relative;
+    }
+
+    .player-item .player-name {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
+    .player-item .ready-text {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      color: #D64541;
     }
 
     .self-player {
@@ -372,4 +410,8 @@
 
 .hidden {
   display: none;
+}
+
+body {
+  background-color: black;
 }
