@@ -107,6 +107,7 @@
 	    this.ball = null;
 	    this.translateX = null;
 	    this.translateY = null;
+	    this.playersReady = {};
 	  }
 	
 	  _createClass(Game, [{
@@ -149,12 +150,28 @@
 	
 	        // load room content
 	        // TODO: change link
+	        // <span class="start-game-instructions">
+	        //   Press SPACE to  (Needs 2 or more people to start)
+	        // </span>
 	        $('.waiting-list').removeClass('hidden');
 	        $('.waiting-room').removeClass('hidden');
-	        $('.waiting-room').prepend('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n          </span>\n          <ul class="keyboard-instructions">\n            <h3>Instructions</h3>\n            <li>\n              <img src="../assets/keyboard_z.png">\n              <span>PICK UP WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_x.png">\n              <span>SHOOT WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_arrows.png">\n              <span>MOVE AROUND</span>\n            </li>\n          </ul>\n          <span class="start-game-instructions">\n            Press SPACE to start game (Needs 2 or more people to start)\n          </span>\n          <div class="help">\n            <span>?</span>\n            <div class="help-text container">\n              <span>The goal of the game is to hold onto the ball for the longest duration of time. You can pick up weapons to kill people, and if the ball holder dies, he releases the ball.</span>\n            </div>\n          </div>\n        </div>');
+	        $('.waiting-room').prepend('<div class="content">\n          <h1>Maze Wars</h1>\n          <span>Room Link: amazeball.lilykwan.me/' + param + '</span>\n          </span>\n          <ul class="keyboard-instructions">\n            <h3>Instructions</h3>\n            <li>\n              <img src="../assets/keyboard_z.png">\n              <span>PICK UP WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_x.png">\n              <span>SHOOT WEAPON</span>\n            </li>\n            <li>\n              <img src="../assets/keyboard_arrows.png">\n              <span>MOVE AROUND</span>\n            </li>\n          </ul>\n          <div class="ready-form">\n            <button class="ready">\n              READY\n            </button>\n          </div>\n          <div class="help">\n            <span>?</span>\n            <div class="help-text container">\n              <span>The goal of the game is to hold onto the ball for the longest duration of time. You can pick up weapons to kill people, and if the ball holder dies, he releases the ball.</span>\n            </div>\n          </div>\n        </div>');
+	
+	        _this.handleDisableReadyButton();
 	
 	        _this.setUpGame();
 	      });
+	    }
+	  }, {
+	    key: 'handleDisableReadyButton',
+	    value: function handleDisableReadyButton(playerCount) {
+	      if (playerCount === undefined || playerCount <= 1) {
+	        console.log('disabling');
+	        $('.ready-form button').prop('disabled', true);
+	      } else {
+	        console.log(' notdisabling');
+	        $('.ready-form button').prop('disabled', false);
+	      }
 	    }
 	  }, {
 	    key: 'loadNewRoomButton',
@@ -213,64 +230,84 @@
 	
 	      // set up game over scene
 	      Crafty.scene('GameOver', function (data) {
-	        // Crafty.e('2D, DOM, Text')
-	        //       .attr({ x: 0, y: 0, w: 300 })
-	        //       .text('Game Over')
-	        //       .textColor('white');
-	        //
-	        // let winnerText;
-	        // if (data.winnerId !== undefined) {
-	        //   winnerText = `player ${ data.winnerId } has
-	        //           won with ${ data.winnerScore } secs`;
-	        // } else {
-	        //   winnerText = 'No one won!';
-	        // }
-	
-	        // Crafty.e('2D, DOM, Text')
-	        //   .attr({ x: 50, y: 50, w: 400})
-	        //   .text(winnerText)
-	        //   .textColor('white');
-	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
-	          var selfPlayerClass = player.playerColor === _this2.selfPlayerColor ? "self-player" : "";
-	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
-	          return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                  <span>' + (i + 1) + '</span>\n                  <img class="icon" src="' + iconImgSrc + '"></img>\n                  <span>' + player.longestBallHoldingTime + '</span>\n                </li>';
-	        });
-	
-	        $(".game-status").html('\n        <div class="results-container">\n          <h1>GAME OVER</h1>\n          <div class="results container">\n            <h2>SCORE</h2>\n            <h3 class="row-header">PLAYER</h3>\n            <h3 class="row-header">TIME RECORD</h3>\n            <ul class="ranking">\n              ' + rankedPlayerScoreLis.join("") + '\n            </ul>\n          </div>\n        </div>\n      ');
+	        _this2.setUpGameOver(data);
 	      });
 	
 	      // start loading scene
 	      Crafty.scene('Loading');
 	    }
 	  }, {
+	    key: 'setUpGameOver',
+	    value: function setUpGameOver(data) {
+	      var _this3 = this;
+	
+	      var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
+	        var selfPlayerClass = player.playerColor === _this3.selfPlayerColor ? "self-player" : "";
+	        var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
+	        return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n              <span>' + (i + 1) + '</span>\n              <img class="icon" src="' + iconImgSrc + '"></img>\n              <span>' + player.longestBallHoldingTime + '</span>\n            </li>';
+	      });
+	
+	      $(".game-status").html('\n      <div class="results-container">\n        <h1>GAME OVER</h1>\n        <div class="results container">\n          <h2>SCORE</h2>\n          <h3 class="row-header">PLAYER</h3>\n          <h3 class="row-header">TIME RECORD</h3>\n          <ul class="ranking">\n            ' + rankedPlayerScoreLis.join("") + '\n          </ul>\n        </div>\n      </div>\n    ');
+	    }
+	  }, {
 	    key: 'installStartGameListener',
 	    value: function installStartGameListener() {
-	      $(document).on('keydown', function (e) {
-	        var spaceBarKeyCode = 32;
-	        if (e.keyCode === spaceBarKeyCode) {
-	          $(document).off('keydown');
-	          socket.emit('startNewGame');
-	        }
+	      var _this4 = this;
+	
+	      // $(document).on('keydown', e => {
+	      //   let spaceBarKeyCode = 32;
+	      //   if (e.keyCode === spaceBarKeyCode) {
+	      //     $(document).off('keydown');
+	      //     socket.emit('startNewGame');
+	      //   }
+	      // });
+	      $('.ready-form').on('click', '.ready', function (e) {
+	        e.preventDefault();
+	        socket.emit('clickReady', { playerId: _this4.selfId });
+	        $('.ready-form button').prop('disabled', true);
+	      });
+	
+	      $('.ready-form').on('click', '.cancel', function (e) {
+	        e.preventDefault();
+	        socket.emit('clickCancel', { playerId: _this4.selfId });
+	        $('.ready-form button').prop('disabled', true);
+	      });
+	
+	      socket.on('clickReady', function () {
+	        $('.ready-form').html('<button class="cancel">CANCEL</button>');
+	        $('.ready-form button').prop('disabled', false);
+	      });
+	
+	      socket.on('clickCancel', function () {
+	        $('.ready-form').html('<button class="ready">READY</button>');
+	        $('.ready-form button').prop('disabled', false);
 	      });
 	    }
 	  }, {
 	    key: 'setUpLoadingScene',
 	    value: function setUpLoadingScene() {
-	      var _this3 = this;
+	      var _this5 = this;
 	
 	      Crafty.load(AssetsObj);
 	
 	      socket.on('setUpGame', function (data) {
-	        _this3.selfId = data.selfId;
-	        _this3.selfPlayerColor = data.playerColor;
-	        _this3.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
+	        _this5.selfId = data.selfId;
+	        _this5.selfPlayerColor = data.playerColor;
+	        _this5.board = new _board2.default(mapGrid.NUM_COLS, mapGrid.NUM_ROWS, data.seedRandomStr, Crafty);
 	
-	        $('.waiting-list').append('<ul class="players-list">\n                                    <h2>Player List</h2>\n                                  <ul>');
-	        _this3.appendToPlayersList(data.playerColor, true);
+	        $('.waiting-list').append('<ul class="players-list">\n                                    <h2>Player List</h2>\n                                  </ul>');
+	        _this5.appendToPlayersList(data.playerColor, true);
 	      });
 	
 	      socket.on('addNewPlayer', function (data) {
-	        _this3.appendToPlayersList(data.playerColor, false);
+	        _this5.appendToPlayersList(data.playerColor, false);
+	        _this5.showPlayerReady(data.playerColor, data.playerReady);
+	        _this5.handleDisableReadyButton(data.playerCount);
+	      });
+	
+	      socket.on('othersClickReady', function (data) {
+	        console.log('telling others!');
+	        _this5.showPlayerReady(data.playerColor, data.playerReady);
 	      });
 	
 	      socket.on('startNewGame', function (data) {
@@ -278,17 +315,29 @@
 	      });
 	    }
 	  }, {
+	    key: 'showPlayerReady',
+	    value: function showPlayerReady(playerColor, playerReady) {
+	      console.log(playerColor, playerReady);
+	      if (playerReady) {
+	        $('.player-item.' + playerColor + ' .ready-text').removeClass('hidden');
+	      } else {
+	        $('.player-item.' + playerColor + ' .ready-text').addClass('hidden');
+	      }
+	    }
+	  }, {
 	    key: 'setUpDisconnect',
 	    value: function setUpDisconnect() {
-	      var _this4 = this;
+	      var _this6 = this;
 	
 	      socket.on('othersDisconnected', function (data) {
-	        if (_this4.players[data.playerId]) {
-	          _this4.players[data.playerId].destroy();
-	          delete _this4.players[data.playerId];
+	        if (_this6.players[data.playerId]) {
+	          _this6.players[data.playerId].destroy();
+	          delete _this6.players[data.playerId];
 	        }
 	
 	        $('.player-item.' + data.playerColor).remove();
+	
+	        _this6.handleDisableReadyButton(data.playerCount);
 	      });
 	    }
 	  }, {
@@ -296,7 +345,7 @@
 	    value: function appendToPlayersList(playerColor, isSelfPlayer) {
 	      var selfPlayerClass = isSelfPlayer ? 'self-player' : '';
 	      var iconImgSrc = '../assets/icons/' + playerColor + '_icon.png';
-	      $('.players-list').append('<li class="player-item ' + selfPlayerClass + ' ' + playerColor + '">\n          <img src=' + iconImgSrc + '></img>\n          <span>Player ' + playerColor + '</span>\n        </li>');
+	      $('.players-list').append('<li class="player-item ' + selfPlayerClass + ' ' + playerColor + '">\n          <img src=' + iconImgSrc + '></img>\n          <span class="player-name">Player ' + playerColor + '</span>\n          <span class="ready-text hidden">READY</span>\n        </li>');
 	    }
 	  }, {
 	    key: 'setUpNewGame',
@@ -320,7 +369,7 @@
 	      $('.game-status').append('<div class=\'timer-container container\'>\n                                <div class=\'timer\'>\n                                  <span class=\'time-left-text\'>TIME LEFT:</span>\n                                  <div class="timer-min-div">\n                                    <span class=\'timer-min\'>' + timerMin + '</span>\n                                    <span class=\'time-text\'>MINS</span>\n                                  </div>\n                                  <div class="timer-sec-div">\n                                    <span class=\'timer-sec\'>' + timerSec + '</span>\n                                    <span class=\'time-text\'>SECS</span>\n                                  </div>\n                                </div>\n                              </div>');
 	
 	      // putting the HP div on the screen
-	      $('.game-status').append('<div class="hp-container container">\n                                  <ul class="hp-list"><ul>\n                                </div>');
+	      $('.game-status').append('<div class="hp-container container">\n                                  <ul class="hp-list"></ul>\n                                </div>');
 	
 	      // putting the weapon display on the screen
 	      $('.game-status').append('<div class="weapon-container container">\n                                <img class="no-weapon-img"\n                                      src="../assets/clear_sword5.png">\n                              </div>');
@@ -331,7 +380,7 @@
 	  }, {
 	    key: 'createPlayerEntities',
 	    value: function createPlayerEntities(data) {
-	      var _this5 = this;
+	      var _this7 = this;
 	
 	      data.players.forEach(function (playerInfo, idx) {
 	        var _playerInfo$playerPx = _slicedToArray(playerInfo.playerPx, 2);
@@ -347,21 +396,21 @@
 	        var player = void 0;
 	        var charSprite = playerInfo.playerColor + 'Sprite';
 	        var selfPlayerClass = void 0;
-	        if (parseInt(playerInfo.playerId) === _this5.selfId) {
+	        if (parseInt(playerInfo.playerId) === _this7.selfId) {
 	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite).setUpSocket(socket).setUpSetBallTime().bindingKeyEvents().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
-	          _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
+	          _this7.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
-	          _this5.translateX = player.x - playerX;
-	          _this5.translateY = player.y - playerY;
+	          _this7.translateX = player.x - playerX;
+	          _this7.translateY = player.y - playerY;
 	
 	          // since the player block always starts at bottom left corner
 	          // when rendering, we need to account for the translation so we can
 	          // render the player block in the top left corner instead
-	          _this5.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
-	          _this5.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
-	          console.log(_this5.translateX);
-	          console.log(_this5.translateY);
+	          _this7.translateX += (mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2;
+	          _this7.translateY -= (mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2;
+	          console.log(_this7.translateX);
+	          console.log(_this7.translateY);
 	
 	          // for displaying purposes. showing the user his/her player color
 	          selfPlayerClass = 'self-player';
@@ -373,11 +422,11 @@
 	        player.setUp(playerInfo.playerId, playerInfo.playerColor).setUpAnimation().attr({ w: mapGrid.PLAYER.WIDTH, h: mapGrid.PLAYER.HEIGHT });
 	
 	        // place it on isometric map
-	        _this5.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
+	        _this7.iso.place(player, playerRow, playerCol, mapGrid.PLAYER.Z);
 	
 	        // after placing it on isometric map, figure out the translation of px
 	        // from the server side to client side rendering
-	        if (playerInfo.playerId === _this5.selfId) {}
+	        if (playerInfo.playerId === _this7.selfId) {}
 	        // this.translateX = player.x - playerX;
 	        // this.translateY = player.y - playerY;
 	        //
@@ -403,7 +452,7 @@
 	        // scoreboard
 	        $('.ranking').append('<li class=\'' + playerInfo.playerColor + '\n                                        ' + selfPlayerClass + '\'>\n                              <span>' + (idx + 1) + '</span>\n                              <img class="icon" src="' + iconImgSrc + '"></img>\n                              <span>' + player.longestBallHoldingTime + '\n                              </span>\n                            </li>');
 	
-	        _this5.players[playerInfo.playerId] = player;
+	        _this7.players[playerInfo.playerId] = player;
 	      });
 	    }
 	  }, {
@@ -429,23 +478,23 @@
 	  }, {
 	    key: 'setUpPlayersMovement',
 	    value: function setUpPlayersMovement() {
-	      var _this6 = this;
+	      var _this8 = this;
 	
 	      socket.on('updatePos', function (data) {
-	        var player = _this6.players[data.playerId];
+	        var player = _this8.players[data.playerId];
 	        if (player) {
 	          var playerOldX = player.x;
 	          var playerOldY = player.y;
 	
-	          player.x = data.x + _this6.translateX;
-	          player.y = data.y + _this6.translateY;
+	          player.x = data.x + _this8.translateX;
+	          player.y = data.y + _this8.translateY;
 	
 	          player.displayAnimation(data.charMove);
 	        }
 	      });
 	
 	      socket.on('stopMovement', function (data) {
-	        var player = _this6.players[data.playerId];
+	        var player = _this8.players[data.playerId];
 	        if (player) {
 	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
 	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
@@ -465,7 +514,7 @@
 	  }, {
 	    key: 'setUpPlacingWeapons',
 	    value: function setUpPlacingWeapons() {
-	      var _this7 = this;
+	      var _this9 = this;
 	
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
@@ -477,37 +526,37 @@
 	          w: mapGrid[data.type].WIDTH,
 	          h: mapGrid[data.type].HEIGHT
 	        });
-	        _this7.weapons[[data.row, data.col]] = weapon;
-	        _this7.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
+	        _this9.weapons[[data.row, data.col]] = weapon;
+	        _this9.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
 	
 	        // translate the weapon px in the initial rendering to the middle of tile
 	        weapon.x += (mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2;
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this7.weapons[[data.row, data.col]];
+	        var weapon = _this9.weapons[[data.row, data.col]];
 	        weapon.destroy();
 	      });
 	    }
 	  }, {
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
-	      var _this8 = this;
+	      var _this10 = this;
 	
 	      socket.on('createDamage', function (data) {
 	        var activeComponent = data.playerColor + 'ActiveTileSprite';
-	        _this8.tileBoard[data.row][data.col].removeComponent('tileSprite');
-	        _this8.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
-	        _this8.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
+	        _this10.tileBoard[data.row][data.col].removeComponent('tileSprite');
+	        _this10.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	        _this10.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
 	      });
 	    }
 	  }, {
 	    key: 'setUpHPChange',
 	    value: function setUpHPChange() {
-	      var _this9 = this;
+	      var _this11 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        var player = _this9.players[data.playerId];
+	        var player = _this11.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
 	          var HPLevelWidth = player.HP / 100 * mapGrid.FULL_HP_BAR_WIDTH;
@@ -536,43 +585,43 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this10 = this;
+	      var _this12 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this10.ball = Crafty.e('Ball, ballSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
+	        _this12.ball = Crafty.e('Ball, ballSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
 	
-	        _this10.iso.place(_this10.ball, data.row, data.col, mapGrid.BALL.Z);
+	        _this12.iso.place(_this12.ball, data.row, data.col, mapGrid.BALL.Z);
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this11 = this;
+	      var _this13 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this11.ball.destroy();
-	        var player = _this11.players[data.playerId];
+	        _this13.ball.destroy();
+	        var player = _this13.players[data.playerId];
 	        player.pickUpBall();
 	        // add ball next to the player with the ball
-	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/astar_weapon.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
+	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/weapons/ASTAR_weapon.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this11.players[data.playerId].loseBall();
+	        _this13.players[data.playerId].loseBall();
 	        $('.ball-holder').remove();
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBallRecord',
 	    value: function setUpShowBallRecord() {
-	      var _this12 = this;
+	      var _this14 = this;
 	
 	      socket.on('showScoreboard', function (data) {
 	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
 	          // The ball holder has the record of current ball holding time
-	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/astar_weapon.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
+	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/weapons/ASTAR_weapon.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
 	
-	          var selfPlayerClass = player.playerColor === _this12.selfPlayerColor ? "self-player" : "";
+	          var selfPlayerClass = player.playerColor === _this14.selfPlayerColor ? "self-player" : "";
 	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
 	          return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                  <span>' + (i + 1) + '</span>\n                  <img class="icon" src="' + iconImgSrc + '"></img>\n                  <span>' + player.longestBallHoldingTime + '</span>\n                  ' + ballHolderDiv + '\n                </li>';
 	        });
@@ -583,16 +632,16 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this13 = this;
+	      var _this15 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this13.players[_this13.selfId].weaponType = data.type;
-	        var imgSrc = '../assets/' + data.type + '_weapon_diagonal.png';
+	        _this15.players[_this15.selfId].weaponType = data.type;
+	        var imgSrc = '../assets/weapons/' + data.type + '_weapon_diagonal.png';
 	        $('.weapon-container').html('<img src=' + imgSrc + '>\n                                      <span class="weapon-type">\n                                        ' + data.type + '\n                                      </span>\n                                    ');
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this13.players[data.playerId].loseWeapon();
+	        _this15.players[data.playerId].loseWeapon();
 	        $('.weapon-container').html('<img class="no-weapon-img"\n                                          src="../assets/clear_sword5.png">');
 	      });
 	    }
@@ -866,7 +915,7 @@
 	  WEAPON_RANGE: 10,
 	  BUFFER_DAMAGE_TIME: 1000,
 	  BUFFER_SHOOTING_TIME: 1500,
-	  WEAPON_SPAWN_TIME: 5000,
+	  WEAPON_SPAWN_TIME: 10000,
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
@@ -888,6 +937,7 @@
 	'use strict';
 	
 	/* globals Crafty */
+	/* globals Queue */
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var wallDirection = Constants.wallDirection;
@@ -900,6 +950,10 @@
 	      this.hasTakenDamage = false;
 	      this.weaponType = null;
 	      this.weaponCoolingdown = false;
+	      this.pendingMoves = new Queue();
+	      // each movement has a number to it, to help client side prediction
+	      this.movementIdx = 0;
+	
 	      this.z = 9;
 	    },
 	
@@ -917,6 +971,16 @@
 	
 	      this.bind('KeyDown', function (e) {
 	        e.originalEvent.preventDefault();
+	        if (e.keyCode === Crafty.keys.Z) {
+	          this.pickUpWeapon();
+	          return;
+	        }
+	
+	        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
+	          this.shootWeapon();
+	          return;
+	        }
+	
 	        this.charMove.left = false;
 	        this.charMove.right = false;
 	        this.charMove.down = false;
@@ -934,27 +998,23 @@
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
 	          this.charMove.down = true;
 	        }
-	
-	        if (e.keyCode === Crafty.keys.Z) {
-	          this.pickUpWeapon();
-	        }
-	
-	        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
-	          this.shootWeapon();
-	        }
 	      });
 	
 	      this.bind('KeyUp', function (e) {
 	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
+	          console.log('releasing key');
 	          this.charMove.right = false;
 	        }
 	        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
+	          console.log('releasing key');
 	          this.charMove.left = false;
 	        }
 	        if (e.keyCode === Crafty.keys.UP_ARROW) {
+	          console.log('releasing key');
 	          this.charMove.up = false;
 	        }
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
+	          console.log('releasing key');
 	          this.charMove.down = false;
 	        }
 	        this.socket.emit('stopMovement', {
@@ -1455,7 +1515,7 @@
 	        'purpleSprite': [0, 0]
 	      }
 	    },
-	    '../assets/astar_weapon.png': {
+	    '../assets/weapons/ASTAR_weapon.png': {
 	      'tile': mapGrid.BALL.ORIG_WIDTH,
 	      'tileh': mapGrid.BALL.ORIG_HEIGHT,
 	      'map': {
@@ -1463,14 +1523,14 @@
 	        'ASTARSprite': [0, 0]
 	      }
 	    },
-	    '../assets/bfs_weapon.png': {
+	    '../assets/weapons/BFS_weapon.png': {
 	      'tile': mapGrid.BFS.ORIG_WIDTH,
 	      'tileh': mapGrid.BFS.ORIG_HEIGHT,
 	      'map': {
 	        'BFSSprite': [0, 0]
 	      }
 	    },
-	    '../assets/dfs_weapon.png': {
+	    '../assets/weapons/DFS_weapon.png': {
 	      'tile': mapGrid.DFS.ORIG_WIDTH,
 	      'tileh': mapGrid.DFS.ORIG_HEIGHT,
 	      'map': {

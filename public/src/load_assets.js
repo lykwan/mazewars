@@ -51,7 +51,7 @@ const assetsObj = {
         'purpleSprite': [0, 0]
       }
     },
-    '../assets/astar_weapon.png': {
+    '../assets/weapons/ASTAR_weapon.png': {
       'tile': mapGrid.BALL.ORIG_WIDTH,
       'tileh': mapGrid.BALL.ORIG_HEIGHT,
       'map': {
@@ -59,14 +59,14 @@ const assetsObj = {
         'ASTARSprite': [0, 0]
       }
     },
-    '../assets/bfs_weapon.png': {
+    '../assets/weapons/BFS_weapon.png': {
       'tile': mapGrid.BFS.ORIG_WIDTH,
       'tileh': mapGrid.BFS.ORIG_HEIGHT,
       'map': {
         'BFSSprite': [0, 0]
       }
     },
-    '../assets/dfs_weapon.png': {
+    '../assets/weapons/DFS_weapon.png': {
       'tile': mapGrid.DFS.ORIG_WIDTH,
       'tileh': mapGrid.DFS.ORIG_HEIGHT,
       'map': {
