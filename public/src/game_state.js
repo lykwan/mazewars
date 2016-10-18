@@ -352,26 +352,9 @@ class GameState {
       }
 
       let movingPlayer = this.players[data.playerId];
-      let dirX, dirY;
-      if (data.charMove.left) {
-        dirX = -1;
-        dirY = -1;
-      } else if (data.charMove.right) {
-        dirX = 1;
-        dirY = 1;
-      } else if (data.charMove.up) {
-        dirX = 1;
-        dirY = -1;
-      } else if (data.charMove.down) {
-        dirX = -1;
-        dirY = 1;
-      }
-
-      movingPlayer.moveDir(dirX, dirY);
-      if (this.collideWithWall(movingPlayer)) {
-        let undoDirX = dirX === -1 ? 1 : -1;
-        let undoDirY = dirY === -1 ? 1 : -1;
-        movingPlayer.moveDir(undoDirX, undoDirY);
+      movingPlayer.performMovement(data.charMove);
+      if (this.board.collideWithWall(movingPlayer)) {
+        movingPlayer.undoMovement(data.charMove);
       }
 
       if (this.ball && this.collideWithItem(movingPlayer, this.ball)) {
@@ -411,22 +394,6 @@ class GameState {
       playerColor: player.playerColor,
       currentBallHoldingTime: 0
     });
-  }
-
-  // checking if player's current position is colliding with a wall or
-  // if it is out of the grid
-  collideWithWall(player) {
-    let [rows, cols] = player.getRowsCols();
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 0; j < cols.length; j++) {
-        if (!this.board.isInGrid(rows[i], cols[j]) ||
-            this.board.maze[rows[i]][cols[j]].isWall) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   collideWithItem(player, item) {
