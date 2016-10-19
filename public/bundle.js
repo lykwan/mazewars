@@ -945,6 +945,17 @@
 	      this.moveIdx = 0;
 	      return this;
 	    },
+	
+	
+	    // copy(charMove) {
+	    //   let copied = {};
+	    //   Object.keys(charMove).forEach(move => {
+	    //     copied[move] = charMove[move];
+	    //   });
+	    //   copied.moveIdx = this.moveIdx;
+	    //   return copied;
+	    // },
+	    //
 	    bindingKeyEvents: function bindingKeyEvents() {
 	      var _this = this;
 	
@@ -953,15 +964,17 @@
 	      this.bind('EnterFrame', function () {
 	        if (_this.charMove.right || _this.charMove.left || _this.charMove.up || _this.charMove.down) {
 	          _this.moveIdx++;
+	          console.log(_this.charMove);
 	          _this.socket.emit('updatePos', {
 	            playerId: _this.playerId,
 	            charMove: _this.charMove,
 	            moveIdx: _this.moveIdx
 	          });
 	
+	          // console.log('charMove', this.copy(this.charMove));
 	          // client side prediction. push the pending move to the queue,
 	          // then move according to what the pending move is
-	          _this.pendingMoves.push(_this.charMove);
+	          _this.pendingMoves.push(Object.assign({}, _this.charMove));
 	
 	          var _getNewPos = _this.getNewPos(_this.charMove, _this.x, _this.y);
 	
@@ -973,7 +986,8 @@
 	          _this.x = newX;
 	          _this.y = newY;
 	          _this.displayAnimation(_this.charMove);
-	          console.log(_this.moveIdx);
+	          console.log('moveIdx', _this.moveIdx);
+	          console.log('newmvt', newX, newY);
 	        }
 	      });
 	
@@ -1095,7 +1109,8 @@
 	    // on top of the server state
 	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
 	      var clientAheadBy = this.moveIdx - data.moveIdx;
-	      console.log(clientAheadBy);
+	      console.log('clientahedby', clientAheadBy);
+	      console.log('length', this.pendingMoves.length);
 	      while (this.pendingMoves.length > clientAheadBy) {
 	        // get rid of the move inputs we don't need
 	        this.pendingMoves.shift();
@@ -1113,7 +1128,8 @@
 	
 	      for (var i = 0; i < this.pendingMoves.length; i++) {
 	        var charMove = this.pendingMoves[i];
-	        console.log(x, y);
+	        console.log('applying thing', charMove);
+	        console.log(x + translateX, y + translateY);
 	
 	        var _getNewPos3 = this.getNewPos(charMove, x, y);
 	
@@ -1122,7 +1138,7 @@
 	        x = _getNewPos4[0];
 	        y = _getNewPos4[1];
 	      }
-	      console.log(x, y);
+	      console.log(x + translateX, y + translateY);
 	
 	      // apply the translation on top of the final x and Y
 	      this.x = x + translateX;
