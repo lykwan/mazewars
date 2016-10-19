@@ -470,29 +470,14 @@ class Game {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
-        let [playerOldX, playerOldY] = [player.x, player.y];
-        player.x = data.x + this.translateX;
-        player.y = data.y + this.translateY;
-
-        player.displayAnimation(data.charMove);
+        player.updatePos(data, this.translateX, this.translateY);
       }
     });
 
     socket.on('stopMovement', data => {
       const player = this.players[data.playerId];
       if (player) {
-        if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
-          if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-        }
-        if (data.keyCode === Crafty.keys.LEFT_ARROW) {
-          if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-        }
-        if (data.keyCode === Crafty.keys.UP_ARROW) {
-          if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-        }
-        if (data.keyCode === Crafty.keys.DOWN_ARROW) {
-          if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-        }
+        player.stopAnimation(data);
       }
     });
   }

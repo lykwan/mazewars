@@ -365,7 +365,8 @@ class GameState {
         playerId: data.playerId,
         x: movingPlayer.x,
         y: movingPlayer.y,
-        charMove: data.charMove
+        charMove: data.charMove,
+        moveIdx: data.moveIdx
       });
     });
 
