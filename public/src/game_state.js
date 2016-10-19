@@ -352,9 +352,10 @@ class GameState {
       }
 
       let movingPlayer = this.players[data.playerId];
-      movingPlayer.performMovement(data.charMove);
-      if (this.board.collideWithWall(movingPlayer)) {
-        movingPlayer.undoMovement(data.charMove);
+      let [newX, newY] = movingPlayer.getNewPos(data.charMove);
+      if (!this.board.collideWithWall(newX, newY)) {
+        movingPlayer.x = newX;
+        movingPlayer.y = newY;
       }
 
       if (this.ball && this.collideWithItem(movingPlayer, this.ball)) {

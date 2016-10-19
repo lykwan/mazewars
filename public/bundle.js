@@ -1034,7 +1034,7 @@
 	
 	      return [dirX, dirY];
 	    },
-	    performMovement: function performMovement(charMove) {
+	    getNewPos: function getNewPos(charMove) {
 	      var _getDir = this.getDir(charMove);
 	
 	      var _getDir2 = _slicedToArray(_getDir, 2);
@@ -1042,7 +1042,7 @@
 	      var dirX = _getDir2[0];
 	      var dirY = _getDir2[1];
 	
-	      this.moveDir(dirX, dirY);
+	      return this.moveDir(dirX, dirY);
 	    },
 	    undoMovement: function undoMovement(charMove) {
 	      var _getDir3 = this.getDir(charMove);
@@ -1061,8 +1061,9 @@
 	      var w = mapGrid.TILE.WIDTH / 2;
 	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 	
-	      this.x += w / this.charStep * dirX;
-	      this.y += h / this.charStep * dirY;
+	      var x = this.x + w / this.charStep * dirX;
+	      var y = this.y + h / this.charStep * dirY;
+	      return [x, y];
 	    },
 	    updatePos: function updatePos(data, translateX, translateY) {
 	      this.x = data.x + translateX;
@@ -1259,6 +1260,8 @@
 	var Constants = __webpack_require__(4);
 	var mapGrid = Constants.mapGrid;
 	var Cell = __webpack_require__(9);
+	
+	var epsilon = 0.000000001;
 	
 	var Board = function () {
 	  function Board(m, n, seedRandomStr) {
@@ -1489,13 +1492,13 @@
 	
 	  }, {
 	    key: 'collideWithWall',
-	    value: function collideWithWall(player) {
-	      var _player$getRowsCols = player.getRowsCols();
+	    value: function collideWithWall(playerX, playerY) {
+	      var _getRowsCols = this.getRowsCols(playerX, playerY);
 	
-	      var _player$getRowsCols2 = _slicedToArray(_player$getRowsCols, 2);
+	      var _getRowsCols2 = _slicedToArray(_getRowsCols, 2);
 	
-	      var rows = _player$getRowsCols2[0];
-	      var cols = _player$getRowsCols2[1];
+	      var rows = _getRowsCols2[0];
+	      var cols = _getRowsCols2[1];
 	
 	      for (var i = 0; i < rows.length; i++) {
 	        for (var j = 0; j < cols.length; j++) {
@@ -1506,6 +1509,58 @@
 	      }
 	
 	      return false;
+	    }
+	  }, {
+	    key: 'getRowsCols',
+	    value: function getRowsCols(x, y) {
+	      var w = mapGrid.TILE.WIDTH / 2;
+	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
+	
+	      var xOverW = x / w;
+	      var yOverH = y / h;
+	
+	      // (x/w) + (y/h) = 2*r
+	      var row = this.fixRoundingErrors((xOverW + yOverH) / 2);
+	      var col = this.fixRoundingErrors(row - xOverW);
+	
+	      // finding all the rows it is at
+	      var rows = [Math.floor(row)];
+	
+	      // if the offset of the block + half the width of the block is more than
+	      // the width of half a tile, then it is overlapping two rows
+	      var spaceOccupyingX = (row - Math.floor(row)) * w + mapGrid.PLAYER.WIDTH / 2;
+	      if (spaceOccupyingX - w > epsilon) {
+	        rows.push(Math.ceil(row));
+	      }
+	
+	      // finding all the cols it is at
+	      var cols = [Math.floor(col)];
+	      var spaceOccupyingY = (col - Math.floor(col)) * h + mapGrid.PLAYER.SURFACE_HEIGHT / 2;
+	      if (spaceOccupyingY - h > epsilon) {
+	        cols.push(Math.ceil(col));
+	      }
+	
+	      return [rows, cols];
+	    }
+	
+	    // account for the floating point epsilon
+	
+	  }, {
+	    key: 'fixRoundingErrors',
+	    value: function fixRoundingErrors(n) {
+	      return Math.abs(n - Math.round(n)) <= epsilon ? Math.round(n) : n;
+	    }
+	  }, {
+	    key: 'getTopLeftRowCol',
+	    value: function getTopLeftRowCol() {
+	      var _getRowsCols3 = this.getRowsCols();
+	
+	      var _getRowsCols4 = _slicedToArray(_getRowsCols3, 2);
+	
+	      var rows = _getRowsCols4[0];
+	      var cols = _getRowsCols4[1];
+	
+	      return [rows[0], cols[0]];
 	    }
 	  }]);
 	

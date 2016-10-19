@@ -112,9 +112,9 @@ module.exports = function(Crafty) {
       return [dirX, dirY];
     },
 
-    performMovement(charMove) {
+    getNewPos(charMove) {
       let [dirX, dirY] = this.getDir(charMove);
-      this.moveDir(dirX, dirY);
+      return this.moveDir(dirX, dirY);
     },
 
     undoMovement(charMove) {
@@ -129,8 +129,9 @@ module.exports = function(Crafty) {
       const w = mapGrid.TILE.WIDTH / 2;
       const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 
-      this.x += (w / this.charStep) * dirX;
-      this.y += (h / this.charStep) * dirY;
+      const x = this.x + (w / this.charStep) * dirX;
+      const y = this.y + (h / this.charStep) * dirY;
+      return [x, y];
     },
 
     updatePos(data, translateX, translateY) {

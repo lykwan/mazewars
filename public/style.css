@@ -94,6 +94,7 @@
     background: #DCDCDC;
     color: #A0A0A0;
     border-color: #F1F1F1;
+    cursor: default;
   }
 
   .ready-form .ready {
