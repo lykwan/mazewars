@@ -440,7 +440,43 @@ class Game {
                             </li>`);
 
       this.players[playerInfo.playerId] = player;
+
+      // put a listener on player movement
     });
+
+    this.putPlayerMovementListener();
+  }
+
+  putPlayerMovementListener() {
+    let selfPlayer = this.players[this.selfId];
+    setInterval(() => {
+      if (selfPlayer.charMove.right || selfPlayer.charMove.left ||
+          selfPlayer.charMove.up || selfPlayer.charMove.down) {
+        selfPlayer.moveIdx++;
+        // console.log(selfPlayer.charMove);
+        socket.emit('updatePos', {
+          playerId: selfPlayer.playerId,
+          charMove: selfPlayer.charMove,
+          moveIdx: selfPlayer.moveIdx
+        });
+
+        // console.log('charMove', selfPlayer.copy(selfPlayer.charMove));
+        // client side prediction. push the pending move to the queue,
+        // then move according to what the pending move is
+        selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
+        let [newX, newY] = selfPlayer.getNewPos(selfPlayer.charMove,
+                                                selfPlayer.x, selfPlayer.y);
+        if (!this.board.collideWithWall(newX, newY)) {
+          selfPlayer.x = newX;
+          selfPlayer.y = newY;
+        }
+        selfPlayer.displayAnimation(selfPlayer.charMove);
+        // console.log('moveIdx', this.moveIdx);
+        // console.log('newmvt', newX, newY);
+      }
+
+    }, 20);
+
   }
 
   createMapEntities() {
@@ -471,7 +507,6 @@ class Game {
       const player = this.players[data.playerId];
       if (player) {
         player.updatePosWithServerState(data, this.translateX, this.translateY);
-        // player.updatePos(data, this.translateX, this.translateY);
       }
     });
 

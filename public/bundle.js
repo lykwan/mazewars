@@ -453,7 +453,49 @@
 	        $('.ranking').append('<li class=\'' + playerInfo.playerColor + '\n                                        ' + selfPlayerClass + '\'>\n                              <span>' + (idx + 1) + '</span>\n                              <img class="icon" src="' + iconImgSrc + '"></img>\n                              <span>' + player.longestBallHoldingTime + '\n                              </span>\n                            </li>');
 	
 	        _this7.players[playerInfo.playerId] = player;
+	
+	        // put a listener on player movement
 	      });
+	
+	      this.putPlayerMovementListener();
+	    }
+	  }, {
+	    key: 'putPlayerMovementListener',
+	    value: function putPlayerMovementListener() {
+	      var _this8 = this;
+	
+	      var selfPlayer = this.players[this.selfId];
+	      setInterval(function () {
+	        if (selfPlayer.charMove.right || selfPlayer.charMove.left || selfPlayer.charMove.up || selfPlayer.charMove.down) {
+	          selfPlayer.moveIdx++;
+	          // console.log(selfPlayer.charMove);
+	          socket.emit('updatePos', {
+	            playerId: selfPlayer.playerId,
+	            charMove: selfPlayer.charMove,
+	            moveIdx: selfPlayer.moveIdx
+	          });
+	
+	          // console.log('charMove', selfPlayer.copy(selfPlayer.charMove));
+	          // client side prediction. push the pending move to the queue,
+	          // then move according to what the pending move is
+	          selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
+	
+	          var _selfPlayer$getNewPos = selfPlayer.getNewPos(selfPlayer.charMove, selfPlayer.x, selfPlayer.y);
+	
+	          var _selfPlayer$getNewPos2 = _slicedToArray(_selfPlayer$getNewPos, 2);
+	
+	          var newX = _selfPlayer$getNewPos2[0];
+	          var newY = _selfPlayer$getNewPos2[1];
+	
+	          if (!_this8.board.collideWithWall(newX, newY)) {
+	            selfPlayer.x = newX;
+	            selfPlayer.y = newY;
+	          }
+	          selfPlayer.displayAnimation(selfPlayer.charMove);
+	          // console.log('moveIdx', this.moveIdx);
+	          // console.log('newmvt', newX, newY);
+	        }
+	      }, 20);
 	    }
 	  }, {
 	    key: 'createMapEntities',
@@ -478,18 +520,17 @@
 	  }, {
 	    key: 'setUpPlayersMovement',
 	    value: function setUpPlayersMovement() {
-	      var _this8 = this;
+	      var _this9 = this;
 	
 	      socket.on('updatePos', function (data) {
-	        var player = _this8.players[data.playerId];
+	        var player = _this9.players[data.playerId];
 	        if (player) {
-	          player.updatePosWithServerState(data, _this8.translateX, _this8.translateY);
-	          // player.updatePos(data, this.translateX, this.translateY);
+	          player.updatePosWithServerState(data, _this9.translateX, _this9.translateY);
 	        }
 	      });
 	
 	      socket.on('stopMovement', function (data) {
-	        var player = _this8.players[data.playerId];
+	        var player = _this9.players[data.playerId];
 	        if (player) {
 	          player.stopAnimation(data);
 	        }
@@ -498,7 +539,7 @@
 	  }, {
 	    key: 'setUpPlacingWeapons',
 	    value: function setUpPlacingWeapons() {
-	      var _this9 = this;
+	      var _this10 = this;
 	
 	      socket.on('addWeapon', function (data) {
 	        var weapon = Crafty.e('Weapon').setUpStaticPos(data.row, data.col).setUp(data.type);
@@ -510,37 +551,37 @@
 	          w: mapGrid[data.type].WIDTH,
 	          h: mapGrid[data.type].HEIGHT
 	        });
-	        _this9.weapons[[data.row, data.col]] = weapon;
-	        _this9.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
+	        _this10.weapons[[data.row, data.col]] = weapon;
+	        _this10.iso.place(weapon, data.row, data.col, mapGrid[data.type].Z);
 	
 	        // translate the weapon px in the initial rendering to the middle of tile
 	        weapon.x += (mapGrid.TILE.WIDTH - mapGrid[data.type].WIDTH) / 2;
 	      });
 	
 	      socket.on('destroyWeapon', function (data) {
-	        var weapon = _this9.weapons[[data.row, data.col]];
+	        var weapon = _this10.weapons[[data.row, data.col]];
 	        weapon.destroy();
 	      });
 	    }
 	  }, {
 	    key: 'setUpCreateDamage',
 	    value: function setUpCreateDamage() {
-	      var _this10 = this;
+	      var _this11 = this;
 	
 	      socket.on('createDamage', function (data) {
 	        var activeComponent = data.playerColor + 'ActiveTileSprite';
-	        _this10.tileBoard[data.row][data.col].removeComponent('tileSprite');
-	        _this10.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
-	        _this10.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
+	        _this11.tileBoard[data.row][data.col].removeComponent('tileSprite');
+	        _this11.tileBoard[data.row][data.col].addComponent(activeComponent).attr({ w: mapGrid.TILE.WIDTH, h: mapGrid.TILE.HEIGHT });
+	        _this11.tileBoard[data.row][data.col].damageDisappearAfter(activeComponent);
 	      });
 	    }
 	  }, {
 	    key: 'setUpHPChange',
 	    value: function setUpHPChange() {
-	      var _this11 = this;
+	      var _this12 = this;
 	
 	      socket.on('HPChange', function (data) {
-	        var player = _this11.players[data.playerId];
+	        var player = _this12.players[data.playerId];
 	        if (player) {
 	          player.HP = data.playerHP;
 	          var HPLevelWidth = player.HP / 100 * mapGrid.FULL_HP_BAR_WIDTH;
@@ -569,43 +610,43 @@
 	  }, {
 	    key: 'setUpAddBall',
 	    value: function setUpAddBall() {
-	      var _this12 = this;
+	      var _this13 = this;
 	
 	      socket.on('addBall', function (data) {
-	        _this12.ball = Crafty.e('Ball, ballSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
+	        _this13.ball = Crafty.e('Ball, ballSprite').attr({ w: mapGrid.BALL.WIDTH, h: mapGrid.BALL.HEIGHT });
 	
-	        _this12.iso.place(_this12.ball, data.row, data.col, mapGrid.BALL.Z);
+	        _this13.iso.place(_this13.ball, data.row, data.col, mapGrid.BALL.Z);
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBall',
 	    value: function setUpShowBall() {
-	      var _this13 = this;
+	      var _this14 = this;
 	
 	      socket.on('showBall', function (data) {
-	        _this13.ball.destroy();
-	        var player = _this13.players[data.playerId];
+	        _this14.ball.destroy();
+	        var player = _this14.players[data.playerId];
 	        player.pickUpBall();
 	        // add ball next to the player with the ball
 	        $('.ranking .' + data.playerColor).append('\n          <div class="ball-holder">\n            <img src="../assets/weapons/ASTAR_weapon.png">\n            <span class="current-score">' + data.currentBallHoldingTime + '</span>\n          </div>\n        ');
 	      });
 	
 	      socket.on('loseBall', function (data) {
-	        _this13.players[data.playerId].loseBall();
+	        _this14.players[data.playerId].loseBall();
 	        $('.ball-holder').remove();
 	      });
 	    }
 	  }, {
 	    key: 'setUpShowBallRecord',
 	    value: function setUpShowBallRecord() {
-	      var _this14 = this;
+	      var _this15 = this;
 	
 	      socket.on('showScoreboard', function (data) {
 	        var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
 	          // The ball holder has the record of current ball holding time
 	          var ballHolderDiv = data.playerColor === player.playerColor ? '<div class=\'ball-holder\'>\n                                  <img src="../assets/weapons/ASTAR_weapon.png">\n                                  <span>' + data.currentBallHoldingTime + '</span>\n                                </div>' : "";
 	
-	          var selfPlayerClass = player.playerColor === _this14.selfPlayerColor ? "self-player" : "";
+	          var selfPlayerClass = player.playerColor === _this15.selfPlayerColor ? "self-player" : "";
 	          var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
 	          return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                  <span>' + (i + 1) + '</span>\n                  <img class="icon" src="' + iconImgSrc + '"></img>\n                  <span>' + player.longestBallHoldingTime + '</span>\n                  ' + ballHolderDiv + '\n                </li>';
 	        });
@@ -616,16 +657,16 @@
 	  }, {
 	    key: 'setUpHaveWeapon',
 	    value: function setUpHaveWeapon() {
-	      var _this15 = this;
+	      var _this16 = this;
 	
 	      socket.on('pickUpWeapon', function (data) {
-	        _this15.players[_this15.selfId].weaponType = data.type;
+	        _this16.players[_this16.selfId].weaponType = data.type;
 	        var imgSrc = '../assets/weapons/' + data.type + '_weapon_diagonal.png';
 	        $('.weapon-container').html('<img src=' + imgSrc + '>\n                                      <span class="weapon-type">\n                                        ' + data.type + '\n                                      </span>\n                                    ');
 	      });
 	
 	      socket.on('loseWeapon', function (data) {
-	        _this15.players[data.playerId].loseWeapon();
+	        _this16.players[data.playerId].loseWeapon();
 	        $('.weapon-container').html('<img class="no-weapon-img"\n                                          src="../assets/clear_sword5.png">');
 	      });
 	    }
@@ -945,51 +986,34 @@
 	      this.moveIdx = 0;
 	      return this;
 	    },
-	
-	
-	    // copy(charMove) {
-	    //   let copied = {};
-	    //   Object.keys(charMove).forEach(move => {
-	    //     copied[move] = charMove[move];
-	    //   });
-	    //   copied.moveIdx = this.moveIdx;
-	    //   return copied;
-	    // },
-	    //
 	    bindingKeyEvents: function bindingKeyEvents() {
 	      var _this = this;
 	
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	
-	      this.bind('EnterFrame', function () {
-	        if (_this.charMove.right || _this.charMove.left || _this.charMove.up || _this.charMove.down) {
-	          _this.moveIdx++;
-	          console.log(_this.charMove);
-	          _this.socket.emit('updatePos', {
-	            playerId: _this.playerId,
-	            charMove: _this.charMove,
-	            moveIdx: _this.moveIdx
-	          });
-	
-	          // console.log('charMove', this.copy(this.charMove));
-	          // client side prediction. push the pending move to the queue,
-	          // then move according to what the pending move is
-	          _this.pendingMoves.push(Object.assign({}, _this.charMove));
-	
-	          var _getNewPos = _this.getNewPos(_this.charMove, _this.x, _this.y);
-	
-	          var _getNewPos2 = _slicedToArray(_getNewPos, 2);
-	
-	          var newX = _getNewPos2[0];
-	          var newY = _getNewPos2[1];
-	
-	          _this.x = newX;
-	          _this.y = newY;
-	          _this.displayAnimation(_this.charMove);
-	          console.log('moveIdx', _this.moveIdx);
-	          console.log('newmvt', newX, newY);
-	        }
-	      });
+	      // this.bind('EnterFrame', (data) => {
+	      //   if (this.charMove.right || this.charMove.left ||
+	      //       this.charMove.up || this.charMove.down) {
+	      //     this.moveIdx++;
+	      //     // console.log(this.charMove);
+	      //     this.socket.emit('updatePos', {
+	      //       playerId: this.playerId,
+	      //       charMove: this.charMove,
+	      //       moveIdx: this.moveIdx
+	      //     });
+	      //
+	      //     // console.log('charMove', this.copy(this.charMove));
+	      //     // client side prediction. push the pending move to the queue,
+	      //     // then move according to what the pending move is
+	      //     this.pendingMoves.push(Object.assign({}, this.charMove));
+	      //     let [newX, newY] = this.getNewPos(this.charMove, this.x, this.y);
+	      //     this.x = newX;
+	      //     this.y = newY;
+	      //     this.displayAnimation(this.charMove);
+	      //     // console.log('moveIdx', this.moveIdx);
+	      //     // console.log('newmvt', newX, newY);
+	      //   }
+	      // });
 	
 	      this.bind('KeyDown', function (e) {
 	        e.originalEvent.preventDefault();
@@ -1109,8 +1133,8 @@
 	    // on top of the server state
 	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
 	      var clientAheadBy = this.moveIdx - data.moveIdx;
-	      console.log('clientahedby', clientAheadBy);
-	      console.log('length', this.pendingMoves.length);
+	      // console.log('clientahedby', clientAheadBy);
+	      // console.log('length', this.pendingMoves.length);
 	      while (this.pendingMoves.length > clientAheadBy) {
 	        // get rid of the move inputs we don't need
 	        this.pendingMoves.shift();
@@ -1128,17 +1152,17 @@
 	
 	      for (var i = 0; i < this.pendingMoves.length; i++) {
 	        var charMove = this.pendingMoves[i];
-	        console.log('applying thing', charMove);
-	        console.log(x + translateX, y + translateY);
+	        // console.log('applying thing', charMove);
+	        // console.log(x + translateX, y + translateY);
 	
-	        var _getNewPos3 = this.getNewPos(charMove, x, y);
+	        var _getNewPos = this.getNewPos(charMove, x, y);
 	
-	        var _getNewPos4 = _slicedToArray(_getNewPos3, 2);
+	        var _getNewPos2 = _slicedToArray(_getNewPos, 2);
 	
-	        x = _getNewPos4[0];
-	        y = _getNewPos4[1];
+	        x = _getNewPos2[0];
+	        y = _getNewPos2[1];
 	      }
-	      console.log(x + translateX, y + translateY);
+	      // console.log(x + translateX, y + translateY);
 	
 	      // apply the translation on top of the final x and Y
 	      this.x = x + translateX;
