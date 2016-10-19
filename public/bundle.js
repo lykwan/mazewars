@@ -108,6 +108,7 @@
 	    this.translateX = null;
 	    this.translateY = null;
 	    this.playersReady = {};
+	    this.playerMvtIntervalId = null;
 	  }
 	
 	  _createClass(Game, [{
@@ -230,6 +231,7 @@
 	
 	      // set up game over scene
 	      Crafty.scene('GameOver', function (data) {
+	        clearInterval(_this2.playerMvtIntervalId);
 	        _this2.showGameOver(data);
 	      });
 	
@@ -465,10 +467,10 @@
 	      var _this8 = this;
 	
 	      var selfPlayer = this.players[this.selfId];
-	      setInterval(function () {
+	      this.playerMvtIntervalId = setInterval(function () {
 	        if (selfPlayer.charMove.right || selfPlayer.charMove.left || selfPlayer.charMove.up || selfPlayer.charMove.down) {
 	          selfPlayer.moveIdx++;
-	          // console.log(selfPlayer.charMove);
+	          console.log(selfPlayer.charMove);
 	          socket.emit('updatePos', {
 	            playerId: selfPlayer.playerId,
 	            charMove: selfPlayer.charMove,
@@ -479,6 +481,7 @@
 	          // client side prediction. push the pending move to the queue,
 	          // then move according to what the pending move is
 	          selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
+	          console.log('oldmvt', selfPlayer.x, selfPlayer.y);
 	
 	          var _selfPlayer$getNewPos = selfPlayer.getNewPos(selfPlayer.charMove, selfPlayer.x, selfPlayer.y);
 	
@@ -487,13 +490,18 @@
 	          var newX = _selfPlayer$getNewPos2[0];
 	          var newY = _selfPlayer$getNewPos2[1];
 	
-	          if (!_this8.board.collideWithWall(newX, newY)) {
+	          console.log('new', newX, newY);
+	
+	          console.log(_this8.board.collideWithWall(newX - _this8.translateX, newY - _this8.translateY, true));
+	          // account for the translation because the board class is based on
+	          // the server side coordination
+	          if (!_this8.board.collideWithWall(newX - _this8.translateX, newY - _this8.translateY)) {
 	            selfPlayer.x = newX;
 	            selfPlayer.y = newY;
 	          }
 	          selfPlayer.displayAnimation(selfPlayer.charMove);
-	          // console.log('moveIdx', this.moveIdx);
-	          // console.log('newmvt', newX, newY);
+	          console.log('moveIdx', selfPlayer.moveIdx);
+	          console.log('newmvt', selfPlayer.x, selfPlayer.y);
 	        }
 	      }, 20);
 	    }
@@ -525,6 +533,7 @@
 	      socket.on('updatePos', function (data) {
 	        var player = _this9.players[data.playerId];
 	        if (player) {
+	          console.log('transX, transY', _this9.translateX, _this9.translateY);
 	          player.updatePosWithServerState(data, _this9.translateX, _this9.translateY);
 	        }
 	      });
@@ -1133,8 +1142,8 @@
 	    // on top of the server state
 	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
 	      var clientAheadBy = this.moveIdx - data.moveIdx;
-	      // console.log('clientahedby', clientAheadBy);
-	      // console.log('length', this.pendingMoves.length);
+	      console.log('clientahedby', clientAheadBy);
+	      console.log('length', this.pendingMoves.length);
 	      while (this.pendingMoves.length > clientAheadBy) {
 	        // get rid of the move inputs we don't need
 	        this.pendingMoves.shift();
@@ -1152,8 +1161,8 @@
 	
 	      for (var i = 0; i < this.pendingMoves.length; i++) {
 	        var charMove = this.pendingMoves[i];
-	        // console.log('applying thing', charMove);
-	        // console.log(x + translateX, y + translateY);
+	        console.log('applying thing', charMove);
+	        console.log(x + translateX, y + translateY);
 	
 	        var _getNewPos = this.getNewPos(charMove, x, y);
 	
@@ -1162,7 +1171,7 @@
 	        x = _getNewPos2[0];
 	        y = _getNewPos2[1];
 	      }
-	      // console.log(x + translateX, y + translateY);
+	      console.log(x + translateX, y + translateY);
 	
 	      // apply the translation on top of the final x and Y
 	      this.x = x + translateX;
@@ -1595,7 +1604,7 @@
 	
 	  }, {
 	    key: 'collideWithWall',
-	    value: function collideWithWall(playerX, playerY) {
+	    value: function collideWithWall(playerX, playerY, print) {
 	      var _getRowsCols = this.getRowsCols(playerX, playerY);
 	
 	      var _getRowsCols2 = _slicedToArray(_getRowsCols, 2);
@@ -1603,6 +1612,9 @@
 	      var rows = _getRowsCols2[0];
 	      var cols = _getRowsCols2[1];
 	
+	      if (print) {
+	        console.log('rows, cols', rows, cols);
+	      }
 	      for (var i = 0; i < rows.length; i++) {
 	        for (var j = 0; j < cols.length; j++) {
 	          if (!this.isInGrid(rows[i], cols[j]) || this.maze[rows[i]][cols[j]].isWall) {

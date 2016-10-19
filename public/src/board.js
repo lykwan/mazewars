@@ -157,8 +157,11 @@ class Board {
 
   // checking if player's current position is colliding with a wall or
   // if it is out of the grid
-  collideWithWall(playerX, playerY) {
+  collideWithWall(playerX, playerY, print) {
     let [rows, cols] = this.getRowsCols(playerX, playerY);
+        if (print) {
+          console.log('rows, cols', rows, cols);
+        }
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < cols.length; j++) {
         if (!this.isInGrid(rows[i], cols[j]) ||
@@ -213,6 +216,8 @@ class Board {
     let [rows, cols] = this.getRowsCols();
     return [rows[0], cols[0]];
   }
+
+
 
 }
 

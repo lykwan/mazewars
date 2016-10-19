@@ -366,14 +366,21 @@ class GameState {
         this.pickUpBall(socket, movingPlayer);
       }
 
+      let testX = movingPlayer.x;
+      let testY = movingPlayer.y;
+
       // console.log(movingPlayer.x, movingPlayer.y);
+      setTimeout(() => {
         this.io.to(this.roomId).emit('updatePos', {
           playerId: data.playerId,
-          x: movingPlayer.x,
-          y: movingPlayer.y,
+          // x: movingPlayer.x,
+          // y: movingPlayer.y,
+          x: testX,
+          y: testY,
           charMove: data.charMove,
           moveIdx: data.moveIdx
         });
+      }, 100);
     });
 
     socket.on('stopMovement', data => {

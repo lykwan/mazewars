@@ -157,8 +157,8 @@ module.exports = function(Crafty) {
     // on top of the server state
     updatePosWithServerState(data, translateX, translateY) {
       const clientAheadBy = this.moveIdx - data.moveIdx;
-      // console.log('clientahedby', clientAheadBy);
-      // console.log('length', this.pendingMoves.length);
+      console.log('clientahedby', clientAheadBy);
+      console.log('length', this.pendingMoves.length);
       while (this.pendingMoves.length > clientAheadBy) {
         // get rid of the move inputs we don't need
         this.pendingMoves.shift();
@@ -173,11 +173,11 @@ module.exports = function(Crafty) {
       let [x, y] = [data.x, data.y];
       for (let i = 0; i < this.pendingMoves.length; i++) {
         let charMove = this.pendingMoves[i];
-        // console.log('applying thing', charMove);
-        // console.log(x + translateX, y + translateY);
+        console.log('applying thing', charMove);
+        console.log(x + translateX, y + translateY);
         [x, y] = this.getNewPos(charMove, x, y);
       }
-      // console.log(x + translateX, y + translateY);
+      console.log(x + translateX, y + translateY);
 
       // apply the translation on top of the final x and Y
       this.x = x + translateX;
