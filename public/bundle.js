@@ -483,31 +483,14 @@
 	      socket.on('updatePos', function (data) {
 	        var player = _this8.players[data.playerId];
 	        if (player) {
-	          var playerOldX = player.x;
-	          var playerOldY = player.y;
-	
-	          player.x = data.x + _this8.translateX;
-	          player.y = data.y + _this8.translateY;
-	
-	          player.displayAnimation(data.charMove);
+	          player.updatePos(data, _this8.translateX, _this8.translateY);
 	        }
 	      });
 	
 	      socket.on('stopMovement', function (data) {
 	        var player = _this8.players[data.playerId];
 	        if (player) {
-	          if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
-	            if (player.isPlaying('PlayerMovingRight')) player.pauseAnimation();
-	          }
-	          if (data.keyCode === Crafty.keys.LEFT_ARROW) {
-	            if (player.isPlaying('PlayerMovingLeft')) player.pauseAnimation();
-	          }
-	          if (data.keyCode === Crafty.keys.UP_ARROW) {
-	            if (player.isPlaying('PlayerMovingUp')) player.pauseAnimation();
-	          }
-	          if (data.keyCode === Crafty.keys.DOWN_ARROW) {
-	            if (player.isPlaying('PlayerMovingDown')) player.pauseAnimation();
-	          }
+	          player.stopAnimation(data);
 	        }
 	      });
 	    }
@@ -962,67 +945,70 @@
 	      return this;
 	    },
 	    bindingKeyEvents: function bindingKeyEvents() {
+	      var _this = this;
+	
 	      this.charMove = { left: false, right: false, up: false, down: false };
 	
 	      this.bind('EnterFrame', function () {
-	        if (this.charMove.right || this.charMove.left || this.charMove.up || this.charMove.down) {
-	          this.socket.emit('updatePos', {
-	            playerId: this.playerId,
-	            charMove: this.charMove
+	        if (_this.charMove.right || _this.charMove.left || _this.charMove.up || _this.charMove.down) {
+	          _this.socket.emit('updatePos', {
+	            playerId: _this.playerId,
+	            charMove: _this.charMove,
+	            moveIdx: _this.moveIdx
 	          });
+	
+	          _this.pendingMoves.enqueue(_this.charMove);
+	          console.log(_this.moveIdx);
+	          _this.moveIdx++;
 	        }
 	      });
 	
 	      this.bind('KeyDown', function (e) {
 	        e.originalEvent.preventDefault();
 	        if (e.keyCode === Crafty.keys.Z) {
-	          this.pickUpWeapon();
+	          _this.pickUpWeapon();
 	          return;
 	        }
 	
-	        if (e.keyCode === Crafty.keys.X && this.weaponType !== null) {
-	          this.shootWeapon();
+	        if (e.keyCode === Crafty.keys.X && _this.weaponType !== null) {
+	          _this.shootWeapon();
 	          return;
 	        }
 	
-	        this.charMove.left = false;
-	        this.charMove.right = false;
-	        this.charMove.down = false;
-	        this.charMove.up = false;
+	        _this.charMove.left = false;
+	        _this.charMove.right = false;
+	        _this.charMove.down = false;
+	        _this.charMove.up = false;
 	
 	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
-	          this.charMove.right = true;
+	          _this.charMove.right = true;
 	        }
 	        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
-	          this.charMove.left = true;
+	          _this.charMove.left = true;
 	        }
 	        if (e.keyCode === Crafty.keys.UP_ARROW) {
-	          this.charMove.up = true;
+	          _this.charMove.up = true;
 	        }
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
-	          this.charMove.down = true;
+	          _this.charMove.down = true;
 	        }
 	      });
 	
 	      this.bind('KeyUp', function (e) {
 	        if (e.keyCode === Crafty.keys.RIGHT_ARROW) {
-	          console.log('releasing key');
-	          this.charMove.right = false;
+	          _this.charMove.right = false;
 	        }
 	        if (e.keyCode === Crafty.keys.LEFT_ARROW) {
-	          console.log('releasing key');
-	          this.charMove.left = false;
+	          _this.charMove.left = false;
 	        }
 	        if (e.keyCode === Crafty.keys.UP_ARROW) {
-	          console.log('releasing key');
-	          this.charMove.up = false;
+	          _this.charMove.up = false;
 	        }
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
-	          console.log('releasing key');
-	          this.charMove.down = false;
+	          _this.charMove.down = false;
 	        }
-	        this.socket.emit('stopMovement', {
-	          playerId: this.playerId,
+	        _this.socket.emit('stopMovement', {
+	          playerId: _this.playerId,
 	          keyCode: e.keyCode
 	        });
 	      });
@@ -1078,6 +1064,27 @@
 	      this.x += w / this.charStep * dirX;
 	      this.y += h / this.charStep * dirY;
 	    },
+	    updatePos: function updatePos(data, translateX, translateY) {
+	      this.x = data.x + translateX;
+	      this.y = data.y + translateY;
+	      console.log(data.moveIdx);
+	
+	      this.displayAnimation(data.charMove);
+	    },
+	    stopAnimation: function stopAnimation(data) {
+	      if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
+	        if (this.isPlaying('PlayerMovingRight')) this.pauseAnimation();
+	      }
+	      if (data.keyCode === Crafty.keys.LEFT_ARROW) {
+	        if (this.isPlaying('PlayerMovingLeft')) this.pauseAnimation();
+	      }
+	      if (data.keyCode === Crafty.keys.UP_ARROW) {
+	        if (this.isPlaying('PlayerMovingUp')) this.pauseAnimation();
+	      }
+	      if (data.keyCode === Crafty.keys.DOWN_ARROW) {
+	        if (this.isPlaying('PlayerMovingDown')) this.pauseAnimation();
+	      }
+	    },
 	
 	
 	    setUpSocket: function setUpSocket(socket) {
@@ -1086,11 +1093,11 @@
 	    },
 	
 	    setUpSetBallTime: function setUpSetBallTime() {
-	      var _this = this;
+	      var _this2 = this;
 	
 	      this.socket.on('setBallTime', function (data) {
-	        _this.currentBallHoldingTime = data.currentBallHoldingTime;
-	        _this.longestSecsHoldingBall = data.longestSecsHoldingBall;
+	        _this2.currentBallHoldingTime = data.currentBallHoldingTime;
+	        _this2.longestSecsHoldingBall = data.longestSecsHoldingBall;
 	      });
 	
 	      return this;
