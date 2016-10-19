@@ -470,7 +470,8 @@ class Game {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
-        player.updatePos(data, this.translateX, this.translateY);
+        player.updatePosWithServerState(data, this.translateX, this.translateY);
+        // player.updatePos(data, this.translateX, this.translateY);
       }
     });
 
