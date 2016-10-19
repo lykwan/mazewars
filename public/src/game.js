@@ -467,18 +467,21 @@ class Game {
         // then move according to what the pending move is
         selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
         console.log('oldmvt', selfPlayer.x, selfPlayer.y);
-        let [newX, newY] = selfPlayer.getNewPos(selfPlayer.charMove,
-                                                selfPlayer.x, selfPlayer.y);
+        let [newX, newY] = this.board.getNewPos(selfPlayer.charMove,
+                                                selfPlayer.x,
+                                                selfPlayer.y,
+                                                this.translateX,
+                                                this.translateY
+                                              );
         console.log('new', newX, newY);
 
-        console.log(this.board.collideWithWall(newX - this.translateX, newY - this.translateY, true));
         // account for the translation because the board class is based on
         // the server side coordination
-        if (!this.board.collideWithWall(newX - this.translateX,
-                                        newY - this.translateY)) {
-          selfPlayer.x = newX;
-          selfPlayer.y = newY;
-        }
+        // if (!this.board.collideWithWall(newX - this.translateX,
+        //                                 newY - this.translateY)) {
+        selfPlayer.x = newX;
+        selfPlayer.y = newY;
+        // }
         selfPlayer.displayAnimation(selfPlayer.charMove);
         console.log('moveIdx', selfPlayer.moveIdx);
         console.log('newmvt', selfPlayer.x, selfPlayer.y);
@@ -514,9 +517,10 @@ class Game {
   setUpPlayersMovement() {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
+      console.log('got there? ');
+      console.log(player);
       if (player) {
-        console.log('transX, transY', this.translateX, this.translateY);
-        player.updatePosWithServerState(data, this.translateX, this.translateY);
+        this.updatePosWithServerState(data, player);
       }
     });
 
@@ -526,6 +530,52 @@ class Game {
         player.stopAnimation(data);
       }
     });
+  }
+
+  // server reconcilation. getting rid of the move inputs that we don't
+  // need anymore from the queue up until the movement updates the server
+  // side returns, and then applying the rest of the moves in the queue
+  // on top of the server state
+  updatePosWithServerState(data, player) {
+    console.log(this.selfId);
+    console.log(player.playerId);
+    console.log(parseInt(player.playerId) === parseInt(this.selfId));
+    console.log(parseInt(player.playerId) === this.selfId);
+    if (parseInt(player.playerId) === parseInt(this.selfId)) {
+      const clientAheadBy = player.moveIdx - data.moveIdx;
+      console.log('HERE WE GOOOOOOOOOOOOOOOOOOO');
+      console.log('clientahedby', clientAheadBy);
+      console.log('length', player.pendingMoves.length);
+      while (player.pendingMoves.length > clientAheadBy) {
+        // get rid of the move inputs we don't need
+        player.pendingMoves.shift();
+      }
+
+      this.updatePosWithRemainingMoves(data, player);
+    } else {
+      // no need to reconcile other player's movement
+      player.x = data.x;
+      player.y = data.y;
+    }
+  }
+
+  // applying the remaining moves that hasn't come back from server yet
+  // on top of the most recent server side update
+  updatePosWithRemainingMoves(data, player) {
+    let [x, y] = [data.x, data.y];
+    console.log('player', player);
+    console.log('pendingMoves', player.pendingMoves);
+    for (let i = 0; i < player.pendingMoves.length; i++) {
+      let charMove = player.pendingMoves[i];
+      console.log('applying thing', charMove);
+      console.log(x + this.translateX, y + this.translateY);
+      [x, y] = this.board.getNewPos(charMove, x, y);
+    }
+    console.log(x + this.translateX, y + this.translateY);
+
+    // apply the translation on top of the final x and Y
+    player.x = x + this.translateX;
+    player.y = y + this.translateY;
   }
 
   setUpPlacingWeapons() {

@@ -102,46 +102,39 @@ module.exports = function(Crafty) {
       return this;
     },
 
-    getDir(charMove) {
-      let dirX, dirY;
-      if (charMove.left) {
-        dirX = -1;
-        dirY = -1;
-      } else if (charMove.right) {
-        dirX = 1;
-        dirY = 1;
-      } else if (charMove.up) {
-        dirX = 1;
-        dirY = -1;
-      } else if (charMove.down) {
-        dirX = -1;
-        dirY = 1;
-      }
-
-      return [dirX, dirY];
-    },
-
-    getNewPos(charMove, x, y) {
-      let [dirX, dirY] = this.getDir(charMove);
-      return this.moveDir(x, y, dirX, dirY);
-    },
-
-    undoMovement(charMove) {
-      let [dirX, dirY] = this.getDir(charMove);
-      let undoDirX = dirX === -1 ? 1 : -1;
-      let undoDirY = dirY === -1 ? 1 : -1;
-      this.moveDir(undoDirX, undoDirY);
-    },
-
-    moveDir(x, y, dirX, dirY) {
-      // the offset it needs to move to the neighbor blocks
-      const w = mapGrid.TILE.WIDTH / 2;
-      const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
-
-      const newX = x + (w / this.charStep) * dirX;
-      const newY = y + (h / this.charStep) * dirY;
-      return [newX, newY];
-    },
+    // getDir(charMove) {
+    //   let dirX, dirY;
+    //   if (charMove.left) {
+    //     dirX = -1;
+    //     dirY = -1;
+    //   } else if (charMove.right) {
+    //     dirX = 1;
+    //     dirY = 1;
+    //   } else if (charMove.up) {
+    //     dirX = 1;
+    //     dirY = -1;
+    //   } else if (charMove.down) {
+    //     dirX = -1;
+    //     dirY = 1;
+    //   }
+    //
+    //   return [dirX, dirY];
+    // },
+    //
+    // getNewPos(charMove, x, y) {
+    //   let [dirX, dirY] = this.getDir(charMove);
+    //   return this.moveDir(x, y, dirX, dirY);
+    // },
+    //
+    // moveDir(x, y, dirX, dirY) {
+    //   // the offset it needs to move to the neighbor blocks
+    //   const w = mapGrid.TILE.WIDTH / 2;
+    //   const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
+    //
+    //   const newX = x + (w / this.charStep) * dirX;
+    //   const newY = y + (h / this.charStep) * dirY;
+    //   return [newX, newY];
+    // },
 
     // updatePos(data, translateX, translateY) {
     //   this.x = data.x + translateX;

@@ -352,15 +352,13 @@ class GameState {
       }
 
       let movingPlayer = this.players[data.playerId];
-      let [newX, newY] = movingPlayer.getNewPos(data.charMove,
-                                                movingPlayer.x,
-                                                movingPlayer.y
-                                              );
+      let [newX, newY] = this.board.getNewPos(data.charMove,
+                                              movingPlayer.x,
+                                              movingPlayer.y
+                                            );
 
-      if (!this.board.collideWithWall(newX, newY)) {
-        movingPlayer.x = newX;
-        movingPlayer.y = newY;
-      }
+      movingPlayer.x = newX;
+      movingPlayer.y = newY;
 
       if (this.ball && this.collideWithItem(movingPlayer, this.ball)) {
         this.pickUpBall(socket, movingPlayer);
