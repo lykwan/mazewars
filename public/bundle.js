@@ -230,21 +230,21 @@
 	
 	      // set up game over scene
 	      Crafty.scene('GameOver', function (data) {
-	        _this2.setUpGameOver(data);
+	        _this2.showGameOver(data);
 	      });
 	
 	      // start loading scene
 	      Crafty.scene('Loading');
 	    }
 	  }, {
-	    key: 'setUpGameOver',
-	    value: function setUpGameOver(data) {
+	    key: 'showGameOver',
+	    value: function showGameOver(data) {
 	      var _this3 = this;
 	
 	      var rankedPlayerScoreLis = data.rankedPlayerScores.map(function (player, i) {
 	        var selfPlayerClass = player.playerColor === _this3.selfPlayerColor ? "self-player" : "";
 	        var iconImgSrc = '../assets/icons/' + player.playerColor + '_icon.png';
-	        return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n              <span>' + (i + 1) + '</span>\n              <img class="icon" src="' + iconImgSrc + '"></img>\n              <span>' + player.longestBallHoldingTime + '</span>\n            </li>';
+	        return '<li class=\'' + player.playerColor + ' ' + selfPlayerClass + '\'>\n                <span>' + (i + 1) + '</span>\n                <img class="icon" src="' + iconImgSrc + '"></img>\n                <span>' + player.longestBallHoldingTime + '</span>\n              </li>';
 	      });
 	
 	      $(".game-status").html('\n      <div class="results-container">\n        <h1>GAME OVER</h1>\n        <div class="results container">\n          <h2>SCORE</h2>\n          <h3 class="row-header">PLAYER</h3>\n          <h3 class="row-header">TIME RECORD</h3>\n          <ul class="ranking">\n            ' + rankedPlayerScoreLis.join("") + '\n          </ul>\n        </div>\n      </div>\n    ');
@@ -902,7 +902,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 200, // 200
+	  GAME_DURATION: 10, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
