@@ -173,24 +173,24 @@ class Game {
 
     // set up game over scene
     Crafty.scene('GameOver', (data) => {
-      this.setUpGameOver(data);
+      this.showGameOver(data);
     });
 
     // start loading scene
     Crafty.scene('Loading');
   }
 
-  setUpGameOver(data) {
+  showGameOver(data) {
     const rankedPlayerScoreLis = data.rankedPlayerScores.map((player, i) => {
-    const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
-                              "self-player" :
-                              "";
-    const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
-    return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
-              <span>${ i + 1 }</span>
-              <img class="icon" src="${ iconImgSrc }"></img>
-              <span>${ player.longestBallHoldingTime }</span>
-            </li>`;
+      const selfPlayerClass = player.playerColor === this.selfPlayerColor ?
+                                "self-player" :
+                                "";
+      const iconImgSrc = `../assets/icons/${ player.playerColor }_icon.png`;
+      return `<li class='${ player.playerColor } ${ selfPlayerClass }'>
+                <span>${ i + 1 }</span>
+                <img class="icon" src="${ iconImgSrc }"></img>
+                <span>${ player.longestBallHoldingTime }</span>
+              </li>`;
     });
 
     $(".game-status").html(`
