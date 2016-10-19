@@ -958,6 +958,16 @@
 	          });
 	
 	          _this.pendingMoves.enqueue(_this.charMove);
+	
+	          var _getNewPos = _this.getNewPos(_this.charMove, _this.x, _this.y);
+	
+	          var _getNewPos2 = _slicedToArray(_getNewPos, 2);
+	
+	          var newX = _getNewPos2[0];
+	          var newY = _getNewPos2[1];
+	
+	          _this.x = newX;
+	          _this.y = newY;
 	          console.log(_this.moveIdx);
 	          _this.moveIdx++;
 	        }
@@ -1034,7 +1044,7 @@
 	
 	      return [dirX, dirY];
 	    },
-	    getNewPos: function getNewPos(charMove) {
+	    getNewPos: function getNewPos(charMove, x, y) {
 	      var _getDir = this.getDir(charMove);
 	
 	      var _getDir2 = _slicedToArray(_getDir, 2);
@@ -1042,7 +1052,7 @@
 	      var dirX = _getDir2[0];
 	      var dirY = _getDir2[1];
 	
-	      return this.moveDir(dirX, dirY);
+	      return this.moveDir(x, y, dirX, dirY);
 	    },
 	    undoMovement: function undoMovement(charMove) {
 	      var _getDir3 = this.getDir(charMove);
@@ -1056,14 +1066,14 @@
 	      var undoDirY = dirY === -1 ? 1 : -1;
 	      this.moveDir(undoDirX, undoDirY);
 	    },
-	    moveDir: function moveDir(dirX, dirY) {
+	    moveDir: function moveDir(x, y, dirX, dirY) {
 	      // the offset it needs to move to the neighbor blocks
 	      var w = mapGrid.TILE.WIDTH / 2;
 	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 	
-	      var x = this.x + w / this.charStep * dirX;
-	      var y = this.y + h / this.charStep * dirY;
-	      return [x, y];
+	      var newX = x + w / this.charStep * dirX;
+	      var newY = y + h / this.charStep * dirY;
+	      return [newX, newY];
 	    },
 	    updatePos: function updatePos(data, translateX, translateY) {
 	      this.x = data.x + translateX;
