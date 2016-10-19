@@ -17,6 +17,7 @@ class Board {
     this.maze = this.createStartingMaze();
     this.frontier = [];
     this.generateMaze();
+    this.charStep = mapGrid.CHAR_STEP;
   }
 
   // create a starting maze map with all the walls
@@ -157,11 +158,17 @@ class Board {
 
   // checking if player's current position is colliding with a wall or
   // if it is out of the grid
-  collideWithWall(playerX, playerY, print) {
-    let [rows, cols] = this.getRowsCols(playerX, playerY);
-        if (print) {
-          console.log('rows, cols', rows, cols);
-        }
+
+  // based on server side coordination
+  collideWithWall(playerX, playerY, translateX, translateY) {
+    // check if there is translation offset (from the client side)
+    let translatedX = translateX ? playerX - translateX : playerX
+    let translatedY = translateY ? playerY - translateY : playerY
+
+    let [rows, cols] = this.getRowsCols(translatedX, translatedY);
+        // if (print) {
+        //   console.log('rows, cols', rows, cols);
+        // }
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < cols.length; j++) {
         if (!this.isInGrid(rows[i], cols[j]) ||
@@ -217,8 +224,46 @@ class Board {
     return [rows[0], cols[0]];
   }
 
+  getDir(charMove) {
+    let dirX, dirY;
+    if (charMove.left) {
+      dirX = -1;
+      dirY = -1;
+    } else if (charMove.right) {
+      dirX = 1;
+      dirY = 1;
+    } else if (charMove.up) {
+      dirX = 1;
+      dirY = -1;
+    } else if (charMove.down) {
+      dirX = -1;
+      dirY = 1;
+    }
 
+    return [dirX, dirY];
+  }
 
+  // giving the player x, y and direction, return the player's new position
+  getNewPos(charMove, playerX, playerY, translateX, translateY) {
+    let [dirX, dirY] = this.getDir(charMove);
+    return this.moveDir(playerX, playerY, dirX, dirY, translateX, translateY);
+  }
+
+  moveDir(x, y, dirX, dirY, translateX, translateY) {
+    // the offset it needs to move to the neighbor blocks
+    const w = mapGrid.TILE.WIDTH / 2;
+    const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
+
+    const newX = x + (w / this.charStep) * dirX;
+    const newY = y + (h / this.charStep) * dirY;
+
+    // check for wall collision
+    if (this.collideWithWall(newX, newY, translateX, translateY)) {
+      return [x, y];
+    } else {
+      return [newX, newY];
+    }
+  }
 }
 
 module.exports = Board;

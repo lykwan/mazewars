@@ -483,22 +483,22 @@
 	          selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
 	          console.log('oldmvt', selfPlayer.x, selfPlayer.y);
 	
-	          var _selfPlayer$getNewPos = selfPlayer.getNewPos(selfPlayer.charMove, selfPlayer.x, selfPlayer.y);
+	          var _board$getNewPos = _this8.board.getNewPos(selfPlayer.charMove, selfPlayer.x, selfPlayer.y, _this8.translateX, _this8.translateY);
 	
-	          var _selfPlayer$getNewPos2 = _slicedToArray(_selfPlayer$getNewPos, 2);
+	          var _board$getNewPos2 = _slicedToArray(_board$getNewPos, 2);
 	
-	          var newX = _selfPlayer$getNewPos2[0];
-	          var newY = _selfPlayer$getNewPos2[1];
+	          var newX = _board$getNewPos2[0];
+	          var newY = _board$getNewPos2[1];
 	
 	          console.log('new', newX, newY);
 	
-	          console.log(_this8.board.collideWithWall(newX - _this8.translateX, newY - _this8.translateY, true));
 	          // account for the translation because the board class is based on
 	          // the server side coordination
-	          if (!_this8.board.collideWithWall(newX - _this8.translateX, newY - _this8.translateY)) {
-	            selfPlayer.x = newX;
-	            selfPlayer.y = newY;
-	          }
+	          // if (!this.board.collideWithWall(newX - this.translateX,
+	          //                                 newY - this.translateY)) {
+	          selfPlayer.x = newX;
+	          selfPlayer.y = newY;
+	          // }
 	          selfPlayer.displayAnimation(selfPlayer.charMove);
 	          console.log('moveIdx', selfPlayer.moveIdx);
 	          console.log('newmvt', selfPlayer.x, selfPlayer.y);
@@ -532,9 +532,10 @@
 	
 	      socket.on('updatePos', function (data) {
 	        var player = _this9.players[data.playerId];
+	        console.log('got there? ');
+	        console.log(player);
 	        if (player) {
-	          console.log('transX, transY', _this9.translateX, _this9.translateY);
-	          player.updatePosWithServerState(data, _this9.translateX, _this9.translateY);
+	          _this9.updatePosWithServerState(data, player);
 	        }
 	      });
 	
@@ -544,6 +545,66 @@
 	          player.stopAnimation(data);
 	        }
 	      });
+	    }
+	
+	    // server reconcilation. getting rid of the move inputs that we don't
+	    // need anymore from the queue up until the movement updates the server
+	    // side returns, and then applying the rest of the moves in the queue
+	    // on top of the server state
+	
+	  }, {
+	    key: 'updatePosWithServerState',
+	    value: function updatePosWithServerState(data, player) {
+	      console.log(this.selfId);
+	      console.log(player.playerId);
+	      console.log(parseInt(player.playerId) === parseInt(this.selfId));
+	      console.log(parseInt(player.playerId) === this.selfId);
+	      if (parseInt(player.playerId) === parseInt(this.selfId)) {
+	        var clientAheadBy = player.moveIdx - data.moveIdx;
+	        console.log('HERE WE GOOOOOOOOOOOOOOOOOOO');
+	        console.log('clientahedby', clientAheadBy);
+	        console.log('length', player.pendingMoves.length);
+	        while (player.pendingMoves.length > clientAheadBy) {
+	          // get rid of the move inputs we don't need
+	          player.pendingMoves.shift();
+	        }
+	
+	        this.updatePosWithRemainingMoves(data, player);
+	      } else {
+	        // no need to reconcile other player's movement
+	        player.x = data.x;
+	        player.y = data.y;
+	      }
+	    }
+	
+	    // applying the remaining moves that hasn't come back from server yet
+	    // on top of the most recent server side update
+	
+	  }, {
+	    key: 'updatePosWithRemainingMoves',
+	    value: function updatePosWithRemainingMoves(data, player) {
+	      var x = data.x;
+	      var y = data.y;
+	
+	      console.log('player', player);
+	      console.log('pendingMoves', player.pendingMoves);
+	      for (var i = 0; i < player.pendingMoves.length; i++) {
+	        var charMove = player.pendingMoves[i];
+	        console.log('applying thing', charMove);
+	        console.log(x + this.translateX, y + this.translateY);
+	
+	        var _board$getNewPos3 = this.board.getNewPos(charMove, x, y);
+	
+	        var _board$getNewPos4 = _slicedToArray(_board$getNewPos3, 2);
+	
+	        x = _board$getNewPos4[0];
+	        y = _board$getNewPos4[1];
+	      }
+	      console.log(x + this.translateX, y + this.translateY);
+	
+	      // apply the translation on top of the final x and Y
+	      player.x = x + this.translateX;
+	      player.y = y + this.translateY;
 	    }
 	  }, {
 	    key: 'setUpPlacingWeapons',
@@ -1076,57 +1137,41 @@
 	
 	      return this;
 	    },
-	    getDir: function getDir(charMove) {
-	      var dirX = void 0,
-	          dirY = void 0;
-	      if (charMove.left) {
-	        dirX = -1;
-	        dirY = -1;
-	      } else if (charMove.right) {
-	        dirX = 1;
-	        dirY = 1;
-	      } else if (charMove.up) {
-	        dirX = 1;
-	        dirY = -1;
-	      } else if (charMove.down) {
-	        dirX = -1;
-	        dirY = 1;
-	      }
 	
-	      return [dirX, dirY];
-	    },
-	    getNewPos: function getNewPos(charMove, x, y) {
-	      var _getDir = this.getDir(charMove);
 	
-	      var _getDir2 = _slicedToArray(_getDir, 2);
-	
-	      var dirX = _getDir2[0];
-	      var dirY = _getDir2[1];
-	
-	      return this.moveDir(x, y, dirX, dirY);
-	    },
-	    undoMovement: function undoMovement(charMove) {
-	      var _getDir3 = this.getDir(charMove);
-	
-	      var _getDir4 = _slicedToArray(_getDir3, 2);
-	
-	      var dirX = _getDir4[0];
-	      var dirY = _getDir4[1];
-	
-	      var undoDirX = dirX === -1 ? 1 : -1;
-	      var undoDirY = dirY === -1 ? 1 : -1;
-	      this.moveDir(undoDirX, undoDirY);
-	    },
-	    moveDir: function moveDir(x, y, dirX, dirY) {
-	      // the offset it needs to move to the neighbor blocks
-	      var w = mapGrid.TILE.WIDTH / 2;
-	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
-	
-	      var newX = x + w / this.charStep * dirX;
-	      var newY = y + h / this.charStep * dirY;
-	      return [newX, newY];
-	    },
-	
+	    // getDir(charMove) {
+	    //   let dirX, dirY;
+	    //   if (charMove.left) {
+	    //     dirX = -1;
+	    //     dirY = -1;
+	    //   } else if (charMove.right) {
+	    //     dirX = 1;
+	    //     dirY = 1;
+	    //   } else if (charMove.up) {
+	    //     dirX = 1;
+	    //     dirY = -1;
+	    //   } else if (charMove.down) {
+	    //     dirX = -1;
+	    //     dirY = 1;
+	    //   }
+	    //
+	    //   return [dirX, dirY];
+	    // },
+	    //
+	    // getNewPos(charMove, x, y) {
+	    //   let [dirX, dirY] = this.getDir(charMove);
+	    //   return this.moveDir(x, y, dirX, dirY);
+	    // },
+	    //
+	    // moveDir(x, y, dirX, dirY) {
+	    //   // the offset it needs to move to the neighbor blocks
+	    //   const w = mapGrid.TILE.WIDTH / 2;
+	    //   const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
+	    //
+	    //   const newX = x + (w / this.charStep) * dirX;
+	    //   const newY = y + (h / this.charStep) * dirY;
+	    //   return [newX, newY];
+	    // },
 	
 	    // updatePos(data, translateX, translateY) {
 	    //   this.x = data.x + translateX;
@@ -1390,6 +1435,7 @@
 	    this.maze = this.createStartingMaze();
 	    this.frontier = [];
 	    this.generateMaze();
+	    this.charStep = mapGrid.CHAR_STEP;
 	  }
 	
 	  // create a starting maze map with all the walls
@@ -1602,19 +1648,25 @@
 	    // checking if player's current position is colliding with a wall or
 	    // if it is out of the grid
 	
+	    // based on server side coordination
+	
 	  }, {
 	    key: 'collideWithWall',
-	    value: function collideWithWall(playerX, playerY, print) {
-	      var _getRowsCols = this.getRowsCols(playerX, playerY);
+	    value: function collideWithWall(playerX, playerY, translateX, translateY) {
+	      // check if there is translation offset (from the client side)
+	      var translatedX = translateX ? playerX - translateX : playerX;
+	      var translatedY = translateY ? playerY - translateY : playerY;
+	
+	      var _getRowsCols = this.getRowsCols(translatedX, translatedY);
 	
 	      var _getRowsCols2 = _slicedToArray(_getRowsCols, 2);
 	
 	      var rows = _getRowsCols2[0];
 	      var cols = _getRowsCols2[1];
+	      // if (print) {
+	      //   console.log('rows, cols', rows, cols);
+	      // }
 	
-	      if (print) {
-	        console.log('rows, cols', rows, cols);
-	      }
 	      for (var i = 0; i < rows.length; i++) {
 	        for (var j = 0; j < cols.length; j++) {
 	          if (!this.isInGrid(rows[i], cols[j]) || this.maze[rows[i]][cols[j]].isWall) {
@@ -1676,6 +1728,59 @@
 	      var cols = _getRowsCols4[1];
 	
 	      return [rows[0], cols[0]];
+	    }
+	  }, {
+	    key: 'getDir',
+	    value: function getDir(charMove) {
+	      var dirX = void 0,
+	          dirY = void 0;
+	      if (charMove.left) {
+	        dirX = -1;
+	        dirY = -1;
+	      } else if (charMove.right) {
+	        dirX = 1;
+	        dirY = 1;
+	      } else if (charMove.up) {
+	        dirX = 1;
+	        dirY = -1;
+	      } else if (charMove.down) {
+	        dirX = -1;
+	        dirY = 1;
+	      }
+	
+	      return [dirX, dirY];
+	    }
+	
+	    // giving the player x, y and direction, return the player's new position
+	
+	  }, {
+	    key: 'getNewPos',
+	    value: function getNewPos(charMove, playerX, playerY, translateX, translateY) {
+	      var _getDir = this.getDir(charMove);
+	
+	      var _getDir2 = _slicedToArray(_getDir, 2);
+	
+	      var dirX = _getDir2[0];
+	      var dirY = _getDir2[1];
+	
+	      return this.moveDir(playerX, playerY, dirX, dirY, translateX, translateY);
+	    }
+	  }, {
+	    key: 'moveDir',
+	    value: function moveDir(x, y, dirX, dirY, translateX, translateY) {
+	      // the offset it needs to move to the neighbor blocks
+	      var w = mapGrid.TILE.WIDTH / 2;
+	      var h = mapGrid.TILE.SURFACE_HEIGHT / 2;
+	
+	      var newX = x + w / this.charStep * dirX;
+	      var newY = y + h / this.charStep * dirY;
+	
+	      // check for wall collision
+	      if (this.collideWithWall(newX, newY, translateX, translateY)) {
+	        return [x, y];
+	      } else {
+	        return [newX, newY];
+	      }
 	    }
 	  }]);
 	
