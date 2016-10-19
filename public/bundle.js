@@ -903,7 +903,7 @@
 	  DAMAGE_ANIMATION_TIME: 100,
 	  DAMAGE_DISAPPEAR_TIME: 1000,
 	  HP_DAMAGE: 10,
-	  GAME_DURATION: 10, // 200
+	  GAME_DURATION: 200, // 200
 	  CHECK_COLLISION_INTERVAL: 200,
 	  COLORS: ['blue', 'red', 'yellow', 'green']
 	};
@@ -1113,6 +1113,7 @@
 	
 	      for (var i = 0; i < this.pendingMoves.length; i++) {
 	        var charMove = this.pendingMoves[i];
+	        console.log(x, y);
 	
 	        var _getNewPos3 = this.getNewPos(charMove, x, y);
 	
@@ -1121,6 +1122,7 @@
 	        x = _getNewPos4[0];
 	        y = _getNewPos4[1];
 	      }
+	      console.log(x, y);
 	
 	      // apply the translation on top of the final x and Y
 	      this.x = x + translateX;

@@ -169,8 +169,10 @@ module.exports = function(Crafty) {
       let [x, y] = [data.x, data.y];
       for (let i = 0; i < this.pendingMoves.length; i++) {
         let charMove = this.pendingMoves[i];
+        console.log(x, y);
         [x, y] = this.getNewPos(charMove, x, y);
       }
+      console.log(x, y);
 
       // apply the translation on top of the final x and Y
       this.x = x + translateX;
