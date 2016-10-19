@@ -21,6 +21,7 @@ class Game {
     this.translateX = null;
     this.translateY = null;
     this.playersReady = {};
+    this.playerMvtIntervalId = null;
   }
 
   run() {
@@ -173,6 +174,7 @@ class Game {
 
     // set up game over scene
     Crafty.scene('GameOver', (data) => {
+      clearInterval(this.playerMvtIntervalId);
       this.showGameOver(data);
     });
 
@@ -449,11 +451,11 @@ class Game {
 
   putPlayerMovementListener() {
     let selfPlayer = this.players[this.selfId];
-    setInterval(() => {
+    this.playerMvtIntervalId = setInterval(() => {
       if (selfPlayer.charMove.right || selfPlayer.charMove.left ||
           selfPlayer.charMove.up || selfPlayer.charMove.down) {
         selfPlayer.moveIdx++;
-        // console.log(selfPlayer.charMove);
+        console.log(selfPlayer.charMove);
         socket.emit('updatePos', {
           playerId: selfPlayer.playerId,
           charMove: selfPlayer.charMove,
@@ -464,15 +466,22 @@ class Game {
         // client side prediction. push the pending move to the queue,
         // then move according to what the pending move is
         selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
+        console.log('oldmvt', selfPlayer.x, selfPlayer.y);
         let [newX, newY] = selfPlayer.getNewPos(selfPlayer.charMove,
                                                 selfPlayer.x, selfPlayer.y);
-        if (!this.board.collideWithWall(newX, newY)) {
+        console.log('new', newX, newY);
+
+        console.log(this.board.collideWithWall(newX - this.translateX, newY - this.translateY, true));
+        // account for the translation because the board class is based on
+        // the server side coordination
+        if (!this.board.collideWithWall(newX - this.translateX,
+                                        newY - this.translateY)) {
           selfPlayer.x = newX;
           selfPlayer.y = newY;
         }
         selfPlayer.displayAnimation(selfPlayer.charMove);
-        // console.log('moveIdx', this.moveIdx);
-        // console.log('newmvt', newX, newY);
+        console.log('moveIdx', selfPlayer.moveIdx);
+        console.log('newmvt', selfPlayer.x, selfPlayer.y);
       }
 
     }, 20);
@@ -506,6 +515,7 @@ class Game {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
       if (player) {
+        console.log('transX, transY', this.translateX, this.translateY);
         player.updatePosWithServerState(data, this.translateX, this.translateY);
       }
     });
