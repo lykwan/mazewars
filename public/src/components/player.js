@@ -22,41 +22,32 @@ module.exports = function(Crafty) {
       return this;
     },
 
-    // copy(charMove) {
-    //   let copied = {};
-    //   Object.keys(charMove).forEach(move => {
-    //     copied[move] = charMove[move];
-    //   });
-    //   copied.moveIdx = this.moveIdx;
-    //   return copied;
-    // },
-    //
     bindingKeyEvents() {
       this.charMove = { left: false, right: false, up: false, down: false };
 
-      this.bind('EnterFrame', () => {
-        if (this.charMove.right || this.charMove.left ||
-            this.charMove.up || this.charMove.down) {
-          this.moveIdx++;
-          console.log(this.charMove);
-          this.socket.emit('updatePos', {
-            playerId: this.playerId,
-            charMove: this.charMove,
-            moveIdx: this.moveIdx
-          });
-
-          // console.log('charMove', this.copy(this.charMove));
-          // client side prediction. push the pending move to the queue,
-          // then move according to what the pending move is
-          this.pendingMoves.push(Object.assign({}, this.charMove));
-          let [newX, newY] = this.getNewPos(this.charMove, this.x, this.y);
-          this.x = newX;
-          this.y = newY;
-          this.displayAnimation(this.charMove);
-          console.log('moveIdx', this.moveIdx);
-          console.log('newmvt', newX, newY);
-        }
-      });
+      // this.bind('EnterFrame', (data) => {
+      //   if (this.charMove.right || this.charMove.left ||
+      //       this.charMove.up || this.charMove.down) {
+      //     this.moveIdx++;
+      //     // console.log(this.charMove);
+      //     this.socket.emit('updatePos', {
+      //       playerId: this.playerId,
+      //       charMove: this.charMove,
+      //       moveIdx: this.moveIdx
+      //     });
+      //
+      //     // console.log('charMove', this.copy(this.charMove));
+      //     // client side prediction. push the pending move to the queue,
+      //     // then move according to what the pending move is
+      //     this.pendingMoves.push(Object.assign({}, this.charMove));
+      //     let [newX, newY] = this.getNewPos(this.charMove, this.x, this.y);
+      //     this.x = newX;
+      //     this.y = newY;
+      //     this.displayAnimation(this.charMove);
+      //     // console.log('moveIdx', this.moveIdx);
+      //     // console.log('newmvt', newX, newY);
+      //   }
+      // });
 
       this.bind('KeyDown', e => {
         e.originalEvent.preventDefault();
@@ -166,8 +157,8 @@ module.exports = function(Crafty) {
     // on top of the server state
     updatePosWithServerState(data, translateX, translateY) {
       const clientAheadBy = this.moveIdx - data.moveIdx;
-      console.log('clientahedby', clientAheadBy);
-      console.log('length', this.pendingMoves.length);
+      // console.log('clientahedby', clientAheadBy);
+      // console.log('length', this.pendingMoves.length);
       while (this.pendingMoves.length > clientAheadBy) {
         // get rid of the move inputs we don't need
         this.pendingMoves.shift();
@@ -182,11 +173,11 @@ module.exports = function(Crafty) {
       let [x, y] = [data.x, data.y];
       for (let i = 0; i < this.pendingMoves.length; i++) {
         let charMove = this.pendingMoves[i];
-        console.log('applying thing', charMove);
-        console.log(x + translateX, y + translateY);
+        // console.log('applying thing', charMove);
+        // console.log(x + translateX, y + translateY);
         [x, y] = this.getNewPos(charMove, x, y);
       }
-      console.log(x + translateX, y + translateY);
+      // console.log(x + translateX, y + translateY);
 
       // apply the translation on top of the final x and Y
       this.x = x + translateX;
