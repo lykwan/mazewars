@@ -35,6 +35,9 @@ module.exports = function(Crafty) {
           });
 
           this.pendingMoves.enqueue(this.charMove);
+          let [newX, newY] = this.getNewPos(this.charMove, this.x, this.y);
+          this.x = newX;
+          this.y = newY;
           console.log(this.moveIdx);
           this.moveIdx++;
         }
@@ -112,9 +115,9 @@ module.exports = function(Crafty) {
       return [dirX, dirY];
     },
 
-    getNewPos(charMove) {
+    getNewPos(charMove, x, y) {
       let [dirX, dirY] = this.getDir(charMove);
-      return this.moveDir(dirX, dirY);
+      return this.moveDir(x, y, dirX, dirY);
     },
 
     undoMovement(charMove) {
@@ -124,14 +127,14 @@ module.exports = function(Crafty) {
       this.moveDir(undoDirX, undoDirY);
     },
 
-    moveDir(dirX, dirY) {
+    moveDir(x, y, dirX, dirY) {
       // the offset it needs to move to the neighbor blocks
       const w = mapGrid.TILE.WIDTH / 2;
       const h = mapGrid.TILE.SURFACE_HEIGHT / 2;
 
-      const x = this.x + (w / this.charStep) * dirX;
-      const y = this.y + (h / this.charStep) * dirY;
-      return [x, y];
+      const newX = x + (w / this.charStep) * dirX;
+      const newY = y + (h / this.charStep) * dirY;
+      return [newX, newY];
     },
 
     updatePos(data, translateX, translateY) {
