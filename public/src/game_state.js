@@ -356,6 +356,7 @@ class GameState {
                                                 movingPlayer.x,
                                                 movingPlayer.y
                                               );
+
       if (!this.board.collideWithWall(newX, newY)) {
         movingPlayer.x = newX;
         movingPlayer.y = newY;
@@ -365,13 +366,14 @@ class GameState {
         this.pickUpBall(socket, movingPlayer);
       }
 
-      this.io.to(this.roomId).emit('updatePos', {
-        playerId: data.playerId,
-        x: movingPlayer.x,
-        y: movingPlayer.y,
-        charMove: data.charMove,
-        moveIdx: data.moveIdx
-      });
+      // console.log(movingPlayer.x, movingPlayer.y);
+        this.io.to(this.roomId).emit('updatePos', {
+          playerId: data.playerId,
+          x: movingPlayer.x,
+          y: movingPlayer.y,
+          charMove: data.charMove,
+          moveIdx: data.moveIdx
+        });
     });
 
     socket.on('stopMovement', data => {
