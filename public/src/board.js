@@ -2,6 +2,8 @@ const Constants = require('./constants.js');
 const mapGrid = Constants.mapGrid;
 const Cell = require('./cell.js');
 
+let epsilon = 0.000000001;
+
 class Board {
   constructor(m, n, seedRandomStr) {
     // how many cells rows and cols are there if walls were just borders
@@ -155,8 +157,8 @@ class Board {
 
   // checking if player's current position is colliding with a wall or
   // if it is out of the grid
-  collideWithWall(player) {
-    let [rows, cols] = player.getRowsCols();
+  collideWithWall(playerX, playerY) {
+    let [rows, cols] = this.getRowsCols(playerX, playerY);
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < cols.length; j++) {
         if (!this.isInGrid(rows[i], cols[j]) ||
@@ -167,6 +169,49 @@ class Board {
     }
 
     return false;
+  }
+
+  getRowsCols(x, y) {
+    const w = (mapGrid.TILE.WIDTH / 2);
+    const h = (mapGrid.TILE.SURFACE_HEIGHT / 2);
+
+    const xOverW = x / w;
+    const yOverH = y / h;
+
+    // (x/w) + (y/h) = 2*r
+    const row = this.fixRoundingErrors((xOverW + yOverH) / 2);
+    const col = this.fixRoundingErrors(row - xOverW);
+
+    // finding all the rows it is at
+    let rows = [Math.floor(row)];
+
+    // if the offset of the block + half the width of the block is more than
+    // the width of half a tile, then it is overlapping two rows
+    let spaceOccupyingX = (row - Math.floor(row)) * w
+                            + (mapGrid.PLAYER.WIDTH / 2);
+    if ((spaceOccupyingX - w) > epsilon) {
+      rows.push(Math.ceil(row));
+    }
+
+    // finding all the cols it is at
+    let cols = [Math.floor(col)];
+    let spaceOccupyingY = (col - Math.floor(col)) * h
+                            + (mapGrid.PLAYER.SURFACE_HEIGHT / 2);
+    if ((spaceOccupyingY - h) > epsilon) {
+      cols.push(Math.ceil(col));
+    }
+
+    return [rows, cols];
+  }
+
+  // account for the floating point epsilon
+  fixRoundingErrors(n) {
+    return (Math.abs(n - Math.round(n)) <= epsilon) ? Math.round(n) : n;
+  }
+
+  getTopLeftRowCol() {
+    let [rows, cols] = this.getRowsCols();
+    return [rows[0], cols[0]];
   }
 
 }
