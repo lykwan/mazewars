@@ -483,7 +483,8 @@
 	      socket.on('updatePos', function (data) {
 	        var player = _this8.players[data.playerId];
 	        if (player) {
-	          player.updatePos(data, _this8.translateX, _this8.translateY);
+	          player.updatePosWithServerState(data, _this8.translateX, _this8.translateY);
+	          // player.updatePos(data, this.translateX, this.translateY);
 	        }
 	      });
 	
@@ -939,7 +940,7 @@
 	    },
 	
 	    setUpMovesQueue: function setUpMovesQueue() {
-	      this.pendingMoves = new Queue();
+	      this.pendingMoves = [];
 	      // each movement has a number to it, to help client side prediction
 	      this.moveIdx = 0;
 	      return this;
@@ -951,13 +952,16 @@
 	
 	      this.bind('EnterFrame', function () {
 	        if (_this.charMove.right || _this.charMove.left || _this.charMove.up || _this.charMove.down) {
+	          _this.moveIdx++;
 	          _this.socket.emit('updatePos', {
 	            playerId: _this.playerId,
 	            charMove: _this.charMove,
 	            moveIdx: _this.moveIdx
 	          });
 	
-	          _this.pendingMoves.enqueue(_this.charMove);
+	          // client side prediction. push the pending move to the queue,
+	          // then move according to what the pending move is
+	          _this.pendingMoves.push(_this.charMove);
 	
 	          var _getNewPos = _this.getNewPos(_this.charMove, _this.x, _this.y);
 	
@@ -968,8 +972,8 @@
 	
 	          _this.x = newX;
 	          _this.y = newY;
+	          _this.displayAnimation(_this.charMove);
 	          console.log(_this.moveIdx);
-	          _this.moveIdx++;
 	        }
 	      });
 	
@@ -1075,12 +1079,52 @@
 	      var newY = y + h / this.charStep * dirY;
 	      return [newX, newY];
 	    },
-	    updatePos: function updatePos(data, translateX, translateY) {
-	      this.x = data.x + translateX;
-	      this.y = data.y + translateY;
-	      console.log(data.moveIdx);
 	
-	      this.displayAnimation(data.charMove);
+	
+	    // updatePos(data, translateX, translateY) {
+	    //   this.x = data.x + translateX;
+	    //   this.y = data.y + translateY;
+	    //   console.log(data.moveIdx);
+	    //
+	    //   this.displayAnimation(data.charMove);
+	    // },
+	    //
+	    // server reconcilation. getting rid of the move inputs that we don't
+	    // need anymore from the queue up until the movement updates the server
+	    // side returns, and then applying the rest of the moves in the queue
+	    // on top of the server state
+	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
+	      var clientAheadBy = this.moveIdx - data.moveIdx;
+	      console.log(clientAheadBy);
+	      while (this.pendingMoves.length > clientAheadBy) {
+	        // get rid of the move inputs we don't need
+	        this.pendingMoves.shift();
+	      }
+	
+	      this.updatePosWithRemainingMoves(data, translateX, translateY);
+	    },
+	
+	
+	    // applying the remaining moves that hasn't come back from server yet
+	    // on top of the most recent server side update
+	    updatePosWithRemainingMoves: function updatePosWithRemainingMoves(data, translateX, translateY) {
+	      var x = data.x;
+	      var y = data.y;
+	
+	      for (var i = 0; i < this.pendingMoves.length; i++) {
+	        var charMove = this.pendingMoves[i];
+	
+	        var _getNewPos3 = this.getNewPos(charMove, x, y);
+	
+	        var _getNewPos4 = _slicedToArray(_getNewPos3, 2);
+	
+	        x = _getNewPos4[0];
+	        y = _getNewPos4[1];
+	      }
+	
+	      // apply the translation on top of the final x and Y
+	      this.x = x + translateX;
+	      this.y = y + translateY;
 	    },
 	    stopAnimation: function stopAnimation(data) {
 	      if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
@@ -1135,6 +1179,13 @@
 	  Crafty.c('OtherPlayer', {
 	    init: function init() {
 	      this.requires('Player');
+	    },
+	
+	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
+	      this.x = data.x + translateX;
+	      this.y = data.y + translateY;
+	
+	      this.displayAnimation(data.charMove);
 	    }
 	  });
 	

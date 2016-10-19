@@ -16,7 +16,7 @@ module.exports = function(Crafty) {
     },
 
     setUpMovesQueue() {
-      this.pendingMoves = new Queue();
+      this.pendingMoves = [];
       // each movement has a number to it, to help client side prediction
       this.moveIdx = 0;
       return this;
@@ -28,18 +28,21 @@ module.exports = function(Crafty) {
       this.bind('EnterFrame', () => {
         if (this.charMove.right || this.charMove.left ||
             this.charMove.up || this.charMove.down) {
+          this.moveIdx++;
           this.socket.emit('updatePos', {
             playerId: this.playerId,
             charMove: this.charMove,
             moveIdx: this.moveIdx
           });
 
-          this.pendingMoves.enqueue(this.charMove);
+          // client side prediction. push the pending move to the queue,
+          // then move according to what the pending move is
+          this.pendingMoves.push(this.charMove);
           let [newX, newY] = this.getNewPos(this.charMove, this.x, this.y);
           this.x = newX;
           this.y = newY;
+          this.displayAnimation(this.charMove);
           console.log(this.moveIdx);
-          this.moveIdx++;
         }
       });
 
@@ -137,12 +140,41 @@ module.exports = function(Crafty) {
       return [newX, newY];
     },
 
-    updatePos(data, translateX, translateY) {
-      this.x = data.x + translateX;
-      this.y = data.y + translateY;
-      console.log(data.moveIdx);
+    // updatePos(data, translateX, translateY) {
+    //   this.x = data.x + translateX;
+    //   this.y = data.y + translateY;
+    //   console.log(data.moveIdx);
+    //
+    //   this.displayAnimation(data.charMove);
+    // },
+    //
+    // server reconcilation. getting rid of the move inputs that we don't
+    // need anymore from the queue up until the movement updates the server
+    // side returns, and then applying the rest of the moves in the queue
+    // on top of the server state
+    updatePosWithServerState(data, translateX, translateY) {
+      const clientAheadBy = this.moveIdx - data.moveIdx;
+      console.log(clientAheadBy);
+      while (this.pendingMoves.length > clientAheadBy) {
+        // get rid of the move inputs we don't need
+        this.pendingMoves.shift();
+      }
 
-      this.displayAnimation(data.charMove);
+      this.updatePosWithRemainingMoves(data, translateX, translateY);
+    },
+
+    // applying the remaining moves that hasn't come back from server yet
+    // on top of the most recent server side update
+    updatePosWithRemainingMoves(data, translateX, translateY) {
+      let [x, y] = [data.x, data.y];
+      for (let i = 0; i < this.pendingMoves.length; i++) {
+        let charMove = this.pendingMoves[i];
+        [x, y] = this.getNewPos(charMove, x, y);
+      }
+
+      // apply the translation on top of the final x and Y
+      this.x = x + translateX;
+      this.y = y + translateY;
     },
 
     stopAnimation(data) {
@@ -195,6 +227,13 @@ module.exports = function(Crafty) {
   Crafty.c('OtherPlayer', {
     init: function() {
       this.requires('Player');
+    },
+
+    updatePosWithServerState(data, translateX, translateY) {
+      this.x = data.x + translateX;
+      this.y = data.y + translateY;
+
+      this.displayAnimation(data.charMove);
     }
   });
 
