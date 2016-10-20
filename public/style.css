@@ -110,7 +110,7 @@
       position: absolute;
       right: 280px;
       bottom: 0;
-      font-size: 40px;
+      font-size: 70px;
       margin-bottom: 20px;
       margin-right: 20px;
     }
@@ -120,7 +120,7 @@
       width: 250px;
       position: absolute;
       right: 0;
-      bottom: 40px;
+      bottom: 70px;
       font-size: 15px;
       font-family: 'Open Sans', sans-serif;
       display: none;

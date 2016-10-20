@@ -106,10 +106,8 @@ class Game {
 
   handleDisableReadyButton(playerCount) {
     if (playerCount === undefined || playerCount <= 1) {
-      console.log('disabling');
       $('.ready-form button').prop('disabled', true);
     } else {
-      console.log(' notdisabling');
       $('.ready-form button').prop('disabled', false);
     }
   }
@@ -263,7 +261,6 @@ class Game {
     });
 
     socket.on('othersClickReady', data => {
-      console.log('telling others!');
       this.showPlayerReady(data.playerColor, data.playerReady);
     });
 
@@ -273,7 +270,6 @@ class Game {
   }
 
   showPlayerReady(playerColor, playerReady) {
-    console.log(playerColor, playerReady);
     if (playerReady) {
       $(`.player-item.${ playerColor } .ready-text`).removeClass('hidden');
     } else {
@@ -289,6 +285,8 @@ class Game {
       }
 
       $(`.player-item.${ data.playerColor }`).remove();
+      $(`.ranking .${ data.playerColor }`).remove();
+      $(`.hp-list .${ data.playerColor }`).remove();
 
       this.handleDisableReadyButton(data.playerCount);
     });
@@ -380,8 +378,6 @@ class Game {
         this.translateX += ((mapGrid.TILE.WIDTH - mapGrid.PLAYER.WIDTH) / 2);
         this.translateY -=
         ((mapGrid.TILE.SURFACE_HEIGHT - mapGrid.PLAYER.SURFACE_HEIGHT) / 2);
-        console.log(this.translateX);
-        console.log(this.translateY);
 
         // for displaying purposes. showing the user his/her player color
         selfPlayerClass = 'self-player';
@@ -511,7 +507,6 @@ class Game {
     });
 
     socket.on('stopMovement', data => {
-      console.log('topAnimation');
       const player = this.players[data.playerId];
       if (player) {
         player.stopAnimation(data.keyCode);
@@ -534,7 +529,6 @@ class Game {
       this.updatePosWithRemainingMoves(data, player);
     } else {
       // no need to reconcile other player's movement
-      console.log('updating pos');
       player.updatePos(data.x, data.y,
                         this.translateX, this.translateY, data.charMove);
     }
@@ -669,7 +663,8 @@ class Game {
                 </li>`;
       });
 
-      $('.ranking').html(rankedPlayerScoreLis.join(''));
+      $('.ranking').empty();
+      $('.ranking').append(rankedPlayerScoreLis.join(''));
     });
   }
 

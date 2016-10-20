@@ -100,9 +100,18 @@ class GameState {
       console.log('user disconnected');
       delete this.sockets[socket.id];
 
+      let player = this.players[playerId];
       // delete player if game has started already
-      if (this.players[playerId] !== true) {
-        this.players[playerId].destroy();
+      if (player !== true) {
+
+        // if the person is the ball holder, release the ball
+        if (parseInt(playerId) === parseInt(this.ballHolder.playerId)) {
+          let [row, col] = player.getTopLeftRowCol();
+          this.addBall(row, col);
+          this.ballHolder = null;
+        }
+
+        player.destroy();
       }
       this.players[playerId] = null;
       delete this.playersReady[playerId];
@@ -507,6 +516,7 @@ class GameState {
 
           if (idx >= damageCells.length) {
             clearInterval(intervalId);
+            return;
           }
 
           const [row, col] = damageCells[idx];

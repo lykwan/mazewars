@@ -53,10 +53,6 @@ module.exports = function(Crafty) {
       let spaceOccupyingX = (row - Math.floor(row)) * w
                               + (mapGrid.PLAYER.WIDTH / 2);
       if ((spaceOccupyingX - w) > epsilon) {
-        // console.log('really?');
-        // console.log((row - Math.floor(row)) * w);
-        // console.log(mapGrid.PLAYER_WIDTH / 2);
-        // console.log(w);
         rows.push(Math.ceil(row));
       }
 

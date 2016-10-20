@@ -162,13 +162,10 @@ class Board {
   // based on server side coordination
   collideWithWall(playerX, playerY, translateX, translateY) {
     // check if there is translation offset (from the client side)
-    let translatedX = translateX ? playerX - translateX : playerX
-    let translatedY = translateY ? playerY - translateY : playerY
+    let translatedX = translateX ? playerX - translateX : playerX;
+    let translatedY = translateY ? playerY - translateY : playerY;
 
     let [rows, cols] = this.getRowsCols(translatedX, translatedY);
-        // if (print) {
-        //   console.log('rows, cols', rows, cols);
-        // }
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < cols.length; j++) {
         if (!this.isInGrid(rows[i], cols[j]) ||
