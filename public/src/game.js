@@ -386,7 +386,7 @@ class Game {
         // for displaying purposes. showing the user his/her player color
         selfPlayerClass = 'self-player';
       } else {
-        player = Crafty.e(`SelfPlayer, SpriteAnimation, ${ charSprite }`);
+        player = Crafty.e(`OtherPlayer, SpriteAnimation, ${ charSprite }`);
         selfPlayerClass = '';
       }
 
@@ -455,38 +455,26 @@ class Game {
       if (selfPlayer.charMove.right || selfPlayer.charMove.left ||
           selfPlayer.charMove.up || selfPlayer.charMove.down) {
         selfPlayer.moveIdx++;
-        console.log(selfPlayer.charMove);
         socket.emit('updatePos', {
           playerId: selfPlayer.playerId,
           charMove: selfPlayer.charMove,
           moveIdx: selfPlayer.moveIdx
         });
 
-        // console.log('charMove', selfPlayer.copy(selfPlayer.charMove));
         // client side prediction. push the pending move to the queue,
         // then move according to what the pending move is
         selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
-        console.log('oldmvt', selfPlayer.x, selfPlayer.y);
         let [newX, newY] = this.board.getNewPos(selfPlayer.charMove,
                                                 selfPlayer.x,
                                                 selfPlayer.y,
                                                 this.translateX,
                                                 this.translateY
                                               );
-        console.log('new', newX, newY);
 
-        // account for the translation because the board class is based on
-        // the server side coordination
-        // if (!this.board.collideWithWall(newX - this.translateX,
-        //                                 newY - this.translateY)) {
         selfPlayer.x = newX;
         selfPlayer.y = newY;
-        // }
         selfPlayer.displayAnimation(selfPlayer.charMove);
-        console.log('moveIdx', selfPlayer.moveIdx);
-        console.log('newmvt', selfPlayer.x, selfPlayer.y);
       }
-
     }, 20);
 
   }
@@ -517,17 +505,16 @@ class Game {
   setUpPlayersMovement() {
     socket.on('updatePos', data => {
       const player = this.players[data.playerId];
-      console.log('got there? ');
-      console.log(player);
       if (player) {
         this.updatePosWithServerState(data, player);
       }
     });
 
     socket.on('stopMovement', data => {
+      console.log('topAnimation');
       const player = this.players[data.playerId];
       if (player) {
-        player.stopAnimation(data);
+        player.stopAnimation(data.keyCode);
       }
     });
   }
@@ -537,15 +524,8 @@ class Game {
   // side returns, and then applying the rest of the moves in the queue
   // on top of the server state
   updatePosWithServerState(data, player) {
-    console.log(this.selfId);
-    console.log(player.playerId);
-    console.log(parseInt(player.playerId) === parseInt(this.selfId));
-    console.log(parseInt(player.playerId) === this.selfId);
     if (parseInt(player.playerId) === parseInt(this.selfId)) {
       const clientAheadBy = player.moveIdx - data.moveIdx;
-      console.log('HERE WE GOOOOOOOOOOOOOOOOOOO');
-      console.log('clientahedby', clientAheadBy);
-      console.log('length', player.pendingMoves.length);
       while (player.pendingMoves.length > clientAheadBy) {
         // get rid of the move inputs we don't need
         player.pendingMoves.shift();
@@ -554,8 +534,9 @@ class Game {
       this.updatePosWithRemainingMoves(data, player);
     } else {
       // no need to reconcile other player's movement
-      player.x = data.x;
-      player.y = data.y;
+      console.log('updating pos');
+      player.updatePos(data.x, data.y,
+                        this.translateX, this.translateY, data.charMove);
     }
   }
 
@@ -563,19 +544,13 @@ class Game {
   // on top of the most recent server side update
   updatePosWithRemainingMoves(data, player) {
     let [x, y] = [data.x, data.y];
-    console.log('player', player);
-    console.log('pendingMoves', player.pendingMoves);
     for (let i = 0; i < player.pendingMoves.length; i++) {
       let charMove = player.pendingMoves[i];
-      console.log('applying thing', charMove);
-      console.log(x + this.translateX, y + this.translateY);
       [x, y] = this.board.getNewPos(charMove, x, y);
     }
-    console.log(x + this.translateX, y + this.translateY);
 
     // apply the translation on top of the final x and Y
-    player.x = x + this.translateX;
-    player.y = y + this.translateY;
+    player.updatePos(x, y, this.translateX, this.translateY);
   }
 
   setUpPlacingWeapons() {

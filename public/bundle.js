@@ -417,7 +417,7 @@
 	          // for displaying purposes. showing the user his/her player color
 	          selfPlayerClass = 'self-player';
 	        } else {
-	          player = Crafty.e('SelfPlayer, SpriteAnimation, ' + charSprite);
+	          player = Crafty.e('OtherPlayer, SpriteAnimation, ' + charSprite);
 	          selfPlayerClass = '';
 	        }
 	
@@ -470,18 +470,15 @@
 	      this.playerMvtIntervalId = setInterval(function () {
 	        if (selfPlayer.charMove.right || selfPlayer.charMove.left || selfPlayer.charMove.up || selfPlayer.charMove.down) {
 	          selfPlayer.moveIdx++;
-	          console.log(selfPlayer.charMove);
 	          socket.emit('updatePos', {
 	            playerId: selfPlayer.playerId,
 	            charMove: selfPlayer.charMove,
 	            moveIdx: selfPlayer.moveIdx
 	          });
 	
-	          // console.log('charMove', selfPlayer.copy(selfPlayer.charMove));
 	          // client side prediction. push the pending move to the queue,
 	          // then move according to what the pending move is
 	          selfPlayer.pendingMoves.push(Object.assign({}, selfPlayer.charMove));
-	          console.log('oldmvt', selfPlayer.x, selfPlayer.y);
 	
 	          var _board$getNewPos = _this8.board.getNewPos(selfPlayer.charMove, selfPlayer.x, selfPlayer.y, _this8.translateX, _this8.translateY);
 	
@@ -490,18 +487,10 @@
 	          var newX = _board$getNewPos2[0];
 	          var newY = _board$getNewPos2[1];
 	
-	          console.log('new', newX, newY);
 	
-	          // account for the translation because the board class is based on
-	          // the server side coordination
-	          // if (!this.board.collideWithWall(newX - this.translateX,
-	          //                                 newY - this.translateY)) {
 	          selfPlayer.x = newX;
 	          selfPlayer.y = newY;
-	          // }
 	          selfPlayer.displayAnimation(selfPlayer.charMove);
-	          console.log('moveIdx', selfPlayer.moveIdx);
-	          console.log('newmvt', selfPlayer.x, selfPlayer.y);
 	        }
 	      }, 20);
 	    }
@@ -532,17 +521,16 @@
 	
 	      socket.on('updatePos', function (data) {
 	        var player = _this9.players[data.playerId];
-	        console.log('got there? ');
-	        console.log(player);
 	        if (player) {
 	          _this9.updatePosWithServerState(data, player);
 	        }
 	      });
 	
 	      socket.on('stopMovement', function (data) {
+	        console.log('topAnimation');
 	        var player = _this9.players[data.playerId];
 	        if (player) {
-	          player.stopAnimation(data);
+	          player.stopAnimation(data.keyCode);
 	        }
 	      });
 	    }
@@ -555,15 +543,8 @@
 	  }, {
 	    key: 'updatePosWithServerState',
 	    value: function updatePosWithServerState(data, player) {
-	      console.log(this.selfId);
-	      console.log(player.playerId);
-	      console.log(parseInt(player.playerId) === parseInt(this.selfId));
-	      console.log(parseInt(player.playerId) === this.selfId);
 	      if (parseInt(player.playerId) === parseInt(this.selfId)) {
 	        var clientAheadBy = player.moveIdx - data.moveIdx;
-	        console.log('HERE WE GOOOOOOOOOOOOOOOOOOO');
-	        console.log('clientahedby', clientAheadBy);
-	        console.log('length', player.pendingMoves.length);
 	        while (player.pendingMoves.length > clientAheadBy) {
 	          // get rid of the move inputs we don't need
 	          player.pendingMoves.shift();
@@ -572,8 +553,8 @@
 	        this.updatePosWithRemainingMoves(data, player);
 	      } else {
 	        // no need to reconcile other player's movement
-	        player.x = data.x;
-	        player.y = data.y;
+	        console.log('updating pos');
+	        player.updatePos(data.x, data.y, this.translateX, this.translateY, data.charMove);
 	      }
 	    }
 	
@@ -586,12 +567,8 @@
 	      var x = data.x;
 	      var y = data.y;
 	
-	      console.log('player', player);
-	      console.log('pendingMoves', player.pendingMoves);
 	      for (var i = 0; i < player.pendingMoves.length; i++) {
 	        var charMove = player.pendingMoves[i];
-	        console.log('applying thing', charMove);
-	        console.log(x + this.translateX, y + this.translateY);
 	
 	        var _board$getNewPos3 = this.board.getNewPos(charMove, x, y);
 	
@@ -600,11 +577,9 @@
 	        x = _board$getNewPos4[0];
 	        y = _board$getNewPos4[1];
 	      }
-	      console.log(x + this.translateX, y + this.translateY);
 	
 	      // apply the translation on top of the final x and Y
-	      player.x = x + this.translateX;
-	      player.y = y + this.translateY;
+	      player.updatePos(x, y, this.translateX, this.translateY);
 	    }
 	  }, {
 	    key: 'setUpPlacingWeapons',
@@ -1031,8 +1006,6 @@
 
 	'use strict';
 	
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-	
 	/* globals Crafty */
 	/* globals Queue */
 	var Constants = __webpack_require__(4);
@@ -1129,6 +1102,8 @@
 	        if (e.keyCode === Crafty.keys.DOWN_ARROW) {
 	          _this.charMove.down = false;
 	        }
+	
+	        _this.stopAnimation(e.keyCode);
 	        _this.socket.emit('stopMovement', {
 	          playerId: _this.playerId,
 	          keyCode: e.keyCode
@@ -1173,70 +1148,45 @@
 	    //   return [newX, newY];
 	    // },
 	
-	    // updatePos(data, translateX, translateY) {
-	    //   this.x = data.x + translateX;
-	    //   this.y = data.y + translateY;
-	    //   console.log(data.moveIdx);
-	    //
-	    //   this.displayAnimation(data.charMove);
-	    // },
+	    updatePos: function updatePos(x, y, translateX, translateY) {
+	      console.log('not in here are you....?');
+	      this.x = x + translateX;
+	      this.y = y + translateY;
+	    },
+	
 	    //
 	    // server reconcilation. getting rid of the move inputs that we don't
 	    // need anymore from the queue up until the movement updates the server
 	    // side returns, and then applying the rest of the moves in the queue
 	    // on top of the server state
-	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
-	      var clientAheadBy = this.moveIdx - data.moveIdx;
-	      console.log('clientahedby', clientAheadBy);
-	      console.log('length', this.pendingMoves.length);
-	      while (this.pendingMoves.length > clientAheadBy) {
-	        // get rid of the move inputs we don't need
-	        this.pendingMoves.shift();
-	      }
-	
-	      this.updatePosWithRemainingMoves(data, translateX, translateY);
-	    },
-	
-	
-	    // applying the remaining moves that hasn't come back from server yet
-	    // on top of the most recent server side update
-	    updatePosWithRemainingMoves: function updatePosWithRemainingMoves(data, translateX, translateY) {
-	      var x = data.x;
-	      var y = data.y;
-	
-	      for (var i = 0; i < this.pendingMoves.length; i++) {
-	        var charMove = this.pendingMoves[i];
-	        console.log('applying thing', charMove);
-	        console.log(x + translateX, y + translateY);
-	
-	        var _getNewPos = this.getNewPos(charMove, x, y);
-	
-	        var _getNewPos2 = _slicedToArray(_getNewPos, 2);
-	
-	        x = _getNewPos2[0];
-	        y = _getNewPos2[1];
-	      }
-	      console.log(x + translateX, y + translateY);
-	
-	      // apply the translation on top of the final x and Y
-	      this.x = x + translateX;
-	      this.y = y + translateY;
-	    },
-	    stopAnimation: function stopAnimation(data) {
-	      if (data.keyCode === Crafty.keys.RIGHT_ARROW) {
-	        if (this.isPlaying('PlayerMovingRight')) this.pauseAnimation();
-	      }
-	      if (data.keyCode === Crafty.keys.LEFT_ARROW) {
-	        if (this.isPlaying('PlayerMovingLeft')) this.pauseAnimation();
-	      }
-	      if (data.keyCode === Crafty.keys.UP_ARROW) {
-	        if (this.isPlaying('PlayerMovingUp')) this.pauseAnimation();
-	      }
-	      if (data.keyCode === Crafty.keys.DOWN_ARROW) {
-	        if (this.isPlaying('PlayerMovingDown')) this.pauseAnimation();
-	      }
-	    },
-	
+	    // updatePosWithServerState(data, translateX, translateY) {
+	    //   const clientAheadBy = this.moveIdx - data.moveIdx;
+	    //   console.log('clientahedby', clientAheadBy);
+	    //   console.log('length', this.pendingMoves.length);
+	    //   while (this.pendingMoves.length > clientAheadBy) {
+	    //     // get rid of the move inputs we don't need
+	    //     this.pendingMoves.shift();
+	    //   }
+	    //
+	    //   this.updatePosWithRemainingMoves(data, translateX, translateY);
+	    // },
+	    //
+	    // // applying the remaining moves that hasn't come back from server yet
+	    // // on top of the most recent server side update
+	    // updatePosWithRemainingMoves(data, translateX, translateY) {
+	    //   let [x, y] = [data.x, data.y];
+	    //   for (let i = 0; i < this.pendingMoves.length; i++) {
+	    //     let charMove = this.pendingMoves[i];
+	    //     console.log('applying thing', charMove);
+	    //     console.log(x + translateX, y + translateY);
+	    //     [x, y] = this.getNewPos(charMove, x, y);
+	    //   }
+	    //   console.log(x + translateX, y + translateY);
+	    //
+	    //   // apply the translation on top of the final x and Y
+	    //   this.x = x + translateX;
+	    //   this.y = y + translateY;
+	    // },
 	
 	    setUpSocket: function setUpSocket(socket) {
 	      this.socket = socket;
@@ -1277,11 +1227,13 @@
 	      this.requires('Player');
 	    },
 	
-	    updatePosWithServerState: function updatePosWithServerState(data, translateX, translateY) {
-	      this.x = data.x + translateX;
-	      this.y = data.y + translateY;
+	    updatePos: function updatePos(x, y, translateX, translateY, charMove) {
+	      console.log('updating in other player!!');
+	      this.x = x + translateX;
+	      this.y = y + translateY;
 	
-	      this.displayAnimation(data.charMove);
+	      console.log(charMove);
+	      this.displayAnimation(charMove);
 	    }
 	  });
 	
@@ -1294,6 +1246,7 @@
 	    },
 	
 	    displayAnimation: function displayAnimation(charMove) {
+	      console.log(charMove);
 	      // display the animation movement depending on the char move
 	      if (charMove.left && !this.isPlaying('PlayerMovingLeft')) {
 	        this.animate('PlayerMovingLeft', -1);
@@ -1338,6 +1291,25 @@
 	      this.addComponent(this.playerColor + 'Sprite');
 	      this.removeComponent('purpleSprite');
 	      return this;
+	    },
+	
+	    stopAnimation: function stopAnimation(keyCode) {
+	      if (keyCode === Crafty.keys.RIGHT_ARROW) {
+	        console.log(this.isPlaying('PlayerMovingRight'));
+	        if (this.isPlaying('PlayerMovingRight')) this.pauseAnimation();
+	      }
+	      if (keyCode === Crafty.keys.LEFT_ARROW) {
+	        console.log(this.isPlaying('PlayerMovingLeft'));
+	        if (this.isPlaying('PlayerMovingLeft')) this.pauseAnimation();
+	      }
+	      if (keyCode === Crafty.keys.UP_ARROW) {
+	        console.log(this.isPlaying('PlayerMovingUp'));
+	        if (this.isPlaying('PlayerMovingUp')) this.pauseAnimation();
+	      }
+	      if (keyCode === Crafty.keys.DOWN_ARROW) {
+	        console.log(this.isPlaying('PlayerMovingDown'));
+	        if (this.isPlaying('PlayerMovingDown')) this.pauseAnimation();
+	      }
 	    }
 	  });
 	};
