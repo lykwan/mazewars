@@ -491,6 +491,9 @@ class GameState {
           damageCells = this.shootDFSWeapon(player);
         } else if (player.weaponType === weaponTypes.ASTAR) {
           damageCells = this.shootASTARWeapon(player);
+        } else {
+          // player does not have weapon
+          return;
         }
 
         this.bufferShootingTime(player);
@@ -500,6 +503,10 @@ class GameState {
           if (this.isGameOver) {
             clearInterval(intervalId);
             return;
+          }
+
+          if (idx >= damageCells.length) {
+            clearInterval(intervalId);
           }
 
           const [row, col] = damageCells[idx];
@@ -520,10 +527,6 @@ class GameState {
           });
 
           idx++;
-          if (idx >= damageCells.length) {
-            clearInterval(intervalId);
-          }
-
         }, gameSettings.DAMAGE_ANIMATION_TIME);
       }
     });
