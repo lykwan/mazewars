@@ -90,7 +90,6 @@ module.exports = function(Crafty) {
     getZAtLoc: function() {
       let layerZLevel = mapGrid.NUM_MAZE_ROWS + mapGrid.NUM_MAZE_COLS + 1;
       let [row, col] = this.getTopLeftRowCol();
-      console.log(layerZLevel * mapGrid.PLAYER.Z + row + col);
       return layerZLevel * mapGrid.PLAYER.Z + row + col;
     },
 

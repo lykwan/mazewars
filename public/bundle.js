@@ -733,8 +733,6 @@
 	module.exports = function (Crafty) {
 	  // change name of the html element to stage
 	  Crafty.init(mapGrid.GAME_WIDTH, mapGrid.GAME_HEIGHT, 'stage');
-	  console.log(mapGrid.GAME_WIDTH);
-	  console.log(mapGrid.GAME_HEIGHT);
 	
 	  createComponents(Crafty);
 	  createPlayerComponent(Crafty);
@@ -1100,7 +1098,6 @@
 	      var row = _getTopLeftRowCol2[0];
 	      var col = _getTopLeftRowCol2[1];
 	
-	      console.log(layerZLevel * mapGrid.PLAYER.Z + row + col);
 	      return layerZLevel * mapGrid.PLAYER.Z + row + col;
 	    },
 	
