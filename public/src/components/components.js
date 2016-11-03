@@ -82,6 +82,7 @@ module.exports = function(Crafty) {
       let [rows, cols] = this.getRowsCols();
       return [rows[0], cols[0]];
     }
+
   });
 
   Crafty.c('Actor', {

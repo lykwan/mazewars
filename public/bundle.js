@@ -838,6 +838,7 @@
 	
 	      return [rows[0], cols[0]];
 	    }
+	
 	  });
 	
 	  Crafty.c('Actor', {
@@ -997,6 +998,8 @@
 
 	'use strict';
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	/* globals Crafty */
 	/* globals Queue */
 	var Constants = __webpack_require__(4);
@@ -1082,8 +1085,24 @@
 	    updatePos: function updatePos(x, y, translateX, translateY) {
 	      this.x = x + translateX;
 	      this.y = y + translateY;
+	      this.z = this.getZAtLoc();
 	    },
 	
+	
+	    // according to crafty assignment of z for diamond iso
+	    getZAtLoc: function getZAtLoc() {
+	      var layerZLevel = mapGrid.NUM_MAZE_ROWS + mapGrid.NUM_MAZE_COLS + 1;
+	
+	      var _getTopLeftRowCol = this.getTopLeftRowCol();
+	
+	      var _getTopLeftRowCol2 = _slicedToArray(_getTopLeftRowCol, 2);
+	
+	      var row = _getTopLeftRowCol2[0];
+	      var col = _getTopLeftRowCol2[1];
+	
+	      console.log(layerZLevel * mapGrid.PLAYER.Z + row + col);
+	      return layerZLevel * mapGrid.PLAYER.Z + row + col;
+	    },
 	
 	    setUpSocket: function setUpSocket(socket) {
 	      this.socket = socket;

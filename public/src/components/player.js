@@ -83,8 +83,17 @@ module.exports = function(Crafty) {
     updatePos(x, y, translateX, translateY) {
       this.x = x + translateX;
       this.y = y + translateY;
+      this.z = this.getZAtLoc();
     },
-    
+
+    // according to crafty assignment of z for diamond iso
+    getZAtLoc: function() {
+      let layerZLevel = mapGrid.NUM_MAZE_ROWS + mapGrid.NUM_MAZE_COLS + 1;
+      let [row, col] = this.getTopLeftRowCol();
+      console.log(layerZLevel * mapGrid.PLAYER.Z + row + col);
+      return layerZLevel * mapGrid.PLAYER.Z + row + col;
+    },
+
     setUpSocket: function(socket) {
       this.socket = socket;
       return this;
