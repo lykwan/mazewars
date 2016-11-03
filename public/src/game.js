@@ -67,7 +67,7 @@ class Game {
       $('.waiting-room').prepend(
         `<div class="content">
           <h1>Maze Wars</h1>
-          <span>Room Link: amazeball.lilykwan.me/${ param }</span>
+          <span>Room Link: mazewars.lilykwan.me/${ param }</span>
           </span>
           <ul class="keyboard-instructions">
             <h3>Instructions</h3>
