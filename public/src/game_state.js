@@ -105,7 +105,8 @@ class GameState {
       if (player !== true) {
 
         // if the person is the ball holder, release the ball
-        if (parseInt(playerId) === parseInt(this.ballHolder.playerId)) {
+        if (this.ballHolder &&
+                parseInt(playerId) === parseInt(this.ballHolder.playerId)) {
           let [row, col] = player.getTopLeftRowCol();
           this.addBall(row, col);
           this.ballHolder = null;
