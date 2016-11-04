@@ -1,10 +1,10 @@
-# A-maze Ball
+# Maze Wars
 
 [game live][game]
 
-[game]: lilykwan.me:3000
+[game]: mazewars.lilykwan.me
 
-A-maze Ball is a multi-player game with web sockets. The goal of the game is to hold onto the ball for the longest duration of time. Other players can kill the player holding the ball by picking up weapons and shooting at him/her. Once he/she is killed, the ball is released and another player can pick up the ball.
+Maze Wars is a multi-player game with web sockets. The goal of the game is to hold onto the ball for the longest duration of time. Other players can kill the player holding the ball by picking up weapons and shooting at him/her. Once he/she is killed, the ball is released and another player can pick up the ball.
 
 ## Features & Implementation
 
@@ -16,7 +16,7 @@ The map of the maze is randomly generated each time using Prim's algorithm. The 
 
 ### Weapons
 
-There are two types of weapons: BFS range, and DFS range. BFS weapon finds the path using BFS algorithm, and vice versa for DFS. This way, the players have two options when they pick a weapon. If they want an area-of-effect, closer-range weapon, they can pick BFS weapon. If they want a more targeted, longer-range weapon, they can pick the DFS weapon.
+There are three types of weapons, each comprised of one graph algorithm: BFS range, DFS range, and A* range. BFS weapon finds the path using BFS algorithm, and vice versa for DFS and A*. This way, the players have two options when they pick a weapon. If they want an area-of-effect, closer-range weapon, they can pick BFS weapon. If they want a longer-range weapon, they can pick the DFS weapon.
 
 ![ShootingWeapon](screenshots/shooting_weapon.png)
 
